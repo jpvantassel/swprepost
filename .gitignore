@@ -1,0 +1,18 @@
+# Folders
+__pycache__
+.ipynb_checkpoints
+doc
+test
+data
+
+# File Types
+*.target
+*.param
+*.xlsx
+*.docx
+*.pptx
+*.vscode
+*.xml
+*.egg-info
+*.png
+*.hypothesis
