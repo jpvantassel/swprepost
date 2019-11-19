@@ -1,0 +1,357 @@
+"""Tests for GroundModel class."""
+
+import scipy.io as sio
+import swipp
+import unittest
+import os
+from hypothesis import given, settings
+import hypothesis.strategies as st
+import logging
+logging.basicConfig(level=logging.WARN)
+
+file_name = __file__.split("/")[-1]
+full_path = __file__[:-len(file_name)]
+
+
+class TestGroundModel(unittest.TestCase):
+
+    def test_init(self):
+        thk = [1, 5, 3.3, 10]
+        vps = [300, 450, 1500.1, 2000.1]
+        vss = [100, 150, 201., 300]
+        rho = [2000, 3000, 2250., 2300.]
+        mygm = swipp.GroundModel(thickness=thk, vp=vps, vs=vss, density=rho)
+
+        self.assertListEqual(mygm.tk, thk)
+        self.assertListEqual(mygm.vp, vps)
+        self.assertListEqual(mygm.vs, vss)
+        self.assertListEqual(mygm.rh, rho)
+
+    def test_gm2(self):
+        # Setup
+        thks = [1, 3, 5, 7, 0]
+        vss = [100, 300, 500, 700, 900]
+        vps = [200, 600, 1000, 1400, 1800]
+        rho = [2000]*5
+        mygm = swipp.GroundModel(thks, vps, vss, rho)
+        depth2, vp2, vs2, rho2 = mygm.gm2()
+
+        # True
+        depth2_true = [0, 1, 1, 4, 4, 9, 9, 16, 16, 9999.]
+        vs2_true = [100, 100, 300, 300, 500, 500, 700, 700, 900, 900]
+        vp2_true = [200, 200, 600, 600, 1000, 1000, 1400, 1400, 1800, 1800]
+        rho2_true = rho+rho
+
+        # Different way to get to the same value
+        deptha = mygm.gm2_par(param='depth')
+        vp2a = mygm.gm2_par(param='vp')
+        vs2a = mygm.gm2_par(param='vs')
+        rho2a = mygm.gm2_par(param='rho')
+
+        # Check two lists are indeed the same
+        self.assertListEqual(depth2, deptha)
+        self.assertListEqual(vp2, vp2a)
+        self.assertListEqual(vs2, vs2a)
+        self.assertListEqual(rho2, rho2a)
+
+        # Go value by value
+        tests = [depth2, vp2, vs2, rho2]
+        trues = [depth2_true, vp2_true, vs2_true, rho2_true]
+        for trial, true in zip(tests, trues):
+            # logging.debug(f"trial = {trial}, true = {true}.")
+            for tri, tru in zip(trial, true):
+                self.assertAlmostEqual(tri, tru)
+
+    def test_calcpr(self):
+        # Check with "good" inputs.
+        trials = swipp.GroundModel.calc_pr(
+            [6000, 5000, 4000, 3000, 2000, 1000, 500, 400, 300, 200],
+            [100, 200, 300, 500, 750, 500, 300, 120, 210, 110])
+        trues = [0.499861072520145, 0.499198717948718,
+                 0.49717159, 0.485714285714286, 0.418181818181818,
+                 0.333333333333333, 0.21875, 0.450549450549451,
+                 0.0196078431372549, 0.283154121863799]
+        for trial, true in zip(trials, trues):
+            self.assertAlmostEqual(trial, true)
+        # Check raises value error.
+        vps = [150, 150, 150]
+        vss = [151, 150, 149]
+        for vp, vs in zip([vps], [vss]):
+            self.assertRaises(ValueError, swipp.GroundModel.calc_pr, vp, vs)
+
+    def test_vs30(self):
+        # One thick layer
+        thick = [50, 0]
+        vp = [600]*len(thick)
+        vs = [100, 100]
+        density = [0]*len(thick)
+        test_val = swipp.GroundModel(thick, vp, vs, density).vs30()
+        know_val = 100
+        self.assertEqual(test_val, know_val)
+
+        # Two layers, same velocity
+        thick = [15, 15, 0]
+        vp = [600]*len(thick)
+        vs = [100, 100, 0]
+        density = [0]*len(thick)
+        test_val = swipp.GroundModel(thick, vp, vs, density).vs30()
+        know_val = 100
+        self.assertEqual(test_val, know_val)
+
+        # One layer, exactly 30m
+        thick = [30, 0]
+        vp = [600]*len(thick)
+        vs = [100, 200]
+        density = [0]*len(thick)
+        test_val = swipp.GroundModel(thick, vp, vs, density).vs30()
+        know_val = 100
+        self.assertEqual(test_val, know_val)
+
+        # Two layers, exactly 30m
+        thick = [15, 15, 0]
+        vp = [600]*len(thick)
+        vs = [100, 200, 300]
+        density = [0]*len(thick)
+        test_val = swipp.GroundModel(thick, vp, vs, density).vs30()
+        know_val = 133.33
+        self.assertAlmostEqual(test_val, know_val, places=2)
+
+        # Two layers, less than 30m
+        thick = [5, 10, 0]
+        vp = [600]*len(thick)
+        vs = [100, 200, 300]
+        density = [0]*len(thick)
+        test_val = swipp.GroundModel(thick, vp, vs, density).vs30()
+        know_val = 200.
+        self.assertAlmostEqual(test_val, know_val, places=2)
+
+        # Two layers, less than 30m, with velocity reversal
+        thick = [10, 10, 0]
+        vp = [600]*len(thick)
+        vs = [200, 50, 300]
+        density = [0]*len(thick)
+        test_val = swipp.GroundModel(thick, vp, vs, density).vs30()
+        know_val = 105.88
+        self.assertAlmostEqual(test_val, know_val, places=2)
+
+    def test_write_to_mat(self):
+        thick = [5., 5., 10., 10., 50., 0.]
+        vp = [1500.]*len(thick)
+        vs = [100., 200., 300., 400., 500., 600.]
+        density = [2000.]*len(thick)
+        mygm = swipp.GroundModel(thick, vp, vs, density)
+        fname = "test"
+        mygm.write_to_mat(fname)
+        data = sio.loadmat(fname)
+        self.assertListEqual(data["thickness"].tolist()[0], thick)
+        self.assertListEqual(data["vp1"].tolist()[0], vp)
+        self.assertListEqual(data["vs1"].tolist()[0], vs)
+        self.assertListEqual(data["rho1"].tolist()[0], density)
+        os.remove(f"{fname}.mat")
+
+    def test_gm2_disc(self):
+        thick = [2., 2., 0.]
+        vp = [1500.]*len(thick)
+        vs = [100., 200., 300.]
+        density = [2000.]*len(thick)
+        mygm = swipp.GroundModel(thick, vp, vs, density)
+        disc_depth, disc_par = mygm.gm2_disc(5, dy=1.25)
+        self.assertListEqual([0., 1.25, 2.5, 3.75, 5.], disc_depth)
+        self.assertListEqual([100., 100., 200., 200., 300.], disc_par)
+
+        thick = [2., 2., 0.]
+        vp = [1500.]*len(thick)
+        vs = [100., 200., 300.]
+        density = [2000.]*len(thick)
+        mygm = swipp.GroundModel(thick, vp, vs, density)
+        disc_depth, disc_par = mygm.gm2_disc(5, dy=1)
+        self.assertListEqual([0., 1., 2., 3., 4., 5.], disc_depth)
+        self.assertListEqual([100., 100., 100., 200., 200., 300.], disc_par)
+
+        thick = [1.5, 1.5, 0]
+        vp = [1500.]*len(thick)
+        vs = [100., 200., 300.]
+        density = [2000.]*len(thick)
+        mygm = swipp.GroundModel(thick, vp, vs, density)
+        disc_depth, disc_par = mygm.gm2_disc(5, dy=1)
+        self.assertListEqual([0., 1., 2., 3., 4., 5.], disc_depth)
+        self.assertListEqual([100., 100., 200., 200., 300., 300.], disc_par)
+
+    def test_depth_to_thick(self):
+        depth = [1, 3, 5, 8, 999]
+        thk = swipp.GroundModel.depth_to_thick(depth)
+        self.assertListEqual(thk, [1, 2, 2, 3, 0])
+
+        depth = [0.5, 1.22, 3.82, 5.82, 999]
+        thk = swipp.GroundModel.depth_to_thick(depth)
+        for test, known in zip(thk, [0.5, 0.72, 2.6, 2., 0]):
+            self.assertAlmostEqual(test, known)
+
+    def test_from_geopsy(self):
+        mygm = swipp.GroundModel.from_geopsy(
+            full_path+"data/test_gm_mod1_self.txt")
+        self.assertListEqual(mygm.tk, [2., 4., 0.])
+        self.assertListEqual(mygm.vp, [300, 700, 400])
+        self.assertListEqual(mygm.vs, [100, 275, 300])
+        self.assertListEqual(mygm.rh, [2200]*3)
+
+    def test_write_to_txt(self):
+        tk = [2, 4, 0]
+        vp = [100, 200, 300]
+        vs = [50, 100, 200]
+        rh = [2000]*3
+        obj = swipp.GroundModel(tk, vp, vs, rh)
+        fname = "test_to_geopsy_txt.txt"
+        obj.write_to_txt(fname)
+        obj2 = swipp.GroundModel.from_geopsy(fname)
+        self.assertEqual(obj, obj2)
+        os.remove(fname)
+
+    def test_write_model(self):
+        tk = [2, 4, 0]
+        vp = [100, 200, 300]
+        vs = [50, 100, 200]
+        rh = [2000]*3
+        obj = swipp.GroundModel(tk, vp, vs, rh)
+        fname = "test_to_geopsy_txt.txt"
+        with open(fname, "w") as f:
+            obj.write_model(f)
+        obj2 = swipp.GroundModel.from_geopsy(fname)
+        self.assertEqual(obj, obj2)
+        os.remove(fname)
+
+    def test_simplify(self):
+        tk = [1, 3, 1, 5, 0]
+        vp = [200, 200, 500, 500, 600]
+        vs = [100, 100, 100, 300, 300]
+        rh = [2000]*5
+
+        mygm = swipp.GroundModel(tk, vp, vs, rh)
+        simp_tk, simp_vp = mygm.simplify(param='vp')
+        self.assertListEqual(simp_tk, [4, 6, 0])
+        self.assertListEqual(simp_vp, [200, 500, 600])
+
+        simp_tk, simp_vs = mygm.simplify(param='vs')
+        self.assertListEqual(simp_tk, [5, 0])
+        self.assertListEqual(simp_vs, [100, 300])
+
+        simp_tk, simp_rh = mygm.simplify(param='rh')
+        self.assertListEqual(simp_tk, [0])
+        self.assertListEqual(simp_rh, [2000])
+
+    def test_from_simple_profiles(self):
+        vp_tk = [0]
+        vp = [500]
+        vs_tk = [0]
+        vs = [200]
+        rh_tk = [0]
+        rh = [2000]
+        mygm = swipp.GroundModel.from_simple_profiles(
+            vp_tk, vp, vs_tk, vs, rh_tk, rh)
+        self.assertListEqual(mygm.tk, [0])
+        self.assertListEqual(mygm.vp, [500])
+        self.assertListEqual(mygm.vs, [200])
+        self.assertListEqual(mygm.rh, [2000])
+
+        vp_tk = [4, 6, 0]
+        vp = [200, 500, 600]
+        vs_tk = [5, 0]
+        vs = [100, 200]
+        rh_tk = [0]
+        rh = [2000]
+        mygm = swipp.GroundModel.from_simple_profiles(
+            vp_tk, vp, vs_tk, vs, rh_tk, rh)
+        self.assertListEqual(mygm.tk, [4, 1, 5, 0])
+        self.assertListEqual(mygm.vp, [200, 500, 500, 600])
+        self.assertListEqual(mygm.vs, [100, 100, 200, 200])
+        self.assertListEqual(mygm.rh, [2000]*4)
+
+        vp_tk = [4, 6, 0]
+        vp = [200, 500, 600]
+        vs_tk = [3, 2, 0]
+        vs = [100, 200, 300]
+        rh_tk = [0]
+        rh = [2000]
+        mygm = swipp.GroundModel.from_simple_profiles(
+            vp_tk, vp, vs_tk, vs, rh_tk, rh)
+        self.assertListEqual(mygm.tk, [3, 1, 1, 5, 0])
+        self.assertListEqual(mygm.vp, [200, 200, 500, 500, 600])
+        self.assertListEqual(mygm.vs, [100, 200, 200, 300, 300])
+        self.assertListEqual(mygm.rh, [2000]*5)
+
+        vp_tk = [2, 4, 7, 1, 2, 0]
+        vp = [100, 200, 300, 400, 500, 600]
+        vs_tk = [1, 3, 5, 7, 2, 4, 6, 0]
+        vs = [50, 75, 85, 100, 200, 300, 100, 200]
+        rh_tk = [0]
+        rh = [2000]
+        mygm = swipp.GroundModel.from_simple_profiles(
+            vp_tk, vp, vs_tk, vs, rh_tk, rh)
+        self.assertListEqual(mygm.tk, [1, 1, 2, 2, 3, 4, 1, 2, 2, 4, 6, 0])
+        self.assertListEqual(
+            mygm.vp, [100, 100, 200, 200, 300, 300, 400, 500, 600, 600, 600, 600])
+        self.assertListEqual(
+            mygm.vs, [50, 75, 75, 85, 85, 100, 100, 100, 200, 300, 100, 200])
+        self.assertListEqual(mygm.rh, [2000]*12)
+
+        vp_tk = [1, 1, 1, 1, 2, 0]
+        vp = [1500, 1501, 1502, 1503, 1504, 1505]
+        vs_tk = [1, 1, 1, 1, 1, 0]
+        vs = [100, 101, 102, 103, 104, 105]
+        rh_tk = [0]
+        rh = [2000]
+        mygm = swipp.GroundModel.from_simple_profiles(
+            vp_tk, vp, vs_tk, vs, rh_tk, rh)
+        self.assertListEqual(mygm.tk, [1, 1, 1, 1, 1, 1, 0])
+        self.assertListEqual(
+            mygm.vp, [1500, 1501, 1502, 1503, 1504, 1504, 1505])
+        self.assertListEqual(mygm.vs, [100, 101, 102, 103, 104, 105, 105])
+        self.assertListEqual(mygm.rh, [2000]*7)
+
+        vp_tk = [1, 1, 1, 1, 1, 0]
+        vp = [1500, 1501, 1502, 1503, 1504, 1505]
+        vs_tk = [1, 1, 1, 1, 2, 0]
+        vs = [100, 101, 102, 103, 104, 105]
+        rh_tk = [0]
+        rh = [2000]
+        mygm = swipp.GroundModel.from_simple_profiles(
+            vp_tk, vp, vs_tk, vs, rh_tk, rh)
+        self.assertListEqual(mygm.tk, [1, 1, 1, 1, 1, 1, 0])
+        self.assertListEqual(
+            mygm.vp, [1500, 1501, 1502, 1503, 1504, 1505, 1505])
+        self.assertListEqual(mygm.vs, [100, 101, 102, 103, 104, 104, 105])
+        self.assertListEqual(mygm.rh, [2000]*7)
+
+
+class TestFromSimple(unittest.TestCase):
+    @settings(deadline=None)
+    @given(st.lists(st.integers(min_value=1, max_value=999), min_size=1,),
+           st.lists(st.integers(min_value=1500, max_value=6000),
+                    min_size=1, unique=True),
+           st.lists(st.integers(min_value=1, max_value=999), min_size=1),
+           st.lists(st.integers(min_value=100, max_value=700),
+                    min_size=1, unique=True),
+           st.lists(st.integers(min_value=1, max_value=999), min_size=1),
+           st.lists(st.integers(min_value=2000, max_value=3000), min_size=1, unique=True))
+    def test_from_simple(self, vp_tk, vp, vs_tk, vs, rh_tk, rh):
+        vp_len = min(len(vp_tk), len(vp))
+        vp_tk = vp_tk[:vp_len][:-1]
+        vp = vp[:vp_len]
+
+        vs_len = min(len(vs_tk), len(vs))
+        vs_tk = vs_tk[:vs_len][:-1]
+        vs = vs[:vs_len]
+
+        rh_len = min(len(rh_tk), len(rh))
+        rh_tk = rh_tk[:rh_len][:-1]
+        rh = rh[:rh_len]
+
+        mygm = swipp.GroundModel.from_simple_profiles(
+            vp_tk+[0], vp, vs_tk+[0], vs, rh_tk+[0], rh)
+        self.assertEqual(mygm.simplify(param='vp'), (vp_tk+[0], vp))
+        self.assertEqual(mygm.simplify(param='vs'), (vs_tk+[0], vs))
+        self.assertEqual(mygm.simplify(param='rh'), (rh_tk+[0], rh))
+
+
+if __name__ == '__main__':
+    unittest.main()

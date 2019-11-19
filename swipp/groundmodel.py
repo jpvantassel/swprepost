@@ -113,6 +113,38 @@ class GroundModel():
                     f"Poison's Raio cannot be negative. Vp/Vs={vp}/{vs} too close to unity.")
         return pr
 
+    @classmethod
+    def from_simple_profiles(cls, vp_tk, vp, vs_tk, vs, rh_tk, rh):
+        """Create groundmodel object from simple profiles"""
+        depths = list(dict.fromkeys(cls.thick_to_depth(vp_tk)[1:] +
+                                    cls.thick_to_depth(vs_tk)[1:] +
+                                    cls.thick_to_depth(rh_tk)[1:]
+                                    ))
+        depths.sort()
+        depths.append(0)
+        if depths == [0]:
+            new_tk = [0]
+        else:
+            new_tk = cls.depth_to_thick(depths)
+
+            
+        def define_par(depths, new_par, tk, par):
+            cnt = 0
+            for cdepth in depths:
+                if tk[cnt] == 0:
+                    new_par += [par[cnt]]*(len(depths)-len(new_par))
+                    break
+                new_par.append(par[cnt])
+                if cdepth >= sum(tk[:cnt+1]):
+                    cnt += 1
+                    
+        new_vp, new_vs, new_rh = [], [], []
+        define_par(depths, new_vp, vp_tk, vp)
+        define_par(depths, new_vs, vs_tk, vs)
+        define_par(depths, new_rh, rh_tk, rh)
+        return cls(new_tk, new_vp, new_vs, new_rh)
+
+
     @property
     def depth(self):
         """Return stair-step version of depth profile."""
@@ -244,6 +276,31 @@ class GroundModel():
             if cdepth > dmax:
                 break
         return (ddepth, dpar)
+
+    def simplify(self, param='vs'):
+        """Remove unecessary breaks due to those parameters other than
+        that specificed. This will typically be used for calculating the
+        median across many profiles."""
+        if param == 'vs':
+            par = self.vs
+        elif param == 'vp':
+            par = self.vp
+        elif param == 'rh':
+            par = self.rh
+        else:
+            raise NotImplementedError(f"param={param} is unkown.")
+        tk = []
+        spar = [par[0]]
+        sum_ctk = self.tk[0]
+        for cpar, ctk in zip(par[1:], self.tk[1:]):
+            if cpar == spar[-1]:
+                sum_ctk += ctk
+            else:
+                tk.append(sum_ctk)
+                spar.append(cpar)
+                sum_ctk = ctk
+        tk.append(0)
+        return (tk, spar)
 
     def vs30(self):
         """Return Vs30 (i.e., time-averaged shear-wave velocity in the

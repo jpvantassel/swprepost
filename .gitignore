@@ -1,9 +1,8 @@
 # Folders
 __pycache__
 .ipynb_checkpoints
+.tox
 doc
-test
-data
 
 # File Types
 *.target
