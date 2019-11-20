@@ -1,127 +1,257 @@
-"""
-This file includes a class for handling targets for surface wave
-inversion. In particluar the surface-wave dispersion curves and
-the ellipticity peak.
-"""
+"""This file includes a class for handling targets for surface wave
+inversion."""
 
 import tarfile as tar
 import os
 import numpy as np
 import scipy.interpolate as sp
+import warnings
+import logging
+logging.Logger(name=__name__)
 
 
 class Target:
-    """Class containing various functions for manipulating target
-    information.
+    """Class for manipulating inversion target information.
 
-    Target class is to be used for loading, manipuatling, and writting
-    target information. In particular, target class in the form of
-    surface wave dispersion can be loaded form a csv file, manipulated
-    using various methods provided, and written to a .target format
-    accepted by the Dinver module of the open-source software Geopsy.
-    This class also allows for an ellipticity peak with uncertainty to
-    supplement the experimental disperison data previously mentioned.
+    `Target` is a class for loading, manipulating, and writting
+    target information in preparation for surface-wave inversion. The
+    class contains a number of methods for instantiating a `Target`
+    object, such as:
+
+    From List : 
+    >> SOME EXAMPLE
+
+    From csv file : 
+    >> SOME OTHER EXAMPLE
+
+    Manipualting the `Target` such as:
+
+    Resampling : 
+    >> SOME RESAMPLING EXAMPLE
+
+    SETTING MINIMUM ERROR : 
+    >> SOME MINCOV EXAMPLE
+
+    Writting the `Target` to a file:
+
+    DINVER Style:
+    >> BLAH
+
+    Standard Text File:
+    >> BLAH BLAH .txt
 
     Attributes:
-      This class contains no public attributes.
+        freq : ndarray
+            Vector of frequency values in the experimental dispersion
+            curve (one per point).
+        vel : ndarray
+            Vector of velocity values in the experimental dispersion
+            curve (one per point).
+        velstd : ndarray
+            Vector of standard deviation values in the experimental
+            dispersion curve (one per point).
     """
 
-    def __init__(self, filename, headerlines=1):
+    @staticmethod
+    def check_inputs(names, values):
+        """Check input values type and value.
+
+        Specifically:
+            1. All values are 1D `ndarray`s or convertable to 1D
+            `ndarray`s.
+            2. If value is not convertable to `ndarray` check if `float`
+            , `int`, or `None`. As these are valid options for `velstd`.
+            3. If necessary convert to `ndarray`.
+        """
+
+        for cnt, (name, value) in enumerate(zip(names, values)):
+
+            # Set valid types.
+            if name == "velstd":
+                valid_type = [type(None), float, list, tuple, np.ndarray]
+            else:
+                valid_type = [list, tuple, np.ndarray]
+
+            # Check types.
+            if type(value) not in valid_type:
+                msg = f"{name} is of an invalid type {type(value)}."
+                raise TypeError(msg)
+
+            # Convert types if necessary.
+            if type(value) == int:
+                values[cnt] = float(value)
+            elif type(value) in [list, tuple]:
+                value = np.array(value)
+                values[cnt] = value
+                # Check if arrays are 1D
+                if len(value.shape) > 1:
+                    f"{name} must be 1D, not {len(value.shape)}D."
+                    raise TypeError(msg)
+
+            # Check value.
+            if type(value) == float:
+                if value < 0:
+                    msg = f"cov must be greater than zero."
+                    raise ValueError(msg)
+
+        return values
+
+    def _sort_data(self):
+        """Sort Target attributes from smallest to largest."""
+        if (self.velocity.size != self.frequency.size) and (self.velocity.size != self.velstd.size):
+            msg = "`frequency`, `velocity`, and `velstd` (if provided) must have the same size."
+            raise ValueError(msg)
+
+        sort_ids = np.argsort(self.frequency)
+        self.velstd = self.velstd[sort_ids]
+        self.velocity = self.velocity[sort_ids]
+        self.frequency = self.frequency[sort_ids]
+
+    def __init__(self, frequency, velocity, velstd=0.05):
+        """Instantiate a Target object.
+
+        Create a Target object from `ndarrays` of `frequency`,
+        `velocity`, and optionally velocity standard deviation 
+        (`velstd`).
+
+        Args:
+            frequency : ndarray
+                frequency values (one per point) in the experimental
+                dispersion curve.
+            velocity : ndarray
+                velocity values (one per point) in the experimental
+                dispersion curve.
+            velstd : None, float, ndarray, optional
+                velocity standard deviation in the experimental
+                dispersion curve. 
+                If `None`, no standard deviation is defined. 
+                If `float`, a constant coefficient of variation (COV) is
+                applied, the default is 0.05.
+                If `ndarray`, standard deviation is defined point by
+                point.
+
+        Returns:
+            Instantiated `Target` object.
+
+        Raises:
+            TypeError:
+                If `frequency`, `velocity`, and `velstd` are not
+                convertable to ndarrays.
+            ValueError:
+                If `velstd` is provided in the form of COV and the value
+                is less than zero.
+        """
+        # Check inputs.
+        names = ["frequency", "velocity", "velstd"]
+        values = [frequency, velocity, velstd]
+        checked_inputs = self.check_inputs(names, values)
+        self.frequency, self.velocity, self.velstd = checked_inputs
+
+        # Convert velstd input to vector, if necessary.
+        if type(self.velstd) == type(None):
+            self.velstd = np.zeros(self.frequency.shape)
+        elif type(self.velstd) == float:
+            self.velstd = self.velocity*self.velstd
+
+        # Sort dispersion data by frequency, smallest to largest.
+        self._sort_data()
+
+        # Set dipsersion data weight
+        self.dc_weight = 1
+
+    @classmethod
+    def from_csv(cls, fname, commentcharachter="#"):
         """Construct instance of Target class from csv file.
 
         Read a comma seperated file (csv) with header line(s) to
         construct a target object.
 
         Args:
-          filename: Name or path to file containig surface-wave
-            disperion. The file should have columns for frequency in
-            hertz and velocity in m/s. Velocity standard devaiton in m/s
-            may also be provided. Each value should be listed in the
-            order presented previously. For example a valid input file
-            may be:
+            filename : str
+                Name or path to file containing surface-wave dispersion.
 
-                frequency (Hz), velocity (m/s), velstd (m/s)
-                10, 100, 5
-                5, 120, 6
-                1, 150, 7
+                The file should have at a minimum a column for frequency
+                in Hz and velocity in m/s. Velocity standard devaiton in
+                m/s may also be provided.
 
-          headerlines: Number of lines that should be ignored at the
-            The head of the provided csv file. By default = 1.
+                Example :
+                >>> with open("example.csv", "w") as f:
+                ...     f.write("# frequency (Hz), velocity (m/s), velstd (m/s)\n")
+                ...     f.write("10, 100, 5\n")
+                ...     f.write("5, 120, 6\n")
+                ...     f.write("1, 150, 7\n")
+                TODO (jpv): Finish example
+
+            commentcharachter : str, optional
+                Charachter at the beginning of a line denoting a comment
+                , default value is '#'.
 
         Returns:
             An initialized instance of the Target class.
 
         Raises:
-            ValueError: If the format of the provided input file does not
-                match the required format detailed above.
+            ValueError: 
+                If the format of the input file does not match that
+                detailed above.
         """
-        with open(filename, "r") as f:
-            rows = f.read().splitlines(False)
-        freq = []
-        vel = []
-        velstd = []
-        for row in rows[headerlines:]:
-            # If three entries -> vel_std is provided extract all three
-            if row.count(",") == 2:
-                a, b, c = row.split(",")
-            # If two entries provided -> assume freq and vel, vel_std=0
-            elif row.count(",") == 1:
-                a, b = row.split(",")
+        with open(fname, "r") as f:
+            lines = f.read().splitlines()
+
+        frequency, velocity, velstd = [], [], []
+        for line in lines:
+            # Skip commented lines
+            if line[0] == commentcharachter:
+                continue
+            # If three entries -> velstd is provided extract all three
+            elif line.count(",") == 2:
+                a, b, c = line.split(",")
+            # If two entries provided -> assume freq and vel, velstd=0
+            elif line.count(",") == 1:
+                a, b = line.split(",")
                 c = 0
             else:
-                raise ValueError("Format of input file not recognized.")
-            freq += [float(a)]
-            vel += [float(b)]
-            velstd += [float(c)]
-
-        self.__frequency = []
-        self.__velocity = []
-        self.__velstd = []
-        self.__wavelength = []
-        for f, v, std in sorted(zip(freq, vel, velstd), key=lambda x: x[0]):
-            self.__frequency += [f]
-            self.__velocity += [v]
-            self.__velstd += [std]
-            self.__wavelength += [v/f]
-        self.__dc_weight = 1
-        self.__pseu_d1 = None
-        self.__pseu_v1 = None
-        self.__ell_def = False
-        self.__ell_mean = 0
-        self.__ell_std = 0
-        self.__ell_weight = 1
-
-    @classmethod
-    def from_file(cls, fname, headerlines=1):
-        # TODO (jpv): Move constructor to from_file and clean up constructor.
-        pass
+                msg = "Format of input file not recognized. Refer to documentation."
+                raise ValueError(msg)
+            frequency.append(float(a))
+            velocity.append(float(b))
+            velstd.append(float(c))
+        return cls(frequency, velocity, velstd)
 
     def setcov(self, cov):
-        """Set coefficient of variation (COV) to a constant value for
-        targets.
+        """Set coefficient of variation (COV) to a constant value.
 
         This method may be used if no velocity standard deviation was
-        measured or provided. A COV between 0.05 and 0.15 should provide
-        reasonable estimates of the uncertainty in most test cases.
+        measured or provided. In general, a COV between 0.05 and 0.15
+        should provide a reasonable estimate of the uncertainty.
 
         If velocity standard deviations have already been provided this
-        method will overwrite them. If this is not desired see the
-        setmincov method.
+        method will overwrite them. If this is not desired refer to
+        :meth: `setmincov`.
 
         Args:
-          cov: Coefficient of variation to apply to the experimental
-            data.
+            cov : float
+                Coefficient of variation to be used to replace `velstd`.
 
         Returns:
-          This method returns no value.
+            `None`, updates attribute `velstd`.
 
         Raises:
-          This method raises no errors.
+            ValueError:
+                If `cov` < 0.
         """
-        rid = 0
-        for vel in self.__velocity:
-            self.__velstd[rid] = vel*cov
-            rid += 1
+        if cov < 0:
+            raise ValueError("`cov` must be greater than zero.")
+        self.velstd = self.velocity*cov
+
+    @property
+    def cov(self):
+        """Returns the coefficent of variation (COV) of each data point."""
+        return self.velstd/self.velocity
+
+    @property
+    def slowness(self):
+        """Returns the mean slowness of each data point."""
+        return 1/self.velocity
 
     def setmincov(self, cov):
         """Set minimum coefficient of variation (COV) for targets.
@@ -131,288 +261,241 @@ class Target:
         points with uncertainty below this threshold will be modified
         and those above this threshold will be left alone.
 
-        If no measure of uncertainty has been provided, use the setcov
-        method.
+        If no measure of uncertainty has been provided, use :meth: 
+        `setcov`.
 
         Args:
-          cov: Minimum threshold cov for which all covs currently below
-            which will be updated to.
+            cov : float
+                Minimum allowable COV.
 
         Returns:
-          This methods returns no value.
+            `None`, may update attribute `velstd`.
 
         Raises:
-          This method raises no exceptions.
+            ValueError:
+                If `cov` < 0.
         """
-        rid = 0
-        for vel in self.__velocity:
-            if self.__velstd[rid] < vel*cov:
-                self.__velstd[rid] = vel*cov
-            rid += 1
+        if cov < 0:
+            raise ValueError("`cov` must be greater than zero.")
 
-    @property
-    def freq(self):
-        """Returns the frequency of each data point as a list."""
-        return self.__frequency
-
-    @property
-    def vel(self):
-        """Returns the velocity of each data point as a list."""
-        return self.__velocity
-
-    @property
-    def velstd(self):
-        """Returns the velocity standard deviation of each data point as
-         a list."""
-        return self.__velstd
+        current_cov = self.cov
+        update_ids = np.where(current_cov < cov)
+        self.velstd[update_ids] = self.velocity[update_ids]*cov
 
     @property
     def wavelength(self):
-        """Returns the wavelength of each data point as a list."""
-        return self.__wavelength
+        """Returns the mean wavelength assoicated with each data point."""
+        return self.velocity/self.frequency
 
     def is_no_velstd(self):
-        """Returns a boolean, indicating whether every data point has a
-        non-zero velocity standard deviation."""
-        return any(std == 0 for std in self.__velstd)
+        """Indicates `True` if every point has zero `velstd`."""
+        return all(std == 0 for std in self.velstd)
 
-    def pseudo(self, depth_factor=2.5, velocity_factor=1.1):
-        """Returns an estimate of shear wave velocity (Vs) and depth
-        based on the provided experimental dispersion data.
+    def pseudo_depth(self, depth_factor=2.5):
+        """Estimates depth based on the experimental dispersion data.
 
-        The estimate of Vs (i.e., pseudo-Vs) and depth (i.e.,
-        pseudo-depth) are based on the experimental data and the two
-        method arguements.The plot of pseudo-Vs vs pseudo-depth is
-        beneficial for selecting approprate boundaries for parameter
-        limits in the inverison stage.
+        This method, along with :meth: `pseudo-vs`, may be useful to
+        create plots of pseudo-Vs vs pseudo-depth for selecting
+        approprate boundaries for parameter limits in the inverison
+        stage.
 
         Args:
-            depth_factor: Factor by which the wavelegnth is divided to
-                produce an estimate of depth. Typical between 2 and 3.
-
-            velocity_factor: Factor by which the rayleigh wave velocity
-                is multiplied to produce an estimate of the shear-wave
-                velocity. Typically between 1 and 1.2, depends on
-                expected Poisson"s ratio.
+            depth_factor : float
+                Factor by which the mean wavelegnth is divided to
+                produce an estimate of depth. Typical between 2 and 3,
+                default 2.5.
 
         Returns:
-            This methods returns the tuple (pseudo-velocity,
-                pseudo-depth) where both quantities are lists of their
-                values, one per data point.
-
-        Raises:
-            This method raises no exceptions.
+            `ndarray` of pseudo-depth.
         """
-        tmp_v1 = []
-        tmp_d1 = []
-        for wave, vel in zip(self.__wavelength, self.__velocity):
-            tmp_d1.append(wave/depth_factor)
-            tmp_v1.append(vel*velocity_factor)
-        return (tmp_v1, tmp_d1)
+        if (depth_factor > 3) | (depth_factor < 2):
+            msg = "`depth_factor` is outside the typical range. See documenation."
+            warnings.warn(msg)
+        return self.wavelength/depth_factor
 
-    def cut(self, cut_range, domain="frequency"):
-        """Remove data points outside of the specified frequency or
-        wavelength range.
+    def pseudo_vs(self, velocity_factor=1.1):
+        """Estimates depth based on the experimental dispersion data.
+
+        This method, along with :meth: `pseudo-depth`, may be useful to
+        create plots of pseudo-Vs vs pseudo-depth for selecting
+        approprate boundaries for parameter limits in the inverison
+        stage.
 
         Args:
-            cut_range: Tuple of the form (min, max) where min and max
-                are the desired minimum and maximum value.
-
-            domain: String to denote the desired domain, either
-                frequency or wavelength.
+            velocity_factor : float
+                Factor by which the mean Rayleigh wave velocity is
+                multiplied to produce an estimate of shear-wave 
+                velocity. Typically between 1 and 1.2, and is dependent
+                upon the expected Poisson's ratio, default is 1.1. 
 
         Returns:
-            Returns None, instead updates the objects state.
-
-        Raises:
-            This method raises no exceptions.
+            `ndarray` of pseudo-depth.
         """
-        min_cut = min(cut_range)
-        max_cut = max(cut_range)
+        if (velocity_factor > 1.2) | (velocity_factor < 1):
+            msg = "`velocity_factor` is outside the typical range. See documenation."
+            warnings.warn(msg)
+        return self.velocity*velocity_factor
 
-        frq = np.array(self.__frequency)
-        wav = np.array(self.__wavelength)
+    def cut(self, pmin, pmax, domain="frequency"):
+        """Remove data outside of the specified range.
 
+        Args:
+            pmin, pmax : float
+                New minimum and maximum parameter value in the specified
+                domain, respectively.
+
+            domain : {'frequency', 'wavelength'}, optional
+                Domain along which to perform the cut.
+
+        Returns:
+            `None`, may update attributes `frequency`, `velocity`, and 
+            `velstd`.
+        """
         if domain == "wavelength":
-            ids = np.where((wav >= min_cut) & (wav <= max_cut))
+            x = self.wavelength
+        elif domain == "frequency":
+            x = self.frequency
         else:
-            ids = np.where((frq >= min_cut) & (frq <= max_cut))
+            raise NotImplementedError(f"domain={domain}, not recognized.")
 
-        self.__frequency = frq[ids].tolist()
-        self.__velocity = np.array(self.__velocity)[ids].tolist()
-        self.__velstd = np.array(self.__velstd)[ids].tolist()
-        self.__wavelength = wav[ids].tolist()
+        keep_ids = np.where((x >= pmin) & (x <= pmax))
+        self.frequency = self.frequency[keep_ids]
+        self.velocity = self.velocity[keep_ids]
+        self.velstd = self.velstd[keep_ids]
 
-    def resample(self, res_range, res_type="log", res_by="wavelength", inplace=False):
-        """Resample dispersion curve over a specific range using various
-        methods.
+    def resample(self, pmin, pmax, pn, res_type="log", domain="wavelength", inplace=False):
+        """Resample dispersion curve.
 
-        Resample dispersion curve over a specified range (res_range) and
-        using various methods includeing log or linear sampling in the 
-        frequency or wavelength space.
+        Resample dispersion curve over a specific range, using log or
+        linear sampling in the frequency or wavelength domain.
 
         Args:
-            res_range: Tuple which specify mininum value, maximum value,
-                and number of samples. (min, max, nsamples).
+            pmin, pmax : float
+                Minimum and maximum parameter value in the resampled
+                dispersion data.
 
-            res_type: String specifying either logarithmic ("log") or 
-                linear ("linear") sampling.
+            pn : int
+                Number of points in the resampled dispersion data.
 
-            res_by: String specifying sampling in either the wavelength
-                ("wavelength") or frequency ("frequency") domain.
+            res_type : {'log', 'linear'}, optional
+                Resample using either logarithmic or linear sampling,
+                default is logarithmic.
 
-            inplace: Boolean indicating whether or not the resampling 
-                should be done in place or if a copy should be returned.
-                    If True: edits internal variable.
+            domain : {'frequency', 'wavelength'}, optional
+                Domain along which to perform the resampling.
 
-                    If False: leaves the internal variables unchanged 
-                        and returns a tuple, see Returns for details.
+            inplace : bool
+                Indicating whether the resampling should be done in 
+                place or if a new Target object should be returned.
 
         Returns:
-            If inplace=True, no value is returned.
+            If `inplace=True`:
+                `None`, may update attributes `frequency`, `velocity`,
+                and `velstd`.
 
-            If inplace=False, a tuple of the form (frequency, velocity,
-                vel_std, wavelength) where each parameter is a list.
+            If `inplace=False`:
+                A new instantiated `Target` object is returned.
 
         Raises:
-            TypeError: If res_range is not of the format specified
-                above.
-
-            NotImplementedError: If res_type and/or res_by is not 
-                amoung those options mentioned previously.
+            NotImplementedError: 
+                If `res_type` and/or `domain` are not amoung the options
+                specified.
         """
-        if type(res_range) not in (tuple, list):
-            raise TypeError("range must be a list or tuple of length 3.")
-        if len(res_range) != 3:
-            raise TypeError("range must be a list or tuple of length 3.")
-        if res_range[1] < res_range[0]:
-            res_range = (res_range[1], res_range[0], res_range[2])
-        if type(res_range[2]) not in (int,):
-            raise TypeError("nsamples must be postive integer")
-        if res_range[2] <= 0:
-            raise TypeError("nsamples must be postive integer")
-        types = {"log": "log", "linear": "linear"}
-        options = {"wavelength": "wavelength", "frequency": "frequency"}
+        # Check input.
+        if pmax < pmin:
+            pmin, pmax = (pmax, pmin)
+        if type(pn) != int:
+            raise TypeError(f"`pn` must be an `int`, not {type(pn)}")
+        if pn <= 0:
+            raise ValueError(f"`pn` must be greater than zero.")
 
-        if types[res_type] == types["log"]:
-            xx = np.logspace(np.log10(res_range[0]),
-                             np.log10(res_range[1]),
-                             res_range[2])
-        elif types[res_type] == types["linear"]:
-            xx = np.linspace(res_range[0], res_range[1], res_range[2])
+        # Set location of resampled values.
+        if res_type == "log":
+            xx = np.logspace(np.log10(pmin), np.log10(pmax), pn)
+        elif res_type == "linear":
+            xx = np.linspace(pmin, pmax, pn)
         else:
-            raise NotImplementedError(
-                "This type of resampling has not been implemented.")
+            msg = f"`res_type`={res_type}, has not been implemented."
+            raise NotImplementedError(msg)
 
-        if options[res_by] == options["frequency"]:
-            x = np.array(self.__frequency)
-        elif options[res_by] == options["wavelength"]:
-            x = np.array(self.__wavelength)
+        # Set domain.
+        if domain == "frequency":
+            x = self.frequency
+        elif domain == "wavelength":
+            x = self.wavelength
         else:
-            raise NotImplementedError(
-                "Resampling by {} has not been implemented."
-                .format(res_by))
+            msg = f"`domain`={domain}, has not been implemented."
+            raise NotImplementedError(msg)
 
-        y = np.array(self.__velocity)
-        z = np.array(self.__velstd)/y   # COV
-        interp_vel = sp.interp1d(x, y, kind="cubic")
-        interp_cov = sp.interp1d(x, z, kind="cubic")
+        # Create interpolation functions.
+        interp_fxn_vel = sp.interp1d(x, self.velocity, kind="cubic")
+        interp_fxn_cov = sp.interp1d(x, self.cov, kind="cubic")
 
-        vel_np = interp_vel(xx)
-        velstd_np = interp_vel(xx)*interp_cov(xx)
-
-        if options[res_by] == options["frequency"]:
-            freq_np = xx
-            wave_np = vel_np/xx
-        elif options[res_by] == options["wavelength"]:
-            wave_np = xx
-            freq_np = vel_np/xx
+        # Perform interpolation
+        new_vel = interp_fxn_vel(xx)
+        new_velstd = new_vel * interp_fxn_cov(xx)
+        if domain == "frequency":
+            new_frq = xx
         else:
-            raise NotImplementedError(
-                "Resampling by {} has not been implemented."
-                .format(res_by))
+            new_wave = xx
+            new_frq = new_vel/new_wave
 
+        # Update attributes or return new object.
         if inplace:
-            self.__velocity = vel_np.tolist()
-            self.__frequency = freq_np.tolist()
-            self.__wavelength = wave_np.tolist()
-            self.__velstd = velstd_np.tolist()
+            self.frequency = new_frq
+            self.velocity = new_vel
+            self.velstd = new_velstd
         else:
-            return (freq_np.tolist(), vel_np.tolist(),
-                    velstd_np.tolist(), wave_np.tolist())
+            return Target(new_frq, new_vel, new_velstd)
 
+    @property
     def vr40(self):
-        """ Return the rayleigh wave velocity at a wavelength of 40m.
-
-        Returns a tuple of the information for a rayleigh wave at a 
-        wavelength of 40m, dispersion data encompasses a 40m wavelength
-        otherwise, returns none.
-
-        Args:
-            This method requires no arguments.
-
-        Returns:
-            This method returns a tuple of the form (frequency, 
-            wavelength, velstd, wavelength) at a wavelength of 40m.
-
-        Raises:
-            This method raises no exceptions.
-        """
-        if (max(self.__wavelength) > 40) & (min(self.__wavelength) < 40):
-            freq, vel, velstd, wave = self.resample((39, 41, 3),
-                                                    res_type="linear",
-                                                    res_by="wavelength",
-                                                    inplace=False)
-            return (freq[1], vel[1], velstd[1], wave[1])
+        """Estimate the Rayleigh wave velocity at a wavelength of 40m."""
+        wavelength = self.wavelength
+        if (max(wavelength) > 40) & (min(wavelength) < 40):
+            obj = self.resample(pmin=40, pmax=40, pn=1, res_type="linear",
+                                domain="wavelength", inplace=False)
+            return float(obj.velocity)
         else:
-            print("Minimum wavelength is larger than 40m and/or maximum")
-            print("wavelength is less than 40m. Will not extrapolate.")
+            warnings.warn("A wavelength of 40m is out of range")
             return None
 
-    def write_to_txt(self, fname):
-        """Write target to .txt file so that it can be loaded into
-        DINVER for further editing if necessary.
+    def to_txt(self, fname):
+        """Write `Target` to text format readily accepted by dinver's 
+        pre-processor.
 
         Args:
-            fname: Name of output text file without the .txt extensions.
-                A relative path or full path may also be provided.
+            fname : str
+                Name of output file, may a relative or full path. 
 
         Returns:
-            This method returns no value. But instead writes a file to 
-            disk.
-
-        Raises:
-            This method raises no exceptions.
+            `None`, writes a file to disk.
         """
-        if fname.endswith(".txt"):
-            fname = fname[-4:]
-        with open(fname+".txt", "w") as f:
-            for frq, vel, std in zip(self.freq, self.vel, self.velstd):
-                cov = std/vel
-                slo = 1/vel
+        with open(fname, "w") as f:
+            for frq, slo, cov in zip(self.frequency, self.slowness, self.cov):
                 f.write(f"{frq}\t{slo}\t{slo*cov}\n")
 
-    def write_to_file(self, fname="Tar1"):
-        """Write target information to .target file that can be read by
-        Dinver.
+    def to_target(self, fname):
+        """Write `Target` to `.target` file format that can be imported
+        into dinver.
 
         Args:
-            fname: Name of target file without the .target suffix. If
-                desired a relative path or full path may also be
-                provided.
+            fname : str
+                Name of target file without the .target suffix, a
+                relative or full path may be provided.
 
         Returns:
-            This method returns no value. But instead writes a file to 
-            disk.
-
-        Raises:
-            This method raises no exceptions.
+            `None`, writes a file to disk.
         """
-        slow, slowstd = [], []
-        for vel, velstd in zip(self.__velocity, self.__velstd):
-            slow.append(1/vel)
-            slowstd.append(slow[-1]*velstd/vel)
 
+        # TODO (jpv): Decide on how best to include ell.
+        self.__ell_weight = 0
+        self.__ell_def = False
+        self.__ell_mean = 0
+        self.__ell_std = 0
+
+        # TODO (jpv): Include optional kwarg for version of geopsy.
+        # TODO (jpv): Recode this writter to use json or xml libarary.
         contents = ["<Dinver>",
                     "  <pluginTag>DispersionCurve</pluginTag>",
                     "  <pluginTitle>Surface Wave Inversion</pluginTitle>"]
@@ -421,7 +504,7 @@ class Target:
                      "    <ModalCurveTarget type=\"dispersion\">",
                      "      <selected>true</selected>",
                      "      <misfitWeight>" +
-                     str(self.__dc_weight)+"</misfitWeight>",
+                     str(self.dc_weight)+"</misfitWeight>",
                      "      <minimumMisfit>0</minimumMisfit>",
                      "      <misfitType>L2_Normalized</misfitType>",
                      "      <ModalCurve>",
@@ -434,11 +517,11 @@ class Target:
                      "          <index>0</index>",
                      "        </Mode>"]
 
-        for freq, mean, stdev in zip(self.__frequency, slow, slowstd):
+        for freq, mean, stddev in zip(self.frequency, self.slowness, self.slowness*self.cov):
             contents += ["        <StatPoint>",
                          "          <x>"+str(freq)+"</x>",
                          "          <mean>"+str(mean)+"</mean>",
-                         "          <stddev>"+str(stdev)+"</stddev>",
+                         "          <stddev>"+str(stddev)+"</stddev>",
                          "          <weight>1</weight>",
                          "          <valid>true</valid>",
                          "        </StatPoint>"]

@@ -4,27 +4,29 @@ instances are derived.
 
 import copy
 
+
 class Curve():
 
     @classmethod
     def check_types(cls, x, y, name_x="velocity", name_y="frequency"):
         if (type(x) != list) or (type(y) != list):
-            raise TypeError(
-                f"'{name_x}' and '{name_y}' must be of type list, not {type(x)} and {type(y)}.")
+            msg = f"'{name_x}' and '{name_y}' must be of type list, not {type(x)} and {type(y)}."
+            raise TypeError(msg)
         if len(x) != len(y):
-            raise IndexError(
-                f"'{name_x}' and '{name_y}' must be of the same length, currently 'len(x)={len(x)}' and 'len(y)={len(y)}', respectively.")
+            msg = f"'{name_x}' and '{name_y}' must be of the same length, currently 'len(x)={len(x)}' and 'len(y)={len(y)}', respectively."
+            raise IndexError(msg)
+
         for val in x+y:
             if type(val) not in [int, float]:
-                raise TypeError(
-                    f"'{name_x}' and '{name_y}' must be lists of floats or ints, not {type(val)}.")
+                msg = f"'{name_x}' and '{name_y}' must be lists of floats or ints, not {type(val)}."
+                raise TypeError(msg)
 
     @classmethod
     def check_values(cls, x, y, name_x="frequency", name_y="velocity"):
         for val in x+y:
             if val <= 0:
-                raise ValueError(
-                    f"'{name_x}' and '{name_y}' must be >= 0, bad value={val}.")
+                msg = f"'{name_x}' and '{name_y}' must be >= 0, bad value={val}."
+                raise ValueError(msg)
 
     @classmethod
     def check_input(cls, x, y, name_x="frequency", name_y="velocity"):

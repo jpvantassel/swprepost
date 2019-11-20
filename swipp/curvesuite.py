@@ -1,6 +1,5 @@
 """This file contains an abstract class CurveSuite for handling suites 
-of instantiated CurveSet objects.
-"""
+of instantiated CurveSet objects."""
 
 import re
 import logging
@@ -13,7 +12,6 @@ class CurveSuite():
     Attributes:
 
     """
-
 
     def __init__(self, curveset, curve_type, identifier, misfit=None):
         pass

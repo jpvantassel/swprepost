@@ -46,14 +46,10 @@ class GroundModelSuite(Suite):
         DispersionSuite object.
 
         Args:
-            Same as __init__, refer to that documentaion.
+            Refer to :meth: `__init__` documentation.
 
         Returns:
-            This method returns no value, instead updates the state of 
-            the object upon which it was called.
-
-        Raises:
-            This method raises no exceptions.
+            `None`, updates the attributes `gms`, `ids`, and `misfits`.
         """
         self.check_input()
         self.gms.append(groundmodel)
@@ -118,7 +114,6 @@ class GroundModelSuite(Suite):
                             mod_num, misfit = re.findall(exp1, line)[0]
                             c_misfit = float(misfit)
                             thk, vps, vss, rho = [], [], [], []
-                            # c_nlay = re.findall(r"^\d+$", line)[0]
                         else:
                             cgm = GroundModel(thickness=thk,
                                               vp=vps,
@@ -128,8 +123,6 @@ class GroundModelSuite(Suite):
                             mod_num, misfit = re.findall(exp1, line)[0]
                             c_misfit = float(misfit)
                             thk, vps, vss, rho = [], [], [], []
-                # else:
-                #     contine
 
         cgm = GroundModel(thickness=thk, vp=vps, vs=vss, density=rho)
         if obj == None:
@@ -140,15 +133,14 @@ class GroundModelSuite(Suite):
         return obj
 
     def vs30(self, nbest=None):
-        """Return a list of Vs30 (one per GroundModel). See GroundModel
-        for details."""
+        """Return a list of Vs30 (one per GroundModel), refer to :meth: `vs30`."""
         if nbest == None:
             gms = self.gms
         else:
             gms = self.gms[:nbest]
         vs30 = []
         for gm in gms:
-            vs30.append(gm.vs30())
+            vs30.append(gm.vs30)
         return vs30
 
     def median_simple(self, nbest, param='vs'):

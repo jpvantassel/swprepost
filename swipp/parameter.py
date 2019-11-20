@@ -1,7 +1,5 @@
-"""
-This file includes a class for developing suites of parameterizations
-for use in the open-source software Dinver of the Geopsy suite.
-"""
+"""This file includes a class for developing parameterizations for use
+in the open-source software Dinver, part of the Geopsy suite."""
 
 import tarfile as tar
 import os
@@ -11,19 +9,15 @@ logging.Logger(name=__name__)
 
 
 class Parameter():
-    """Class containing various functions for developing inversion
-    parameterizations.
+    """Class for developing inversion parameterizations.
 
-    Parameter class is to be used for developing various simple
+    `Parameter` is intended to be used for developing various simple
     parameterization files for use in the open-source software Dinver.
-    This class allows the user to quickly initialize using various
-    parameterization techniques.
-
-    While parameterizations can be built quickly using this tool, it is
-    at a slightly sacrafice to specificity that the full user interface.
-    Therefore it is recommended that the user, make their
-    parameterization using this tool, then fine tune any necessary
-    details using the Dinver user interface.
+    While parameterizations can be built quickly using this tool, it
+    does have limited functionality to that of the full user interface.
+    And so it is recommended that the user, batch create general
+    parameterizations using this tool, then fine tune any necessary
+    using the Dinver user interface.
 
     Attributes:
         This class contains no public attributes.

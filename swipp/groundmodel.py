@@ -35,8 +35,8 @@ class GroundModel():
                 raise TypeError(f"All inputs must have the same length.")
             for val in value:
                 if (not isinstance(val, int)) and (not isinstance(val, float)):
-                    raise TypeError(
-                        f"{name} must be a list of int or float, not {type(val)}.")
+                    msg = f"{name} must be a list of int or float, not {type(val)}."
+                    raise TypeError(msg)
 
     @staticmethod
     def check_input_value(thickness, vp, vs, density):
@@ -48,8 +48,8 @@ class GroundModel():
                     raise TypeError(f"{name} must always be >= 0.")
         for tmp_vp, tmp_vs in zip(vp, vs):
             if tmp_vs > tmp_vp:
-                raise ValueError(
-                    f"vp must be greater than vs, {tmp_vp}!>{tmp_vs}.")
+                msg = f"vp must be greater than vs, {tmp_vp}!>{tmp_vs}."
+                raise ValueError(msg)
 
     def __init__(self, thickness, vp, vs, density):
         """Initialize a ground model object
@@ -109,8 +109,8 @@ class GroundModel():
             pr += [(2-(vp/vs)**2)/(2-2*(vp/vs)**2)]
             # Make sure pr>0
             if pr[-1] <= 0:
-                raise ValueError(
-                    f"Poison's Raio cannot be negative. Vp/Vs={vp}/{vs} too close to unity.")
+                msg = f"Poison's Raio cannot be negative. Vp/Vs={vp}/{vs} too close to unity."
+                raise ValueError(msg)
         return pr
 
     @classmethod
@@ -127,7 +127,6 @@ class GroundModel():
         else:
             new_tk = cls.depth_to_thick(depths)
 
-            
         def define_par(depths, new_par, tk, par):
             cnt = 0
             for cdepth in depths:
@@ -137,13 +136,12 @@ class GroundModel():
                 new_par.append(par[cnt])
                 if cdepth >= sum(tk[:cnt+1]):
                     cnt += 1
-                    
+
         new_vp, new_vs, new_rh = [], [], []
         define_par(depths, new_vp, vp_tk, vp)
         define_par(depths, new_vs, vs_tk, vs)
         define_par(depths, new_rh, rh_tk, rh)
         return cls(new_tk, new_vp, new_vs, new_rh)
-
 
     @property
     def depth(self):
@@ -302,18 +300,13 @@ class GroundModel():
         tk.append(0)
         return (tk, spar)
 
+    @property
     def vs30(self):
-        """Return Vs30 (i.e., time-averaged shear-wave velocity in the
-        upper 30m).
-
-        Args:
-            This method requires no arguements.
+        """Calcualte the time-averaged shear-wave velocity in the upper
+        30m (Vs30).
 
         Returns:
-            A float indicating Vs30.
-
-        Raises:
-            This method raises no exceptions.
+            Vs30 of ground model as float.
         """
         depth = 0
         travel_time = 0

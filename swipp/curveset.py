@@ -1,11 +1,9 @@
 """This file contains an abstract class CurveSet for handling sets of
-curves which share some common source.
-"""
+curves which share some common source."""
 
 
 class CurveSet():
-    """Abstract class that can be specialized to handle sets of Curve 
-    objects which all belong to a common source.
+    """Abstract class to handle sets of `Curve` objects.
 
     Attributes:
         rayleigh: Dictionary of the form:

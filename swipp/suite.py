@@ -1,22 +1,26 @@
-"""Abstract parent class for Suite objects."""
+"""This file includes an abstract parent class for `Suite` objects."""
 
-# import matplotlib.pyplot as plt
+import logging
+logging.Logger(name=__name__)
+
 
 class Suite():
 
     def __init__(self):
         pass
-            
+
     @classmethod
     def check_input(cls, curveset, set_type, identifier, misfit):
         """Check inputs comply with the required format."""
         if not isinstance(curveset, set_type):
-            raise TypeError(
-                f"'{identifier}' must be an instance of {type(set_type)}, not {type(curveset)}.")
+            msg = f"'{identifier}' must be an instance of {type(set_type)}, not {type(curveset)}."
+            raise TypeError(msg)
+
         if not isinstance(identifier, str):
-            raise TypeError(
-                f"'{identifier}' must be of type str, not {type(identifier)}.")
+            msg = f"'{identifier}' must be of type str, not {type(identifier)}."
+            raise TypeError(msg)
+
         if misfit != None:
             if type(misfit) not in [int, float]:
-                raise ValueError(
-                    f"'misfit' must be of type int or float, not {type(misfit)}.")
+                msg = f"'misfit' must be of type int or float, not {type(misfit)}."
+                raise ValueError(msg)
