@@ -16,4 +16,6 @@ from .groundmodel import *
 from .groundmodelsuite import *
 
 from .parameter import *
+from .parameterization import *
+
 from .target import *
