@@ -26,8 +26,8 @@ class Parameterization():
     @staticmethod
     def check_parameter(name, val):
         """Check input for the parameter."""
-        if type(val) != Parameter:
-            msg=f"{name} must be of type `Parameter`, not `{type(val)}`."
+        if not isinstance(val, Parameter):
+            msg = f"{name} must be an instance of `Parameter`, not `{type(val)}`."
             raise TypeError(msg)
 
         # logging.info(f"Checking {name}...")
@@ -75,7 +75,7 @@ class Parameterization():
             vp, pr, vs, rh : Parameter
                 Instantitated `Parameter` objects, see :meth: `Parameter
                 <swipp.Parameter.__init__>`.
-                
+
         Returns:
             An initialized Parameterization object.
 
@@ -134,14 +134,14 @@ class Parameterization():
                         Increasing thickness, which is similar to 'LN',
                         but with the requirement that the thickness of
                         each layer increases with depth.
-                    
+
                     Ex. ['LNI', ln, fac, min, max, reversal]
 
                     If type = 'LR' 
                         Layering follows the Layering Ratio, the next
                         arguement is the layering ratio followed by
                         min, max, and bool.
-                    
+
                     Ex. ['LR', lr, min, max, reversal]
 
                 Example:
@@ -171,7 +171,7 @@ class Parameterization():
                 If entered values do not comply with the instructions
                 listed above.
         """
-        
+
         input_arguements = {"vs": vs, "vp": vp, "pr": pr, "rh": rh}
         valid_options = ('FX', 'FTL', 'LN', 'LNI', 'LR')
         for key, value in input_arguements.items():
@@ -190,42 +190,51 @@ class Parameterization():
             elif value[0] == "FTL":
                 input_arguements[key] = Parameter.from_ftl(*value[1:])
             elif value[0] == "LN":
-                input_arguements[key] = Parameter.from_ln(*wv, *value[1:], False)
+                input_arguements[key] = Parameter.from_ln(*wv,
+                                                          *value[1:],
+                                                          factor, False)
             elif value[0] == "LNI":
-                input_arguements[key] = Parameter.from_ln(*wv, *value[2:], True, value[2])
+                input_arguements[key] = Parameter.from_ln(*wv,
+                                                          value[1], *value[3:],
+                                                          factor, True, value[2])
             elif value[0] == "LR":
-                input_arguements[key] = Parameter.from_ln(*wv, *value[1:5])
+                input_arguements[key] = Parameter.from_lr(*wv, *value[1:])
             else:
                 raise NotImplementedError
 
-    # TODO (jpv): Check this method
-    def write_to_file(self, fname, version='2.9.0'):
-        """Write paramterization to .param that can be read by DINVER.
+        return cls(input_arguements["vp"], input_arguements["pr"],
+                   input_arguements["vs"], input_arguements["rh"])
+
+    def to_file(self, fname, version='2.9.0'):
+        """Write paramterization file to disk that can be read by
+        Dinver.
 
         Args:
-            fname: String, such that the file is named "fname.param".
+            fname : str
+                File name, may be a relative or the full path. 
 
-            version: String, {'2.9.0', '2.10.1'}.
+            version : {'2.9.0', '2.10.1'}
+                Version of Geopsy suite, being used.
                 Note '2.9.0' is the version compiled on Stampede2.
 
         Returns:
-            This method returns no value, but writes .param file to disk.
+            `None`, writes .param file to disk.
 
         Raises:
-            KeyError: If version does not match that required exactly.
+            KeyError: 
+                If version does not match those specified exactly.
         """
-        avail_versions = {'2.9.0': '2.9.0', '2.10.1': '2.10.1'}
-        version = avail_versions[version]
+        available_versions = {'2.9.0': '2.9.0', '2.10.1': '2.10.1'}
+        version = available_versions[version]
 
         contents = ['<Dinver>',
                     '  <pluginTag>DispersionCurve</pluginTag>',
                     '  <pluginTitle>Surface Wave Inversion</pluginTitle>',
                     '  <ParamGroundModel>']
 
-        keys = ["Vp", "Nu", "Vs", "Rho"]
-        values = [self.vp, self.pr, self.vs, self.rh]
+        parameters = {"Vp":self.vp, "Nu":self.pr, "Vs":self.vs, "Rho":self.rh}
 
-        for key, value in zip(keys, values):
+        for key, value in parameters.items():
             if key == "Vp":
                 contents += ['    <ParamProfile>',
                              '      <type>Param</type>',
@@ -241,7 +250,7 @@ class Parameterization():
                              '      <longName>Poisson&apos;s Ratio</longName>',
                              '      <shortName>Nu</shortName>',
                              '      <unit></unit>',
-                             '      <defaultMinimum>0.2000000000000000111</defaultMinimum>',
+                             '      <defaultMinimum>0.2</defaultMinimum>',
                              '      <defaultMaximum>0.5</defaultMaximum>',
                              '      <defaultCondition>GreaterThan</defaultCondition>']
             elif key == "Vs":
@@ -263,18 +272,19 @@ class Parameterization():
                              '      <defaultMaximum>2000</defaultMaximum>',
                              '      <defaultCondition>LessThan</defaultCondition>']
             else:
-                raise NotImplementedError(
-                    "Selection {} not implemented".format(key))
+                raise NotImplementedError(f"Selection {key} not implemented")
 
-            if value.get("thickness"):
+            if value.par_type in ["FX", "FTL", "LN", "LNI", "CT" ]:
                 isdepth = "false"
-                dh = value["thickness"]
-            else:
-                dh = value["depth"]
+            elif value.par_type in ["LR", "CD"]:
                 isdepth = "true"
-            par = value["par"]
-            for lnum, (dhmin, dhmax, pmin, pmax, rev) in enumerate(zip(dh["min"], dh["max"], par["min"], par["max"], par["rev"])):
+            else:
+                msg = f"`par_type` {value.par_type} not recognized, refer to Parameter.__doc__."
+                raise NotImplementedError(msg)
+
+            for lnum, (dhmin, dhmax, pmin, pmax, rev) in enumerate(zip(value.lay_min, value.lay_max, value.par_min, value.par_max, value.par_rev)):
                 rev_check = 'true' if not rev else 'false'
+                rev_check = 'false' if len(value.lay_min)==1 else rev_check
                 contents += ['      <ParamLayer name="'+key+str(lnum)+'">',
                              '        <shape>Uniform</shape>',
                              '        <lastParamCondition>'+rev_check+'</lastParamCondition>',
@@ -291,10 +301,10 @@ class Parameterization():
         contents += ['    <ParamSpaceScript>',
                      '      <text>']
 
-        for key, value in zip(keys, values):
-            if value["type"] == "LNI":
-                factor = value["value"]
-                nlay = len(value["par"]["min"])
+        for key, value in parameters.items():
+            if value.par_type == "LNI":
+                nlay = value.par_value
+                factor = value.par_add_value
                 if nlay > 2:
                     for lay in range(nlay-2):
                         if ((lay == 0) & (version == '2.10.1')):
@@ -313,6 +323,6 @@ class Parameterization():
         with open("contents.xml", "w") as f:
             for row in contents:
                 f.write(row+"\n")
-        with tar.open(fname+".param", "w:gz") as f:
+        with tar.open(fname, "w:gz") as f:
             f.add("contents.xml")
         os.remove("contents.xml")

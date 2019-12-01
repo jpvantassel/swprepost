@@ -11,9 +11,10 @@ class Parameter():
     Attributes:
         par_type : {'FX', 'FTL', 'LN', 'LNI' 'LR', 'CT', 'CD'}
             String to denote how the layering was defined.
-        par_value : [int, float]
-            Numerical value to provide additonal context about the
-            type of layering selected. 
+        par_value,  par_add_value : [int, float]
+            Numerical values to provide context about the
+            type of layering selected. `par_add_value` only used for
+            three letter parameter types (i.e., 'FTL' and 'LNI').
         lay_min, lay_max : list
             Minimum and maximum thickness or depth of each layer,
             respectively.
@@ -25,7 +26,7 @@ class Parameter():
             value per layer.
     """
     @staticmethod
-    def _check_layers(lower_name, lower, upper_name, upper):
+    def check_layers(lower_name, lower, upper_name, upper):
         """Check layering input.
 
         Specifically:
@@ -47,7 +48,7 @@ class Parameter():
         return (lower, upper)
 
     @staticmethod
-    def _check_rev(par_rev):
+    def check_rev(par_rev):
         """Check reversal input.
 
         Specifically:
@@ -77,11 +78,12 @@ class Parameter():
         """
         self.par_type = par_type
         self.par_value = 0
-        self.lay_min, self.lay_max = self._check_layers("lay_min", lay_min,
-                                                        "lay_max", lay_max)
-        self.par_min, self.par_max = self._check_layers("par_min", par_min,
-                                                        "par_max", par_max)
-        self.par_rev = self._check_rev(par_rev)
+        self.par_add_value = 0
+        self.lay_min, self.lay_max = self.check_layers("lay_min", lay_min,
+                                                       "lay_max", lay_max)
+        self.par_min, self.par_max = self.check_layers("par_min", par_min,
+                                                       "par_max", par_max)
+        self.par_rev = self.check_rev(par_rev)
 
         if (len(self.lay_min) != len(self.par_min)) and (len(self.lay_min) != len(self.par_rev)):
             msg = "Length of all inputs must be consistent."
@@ -104,8 +106,8 @@ class Parameter():
         if value <= 0:
             raise ValueError("`value` must be postive.")
 
-        obj = cls(par_type="FX", lay_min=1824, lay_max=1883, par_min=value,
-                  par_max=value, par_rev=False)
+        obj = cls(par_type="FX", lay_min=[1824], lay_max=[1883],
+                  par_min=[value], par_max=[value], par_rev=[False])
         obj.par_value = value
         return obj
 
@@ -142,8 +144,10 @@ class Parameter():
             raise TypeError(msg)
         if depth_factor < 2:
             depth_factor = 2
-            logging.warning("`factor` must be >=2. Setting `factor` equal to 2.")
+            logging.warning(
+                "`factor` must be >=2. Setting `factor` equal to 2.")
         return depth_factor
+
     @staticmethod
     def min_max_rev(nlayers, par_min, par_max, par_rev):
         """Create list for par_min, par_max, par_rev."""
@@ -216,6 +220,7 @@ class Parameter():
 
         obj = cls("FTL", lay_min, lay_max, par_min, par_max, par_rev)
         obj.par_value = nlayers
+        obj.par_add_value = thickness
 
         return obj
 
@@ -305,13 +310,15 @@ class Parameter():
             if increasing_factor <= 1:
                 raise ValueError("`increasing_factor` must be greater than 1.")
 
-        lay_min, lay_max = cls.depth_ln(
-            wmin, wmax, nlayers, depth_factor, increasing)
+        lay_min, lay_max = cls.depth_ln(wmin, wmax, nlayers,
+                                        depth_factor, increasing)
         par_min, par_max, par_rev = cls.min_max_rev(nlayers,
                                                     par_min, par_max, par_rev)
         par_type = "LNI" if increasing else "LN"
         obj = cls(par_type, lay_min, lay_max, par_min, par_max, par_rev)
-        obj.par_value = nlayers+increasing_factor/10 if increasing else nlayers
+        obj.par_value = nlayers if increasing else nlayers
+        obj.par_add_value = increasing_factor if increasing else 0
+        
         return obj
 
     @staticmethod
@@ -376,7 +383,7 @@ class Parameter():
             layer_maxdepth[-1] = dmax
             # Add half-space starting at dmax
             layer_mindepth.append(dmax)
-            layer_maxdepth.append("half-space")
+            layer_maxdepth.append(dmax+1)  # Half-space
         # ---> Otherwise, extend the current last layer
         else:
             # Extend the deepest potential depth of the bottomost layer
@@ -384,7 +391,7 @@ class Parameter():
             layer_maxdepth[-2] = dmax
             # Set the old last layer to the half-space
             layer_mindepth[-1] = dmax
-            layer_maxdepth[-1] = "half-space"
+            layer_maxdepth[-1] = dmax+1  # Half-space
         return (layer_mindepth, layer_maxdepth)
 
     @classmethod
@@ -423,7 +430,6 @@ class Parameter():
         lay_min, lay_max = cls.depth_lr(wmin, wmax, lr, depth_factor)
         par_min, par_max, par_rev = cls.min_max_rev(len(lay_min),
                                                     par_min, par_max, par_rev)
-
         obj = cls("LR", lay_min, lay_max, par_min, par_max, par_rev)
         obj.par_value = lr
         return obj

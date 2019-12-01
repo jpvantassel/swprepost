@@ -3,9 +3,12 @@
 import swipp
 import unittest
 import os
+import tarfile as tar
 import logging
 logging.basicConfig(level=logging.DEBUG)
 
+file_name = __file__.split("/")[-1]
+full_path = __file__[:-len(file_name)]
 
 class TestParameterization(unittest.TestCase):
 
@@ -42,298 +45,120 @@ class TestParameterization(unittest.TestCase):
         test = swipp.Parameterization(vp, pr, vs, rh)
         self.assertTrue(test)
 
-# TODO (jpv): Finish tests.
-# def test_init_type(self):
-#     "Check input types, should be a list."
+    def test_from_min_max(self):
+        rh = ['FX', 2000]
+        vs = ['FTL', 5, 2, 100, 200, True]
+        pr = ['LN', 3, 0.2, 0.5, False]
+        vp = ['LNI', 2, 1.2, 200, 400, True]
+        wv = [1, 100]
 
-#     vs = ['LR', 3.0, 100, 200, True]
-#     vp = ['LN', 2, 200, 400, True]
-#     pr = ['LN', 3, 0.2, 0.5, False]
-#     rh = ['FX', 2000]
-#     wv = [1, 100]
+        param = swipp.Parameterization.from_min_max(vp, pr, vs, rh, wv)
+        # Fixed - FX
+        self.assertEqual(rh[0], param.rh.par_type)
+        self.assertEqual(rh[1], param.rh.par_value)
+        self.assertListEqual([rh[1]], param.rh.par_min)
 
-#     for vals in [1.2, "1.3", True, 1]:
-#         self.assertRaises(
-#             TypeError, swipp.Parameter.from_min_max, vals, vp, pr, rh, wv)
-#         self.assertRaises(
-#             TypeError, swipp.Parameter.from_min_max, vs, vals, pr, rh, wv)
-#         self.assertRaises(
-#             TypeError, swipp.Parameter.from_min_max, vs, vp, vals, rh, wv)
-#         self.assertRaises(
-#             TypeError, swipp.Parameter.from_min_max, vs, vp, pr, vals, wv)
+        # Fixed Thickness Layers - FTL
+        self.assertEqual(vs[0], param.vs.par_type)
+        self.assertEqual(vs[1], param.vs.par_value)
+        self.assertEqual(vs[2], param.vs.par_add_value)
+        self.assertListEqual([vs[2]]*vs[1], param.vs.lay_min)
+        self.assertListEqual([vs[2]]*vs[1], param.vs.lay_max)
+        self.assertListEqual([vs[3]]*vs[1], param.vs.par_min)
+        self.assertListEqual([vs[4]]*vs[1], param.vs.par_max)
+        self.assertListEqual([vs[5]]*vs[1], param.vs.par_rev)
 
-# def test_init_vals(self):
-#     "Check input values, should start with FX, FTL, LN, LNI, or LR."
+        # Layering by Number - LN
+        self.assertEqual(pr[0], param.pr.par_type)
+        self.assertEqual(pr[1], param.pr.par_value)
+        self.assertListEqual([wv[0]/3]*pr[1], param.pr.lay_min)
+        self.assertListEqual([wv[1]/(2*pr[1])]*pr[1], param.pr.lay_max)
+        self.assertListEqual([pr[2]]*pr[1], param.pr.par_min)
+        self.assertListEqual([pr[3]]*pr[1], param.pr.par_max)
+        self.assertListEqual([pr[4]]*pr[1], param.pr.par_rev)
 
-#     vs = ['LR', 3.0, 100, 200, True]
-#     vp = ['LN', 2, 200, 400, True]
-#     pr = ['LN', 3, 0.2, 0.5, False]
-#     rh = ['FX', 2000]
-#     wv = [1, 100]
+        # Layering by Number Increasing - LNI
+        self.assertEqual(vp[0], param.vp.par_type)
+        self.assertEqual(vp[1], param.vp.par_value)
+        self.assertEqual(vp[2], param.vp.par_add_value)
+        self.assertListEqual([wv[0]/3]*vp[1], param.vp.lay_min)
+        self.assertListEqual([wv[1]/2]*vp[1], param.vp.lay_max)
+        self.assertListEqual([vp[3]]*vp[1], param.vp.par_min)
+        self.assertListEqual([vp[4]]*vp[1], param.vp.par_max)
+        self.assertListEqual([vp[5]]*vp[1], param.vp.par_rev)
 
-#     for vals in [[1.2], ["1.3"], [True], [1]]:
-#         self.assertRaises(ValueError, swipp.Parameter.from_min_max,
-#                           vals, vp, pr, rh, wv)
-#         self.assertRaises(ValueError, swipp.Parameter.from_min_max,
-#                           vs, vals, pr, rh, wv)
-#         self.assertRaises(ValueError, swipp.Parameter.from_min_max,
-#                           vs, vp, vals, rh, wv)
-#         self.assertRaises(ValueError, swipp.Parameter.from_min_max,
-#                           vs, vp, pr, vals, wv)
+        pr = ['LR', 3, 0.2, 0.5, False]
+        param = swipp.Parameterization.from_min_max(vp, pr, vs, rh, wv)
 
-# def test_init_fx(self):
-#     "Check FX, second values should be positive integer or float."
+        # Layering Ratio - LR
+        self.assertEqual(pr[0], param.pr.par_type)
+        self.assertEqual(pr[1], param.pr.par_value)
+        lay_min, lay_max = swipp.Parameter.depth_lr(*wv, pr[1])
+        self.assertListEqual(lay_min, param.pr.lay_min)
+        self.assertListEqual(lay_max, param.pr.lay_max)
+        self.assertListEqual([pr[2]]*len(lay_min), param.pr.par_min)
+        self.assertListEqual([pr[3]]*len(lay_min), param.pr.par_max)
+        self.assertListEqual([pr[4]]*len(lay_min), param.pr.par_rev)
 
-#     vs = ['LR', 3.0, 100, 200, True]
-#     vp = ['LN', 2, 200, 400, True]
-#     pr = ['LN', 3, 0.2, 0.5, False]
-#     rh = ['FX', 2000]
-#     wv = [1, 100]
+    def test_to_file(self):
+        """Check if parameter data can be written to .param file. Need to
+        use DINVER to confirm file was sucessfully written.
+        """
+        vp = ['LNI', 4, 4, 200, 400, True]
+        pr = ['LN', 3, 0.2, 0.5, False]
+        vs = ['FTL', 3, 3, 100, 200, True]
+        rh = ['FX', 2000]
+        wv = [1, 100]
+        par = swipp.Parameterization.from_min_max(vp, pr, vs, rh, wv)
+        fname1 = full_path+"data/test_par1.param"
+        par.to_file(fname=fname1, version='2.10.1')
+        self.assertTrue(os.path.isfile(fname1))
 
-#     for val in ["1", True, [1], (1,)]:
-#         vals = ['FX', val]
-#         self.assertRaises(
-#             TypeError, swipp.Parameter.from_min_max, vals, vp, pr, rh, wv)
-#         self.assertRaises(
-#             TypeError, swipp.Parameter.from_min_max, vs, vals, pr, rh, wv)
-#         self.assertRaises(
-#             TypeError, swipp.Parameter.from_min_max, vs, vp, vals, rh, wv)
-#         self.assertRaises(
-#             TypeError, swipp.Parameter.from_min_max, vs, vp, pr, vals, wv)
+        # TODO (jpv): Automate checking process
+        # with tar.open(fname1, "r:gz") as f:
+        #     f.extractall()
+        # with open("contents.xml", "r") as f:
+        #     test_lines = f.read().splitlines()
+        # print(test_lines[:5])
 
-#     for val in [-1, 0]:
-#         vals = ['FX', val]
-#         self.assertRaises(ValueError, swipp.Parameter.from_min_max,
-#                           vals, vp, pr, rh, wv)
-#         self.assertRaises(ValueError, swipp.Parameter.from_min_max,
-#                           vs, vals, pr, rh, wv)
-#         self.assertRaises(ValueError, swipp.Parameter.from_min_max,
-#                           vs, vp, vals, rh, wv)
-#         self.assertRaises(ValueError, swipp.Parameter.from_min_max,
-#                           vs, vp, pr, vals, wv)
+        # f = tar.open(full_path+"data/par1.param", "r:gz")
+        # f.extractall()
+        # f.close()
 
-# def test_init_ftl(self):
-#     """Check FTL, second values should be positive integer, third value
-#     should be interger or float great than 1.
-#     """
+        # with open("contents.xml", "r", encoding="utf-16") as f:
+        #     true_lines = f.read().splitlines()
+        os.remove(fname1)
+        # os.remove("contents.xml")
 
-#     vs = ['LR', 3.0, 100, 200, True]
-#     vp = ['LN', 2, 200, 400, True]
-#     pr = ['LN', 3, 0.2, 0.5, False]
-#     rh = ['FX', 2000]
-#     wv = [1, 100]
+        # for true, test in zip(true_lines, test_lines):
+        #     self.assertEqual(true, test)
 
-#     # Check integer for number of layers.
-#     for val in ["1", True, [1], (1,), 1.1]:
-#         vals = ['FTL', val, 1.1, 100, 200, True]
-#         self.assertRaises(
-#             TypeError, swipp.Parameter.from_min_max, vals, vp, pr, rh, wv)
-#         self.assertRaises(
-#             TypeError, swipp.Parameter.from_min_max, vs, vals, pr, rh, wv)
-#         self.assertRaises(
-#             TypeError, swipp.Parameter.from_min_max, vs, vp, vals, rh, wv)
-#         self.assertRaises(
-#             TypeError, swipp.Parameter.from_min_max, vs, vp, pr, vals, wv)
-#     # Check number of layers >0.
-#     for val in [-1, 0]:
-#         vals = ['FTL', val, 2, 100, 200, True]
-#         self.assertRaises(ValueError, swipp.Parameter.from_min_max,
-#                           vals, vp, pr, rh, wv)
-#         self.assertRaises(ValueError, swipp.Parameter.from_min_max,
-#                           vs, vals, pr, rh, wv)
-#         self.assertRaises(ValueError, swipp.Parameter.from_min_max,
-#                           vs, vp, vals, rh, wv)
-#         self.assertRaises(ValueError, swipp.Parameter.from_min_max,
-#                           vs, vp, pr, vals, wv)
-#     # Check integer or float for second value.
-#     for val in ["1", True, [1], (1,)]:
-#         vals = ['FTL', 2, val, 100, 200, True]
-#         self.assertRaises(
-#             TypeError, swipp.Parameter.from_min_max, vals, vp, pr, rh, wv)
-#         self.assertRaises(
-#             TypeError, swipp.Parameter.from_min_max, vs, vals, pr, rh, wv)
-#         self.assertRaises(
-#             TypeError, swipp.Parameter.from_min_max, vs, vp, vals, rh, wv)
-#         self.assertRaises(
-#             TypeError, swipp.Parameter.from_min_max, vs, vp, pr, vals, wv)
-#     # Check layer thickness is >0.
-#     for val in [-1, 0]:
-#         vals = ['FTL', 2, val, 100, 200, True]
-#         self.assertRaises(ValueError, swipp.Parameter.from_min_max,
-#                           vals, vp, pr, rh, wv)
-#         self.assertRaises(ValueError, swipp.Parameter.from_min_max,
-#                           vs, vals, pr, rh, wv)
-#         self.assertRaises(ValueError, swipp.Parameter.from_min_max,
-#                           vs, vp, vals, rh, wv)
-#         self.assertRaises(ValueError, swipp.Parameter.from_min_max,
-#                           vs, vp, pr, vals, wv)
+        vp = ['LR', 3, 200, 400, True]
+        pr = ['LNI', 3, 3, 0.2, 0.5, False]
+        vs = ['FTL', 5, 5, 100, 200, True]
+        rh = ['FX', 2000]
+        wv = [1, 100]
+        fname2 = "test_par2.param"
+        par = swipp.Parameterization.from_min_max(vp, pr, vs, rh, wv)
+        par.to_file(fname=fname2, version='2.10.1')
+        self.assertTrue(os.path.isfile(fname2))
 
-# def test_init_ln(self):
-#     "Check LN second value should be postive integer."
+        # with tar.open(fname2, "r:gz") as f:
+        #     f.extractall()
+        # with open("contents.xml", "r") as f:
+        #     test_lines = f.read().splitlines()
 
-#     vs = ['LR', 3.0, 100, 200, True]
-#     vp = ['LN', 2, 200, 400, True]
-#     pr = ['LN', 3, 0.2, 0.5, False]
-#     rh = ['FX', 2000]
-#     wv = [1, 100]
+        # with tar.open(full_path+"data/par2.param", "r:gz") as f:
+        #     f.extractall()
+        # with open("contents.xml", "r") as f:
+        #     true_lines = f.read().splitlines()
+        os.remove(fname2)
+        # # os.remove("contents.xml")
 
-#     for val in ["5", True, 0.5, 2.2]:
-#         vals = ['LN', val, 50, 300, True]
-#         self.assertRaises(
-#             TypeError, swipp.Parameter.from_min_max, vals, vp, pr, rh, wv)
-#         self.assertRaises(
-#             TypeError, swipp.Parameter.from_min_max, vs, vals, pr, rh, wv)
-#         self.assertRaises(
-#             TypeError, swipp.Parameter.from_min_max, vs, vp, vals, rh, wv)
-#         self.assertRaises(
-#             TypeError, swipp.Parameter.from_min_max, vs, vp, pr, vals, wv)
-#     for val in [-1, 0]:
-#         vals = ['LN', val, 50, 300, True]
-#         self.assertRaises(ValueError, swipp.Parameter.from_min_max,
-#                           vals, vp, pr, rh, wv)
-#         self.assertRaises(ValueError, swipp.Parameter.from_min_max,
-#                           vs, vals, pr, rh, wv)
-#         self.assertRaises(ValueError, swipp.Parameter.from_min_max,
-#                           vs, vp, vals, rh, wv)
-#         self.assertRaises(ValueError, swipp.Parameter.from_min_max,
-#                           vs, vp, pr, vals, wv)
+        # for true, test in zip(true_lines, test_lines):
+        #     self.assertEqual(true, test)
 
-# def test_init_lni(self):
-#     "Test LNI, first number int greater than 1, second number int or float > 1"
 
-#     vs = ['LR', 3.0, 100, 200, True]
-#     vp = ['LN', 2, 200, 400, True]
-#     pr = ['LN', 3, 0.2, 0.5, False]
-#     rh = ['FX', 2000]
-#     wv = [1, 100]
-
-#     # Check number of layers is an int
-#     for val in ["5", True, 0.5, 2.2]:
-#         vals = ['LNI', val, 1.1, 50, 300, True]
-#         self.assertRaises(
-#             TypeError, swipp.Parameter.from_min_max, vals, vp, pr, rh, wv)
-#         self.assertRaises(
-#             TypeError, swipp.Parameter.from_min_max, vs, vals, pr, rh, wv)
-#         self.assertRaises(
-#             TypeError, swipp.Parameter.from_min_max, vs, vp, vals, rh, wv)
-#         self.assertRaises(
-#             TypeError, swipp.Parameter.from_min_max, vs, vp, pr, vals, wv)
-#     # Check factor is an int or float
-#     for val in ["5", True]:
-#         vals = ['LNI', 2, val, 50, 300, True]
-#         self.assertRaises(
-#             TypeError, swipp.Parameter.from_min_max, vals, vp, pr, rh, wv)
-#         self.assertRaises(
-#             TypeError, swipp.Parameter.from_min_max, vs, vals, pr, rh, wv)
-#         self.assertRaises(
-#             TypeError, swipp.Parameter.from_min_max, vs, vp, vals, rh, wv)
-#         self.assertRaises(
-#             TypeError, swipp.Parameter.from_min_max, vs, vp, pr, vals, wv)
-#     # Check number of layers is greater than 1
-#     for val in [-1, 0, 1]:
-#         vals = ['LNI', val, 1.1, 50, 300, True]
-#         self.assertRaises(ValueError, swipp.Parameter.from_min_max,
-#                           vals, vp, pr, rh, wv)
-#         self.assertRaises(ValueError, swipp.Parameter.from_min_max,
-#                           vs, vals, pr, rh, wv)
-#         self.assertRaises(ValueError, swipp.Parameter.from_min_max,
-#                           vs, vp, vals, rh, wv)
-#         self.assertRaises(ValueError, swipp.Parameter.from_min_max,
-#                           vs, vp, pr, vals, wv)
-#     # Check factor is greater than 1
-#     for val in [-1, 0, 1]:
-#         vals = ['LNI', 5, val, 50, 300, True]
-#         self.assertRaises(ValueError, swipp.Parameter.from_min_max,
-#                           vals, vp, pr, rh, wv)
-#         self.assertRaises(ValueError, swipp.Parameter.from_min_max,
-#                           vs, vals, pr, rh, wv)
-#         self.assertRaises(ValueError, swipp.Parameter.from_min_max,
-#                           vs, vp, vals, rh, wv)
-#         self.assertRaises(ValueError, swipp.Parameter.from_min_max,
-#                           vs, vp, pr, vals, wv)
-
-# def test_init_lr(self):
-#     "Test LR, second value should be postive integer or float greater than 1"
-
-#     vs = ['LR', 3.0, 100, 200, True]
-#     vp = ['LN', 2, 200, 400, True]
-#     pr = ['LN', 3, 0.2, 0.5, False]
-#     rh = ['FX', 2000]
-#     wv = [1, 100]
-
-#     for val in ["5", True]:
-#         vals = ['LR', val, 50, 300, True]
-#         self.assertRaises(
-#             TypeError, swipp.Parameter.from_min_max, vals, vp, pr, rh, wv)
-#         self.assertRaises(
-#             TypeError, swipp.Parameter.from_min_max, vs, vals, pr, rh, wv)
-#         self.assertRaises(
-#             TypeError, swipp.Parameter.from_min_max, vs, vp, vals, rh, wv)
-#         self.assertRaises(
-#             TypeError, swipp.Parameter.from_min_max, vs, vp, pr, vals, wv)
-#     for val in [-1, 0, 0.5, 0.9, 1, 1.0]:
-#         vals = ['LR', val, 50, 300, True]
-#         self.assertRaises(ValueError, swipp.Parameter.from_min_max,
-#                           vals, vp, pr, rh, wv)
-#         self.assertRaises(ValueError, swipp.Parameter.from_min_max,
-#                           vs, vals, pr, rh, wv)
-#         self.assertRaises(ValueError, swipp.Parameter.from_min_max,
-#                           vs, vp, vals, rh, wv)
-#         self.assertRaises(ValueError, swipp.Parameter.from_min_max,
-#                           vs, vp, pr, vals, wv)
-
-# def test_lr_calc(self):
-#     "Test LR calculation."
-#     wv = [1, 100]
-#     known_lr = {'1.4':
-#                 [[0.3, 0.5, 1.2, 2.2, 3.6, 5.5, 8.2, 11.9, 17.2, 24.6, 34.9, 50],
-#                  [0.5, 1.2, 2.2, 3.6, 5.5, 8.2, 11.9, 17.2, 24.6, 34.9, 50, "half-space"]],
-#                 '1.5':
-#                 [[0.3, 0.5, 1.3, 2.4, 4.1, 6.6, 10.4, 16.1, 24.6, 50],
-#                  [0.5, 1.3, 2.4, 4.1, 6.6, 10.4, 16.1, 24.6, 50, "half-space"]],
-#                 '2.0':
-#                 [[0.3, 0.5, 1.5, 3.5, 7.5, 15.5, 31.5, 50],
-#                  [0.5, 1.5, 3.5, 7.5, 15.5, 31.5, 50, "half-space"]],
-#                 '3.0':
-#                 [[0.3, 0.5, 2.0, 6.5, 20, 50],
-#                  [0.5, 2.0, 6.5, 20, 50, "half-space"]],
-#                 '5.0':
-#                 [[0.3, 0.5, 3.0, 15.5, 50],
-#                  [0.5, 3.0, 15.5, 50, "half-space"]]}
-#     for key in known_lr.keys():
-#         mindepth, maxdepth = swipp.Parameter._depth_lr(
-#             wv, float(key), 2)
-#         for known1, test1, known2, test2 in zip(mindepth, known_lr[key][0], maxdepth, known_lr[key][1]):
-#             self.assertAlmostEqual(known1, test1, delta=0.051)
-#             self.assertAlmostEqual(known2, test2, delta=0.051)
-
-# def test_write_to_file(self):
-#     """Check if parameter data can be written to .param file. Need to
-#     use DINVER to confirm file was sucessfully written.
-#     """
-#     vp = ['LNI', 4, 4, 200, 400, True]
-#     pr = ['LN', 3, 0.2, 0.5, False]
-#     vs = ['FTL', 3, 3, 100, 200, True]
-#     rh = ['FX', 2000]
-#     wv = [1, 100]
-#     par = swipp.Parameter.from_min_max(vp, pr, vs, rh, wv)
-#     name1 = "LNI_LN_FTL_FX"
-#     par.write_to_file(fname=f"{name1}", version='2.10.1')
-#     self.assertTrue(os.path.isfile(f"{name1}.param"))
-
-#     vp = ['LR', 3, 200, 400, True]
-#     pr = ['LNI', 3, 3, 0.2, 0.5, False]
-#     vs = ['FTL', 5, 5, 100, 200, True]
-#     rh = ['FX', 2000]
-#     wv = [1, 100]
-#     name2 = "LR_LNI_FTL_FX"
-#     par = swipp.Parameter.from_min_max(vp, pr, vs, rh, wv)
-#     par.write_to_file(fname=f"{name2}", version='2.10.1')
-#     self.assertTrue(os.path.isfile(f"{name2}.param"))
-
-#     print(f"Check if {name1} and {name2} wrote correctly!")
-#     os.remove(f"{name1}.param")
-#     os.remove(f"{name2}.param")
 
 if __name__ == '__main__':
     unittest.main()
