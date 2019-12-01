@@ -1,5 +1,4 @@
-"""This file contains the GroundModel class for handling ground model
-(i.e. layered velocity model objects)."""
+"""This file contains the class definiton for `GroundModel`."""
 
 import scipy.io as sio
 import copy
@@ -14,7 +13,7 @@ logging.Logger(name=__name__)
 
 
 class GroundModel():
-    """Class for manipulating ground model objects.
+    """Class for creating and manipulating `GroundModel` objects.
 
     Attributes:
         tk:
@@ -24,29 +23,69 @@ class GroundModel():
     """
 
     @staticmethod
-    def check_input_type(thickness, vp, vs, density):
-        tmp_dict = {"thickness": thickness,
-                    "vp": vp, "vs": vs, "density": density}
-        tmp_len = len(thickness)
-        for name, value in tmp_dict.items():
-            if not isinstance(value, list):
-                raise TypeError(f"{name} must be a list, not {type(value)}.")
-            if tmp_len != len(value):
-                raise TypeError(f"All inputs must have the same length.")
+    def check_input_type(values, names):
+        """Check `values` are of the appropriate type.
+
+        Specifically:
+            1. `values` are an interable of `list`. If necessary convert 
+            interable of `ndarray` or `tuple` to interable of `list`.
+            2. Entries of the inner `list` are of type `int` or `float`.
+
+        Args:
+            values : list
+                Container of `list` one per parameter.
+            names : list
+                Container of `str` used for meaningful error messages.
+
+        Raises:
+            TypeError:
+                If `values` does not pass the aforementioned criteria.
+        """
+        for cid, (value, name) in enumerate(zip(values, names)):
+            if type(value) not in [list, tuple, np.ndarray]:
+                msg = f"{name} must be of type `list`, not {type(value)}."
+                raise TypeError(msg)
+            if isinstance(value, tuple):
+                values[cid] = list(value)
+            if isinstance(value, np.ndarray):
+                values[cid] = value.tolist()
+
+        for value, name in zip(values, names):
             for val in value:
-                if (not isinstance(val, int)) and (not isinstance(val, float)):
-                    msg = f"{name} must be a list of int or float, not {type(val)}."
+                if type(val) not in [int, float]:
+                    msg = f"{name} must be a `list` of `int` or `float`, not {type(val)}."
                     raise TypeError(msg)
 
+        return values
+
     @staticmethod
-    def check_input_value(thickness, vp, vs, density):
-        tmp_dict = {"thickness": thickness,
-                    "vp": vp, "vs": vs, "density": density}
-        for name, value in tmp_dict.items():
+    def check_input_value(values, names):
+        """Check `values` have appropriate values.
+
+        Specifically:
+            1. Check that all values are greater than zero.
+            2. Check that `vp` > `vs`.
+
+        Args:
+            values : list
+                Container of `list` one per parameter.
+            names : list
+                Container of `str` used for meaningful error messages.
+
+        Raises:
+            ValueError:
+                If `values` does not pass the aforementioned criteria.
+        """
+
+        tmp_len = len(values[0])
+        for value, name in zip(values, names):
             for val in value:
                 if val < 0:
-                    raise TypeError(f"{name} must always be >= 0.")
-        for tmp_vp, tmp_vs in zip(vp, vs):
+                    raise ValueError(f"{name} must always be >= 0.")
+            if tmp_len != len(value):
+                raise ValueError(f"All inputs must have the same length.")
+
+        for tmp_vp, tmp_vs in zip(values[names == "vp"], values[names == "vs"]):
             if tmp_vs > tmp_vp:
                 msg = f"vp must be greater than vs, {tmp_vp}!>{tmp_vs}."
                 raise ValueError(msg)
@@ -55,24 +94,30 @@ class GroundModel():
         """Initialize a ground model object
 
         Args:
-            thickness: List of floats or ints denoting the layers
-                thickness (one per layer) in meters starting from the
-                ground surface.
-            vp: List of floats or ints denoting the P-wave velocity of
-                each layer in m/s.
-            vs: List of floats or ints denoting the S-wave velocity of
-                each layer in m/s.
-            density: List of floats or ints denoting the mass density
+            thickness : list
+                Container of `float` or `int` denoting layer thickness
+                (one per layer) in meters starting from the ground
+                surface.
+            vp, vs : list
+                Container of `float` or `int` denoting the P- and S-wave
+                velocity of each layer in m/s.
+            density : list 
+                Container of `float` or `int` denoting the mass density
                 of each layer in kg/m3.
 
         Returns:
-            An instantiated GroundModel object
+            Instantiated GroundModel object
 
         Raises:
-            This method raises no exceptions.
+            Various exceptions, see
+            :meth: `check_input_type <GroundModel.check_input_type` and
+            :meth: `check_input_value <GroundModel.check_input_value`
+            for details.
         """
-        self.check_input_type(thickness, vp, vs, density)
-        self.check_input_value(thickness, vp, vs, density)
+        thickness, vp, vs, density = self.check_input_type([thickness, vp, vs, density],
+                                                           ["thickness", "vp", "vs", "density"])
+        self.check_input_value([thickness, vp, vs, density],
+                               ["thickness", "vp", "vs", "density"])
         self.nlay = len(thickness)
         self.tk = copy.deepcopy(thickness)
         self.vp = copy.deepcopy(vp)
@@ -81,157 +126,143 @@ class GroundModel():
 
     @staticmethod
     def calc_pr(vp, vs):
-        """Calculate Poisson's Ratio from lists of vp and vs.
+        """Calculate Poisson's ratio from list of `vp` and `vs`.
 
         Args:
-            vp: List of vp values.
-
-            vs: List of vs values.
+            vp, vs : iterable
+                Container of vp and vs values.
 
         Returns:
-            List of Poisson's Ratio, calculated from each vp, vs pair.
+            `List` of Poisson's ratio, calculated from each vp, vs pair.
 
         Raises:
-            ValueError: If vs>vp.
-            ValueError: If calculated Poisson's Ratio is negative.
+            ValueError: 
+                If vs>vp, or Poisson's ratio is negative.
         """
         if type(vp) in [int, float]:
-            print("Warning: vp should be an iterable type.")
+            warnings.warn("`vp` should be an iterable type.")
             vp = [vp]
         if type(vs) in [int, float]:
-            print("Warning: vs should be an iterable type.")
+            warnings.warn("`vs` should be an iterable type.")
             vs = [vs]
         pr = []
         for vp, vs in zip(vp, vs):
-            # Make sure vp>vs
             if vp <= vs:
-                raise ValueError(f"Vp={vp} must be greater than Vs={vs}.")
+                raise ValueError(f"`Vp` must be greater than `Vs`.")
             pr += [(2-(vp/vs)**2)/(2-2*(vp/vs)**2)]
-            # Make sure pr>0
             if pr[-1] <= 0:
-                msg = f"Poison's Raio cannot be negative. Vp/Vs={vp}/{vs} too close to unity."
+                msg = f"Poison's ratio cannot be negative. Vp/Vs={vp}/{vs} too close to unity."
                 raise ValueError(msg)
         return pr
 
     @classmethod
     def from_simple_profiles(cls, vp_tk, vp, vs_tk, vs, rh_tk, rh):
-        """Create groundmodel object from simple profiles"""
-        depths = list(dict.fromkeys(cls.thick_to_depth(vp_tk)[1:] +
-                                    cls.thick_to_depth(vs_tk)[1:] +
-                                    cls.thick_to_depth(rh_tk)[1:]
-                                    ))
-        depths.sort()
-        depths.append(0)
-        if depths == [0]:
-            new_tk = [0]
-        else:
-            new_tk = cls.depth_to_thick(depths)
+        """Instantiate `GroundModel` from simple profiles.
 
-        def define_par(depths, new_par, tk, par):
-            cnt = 0
-            for cdepth in depths:
-                if tk[cnt] == 0:
-                    new_par += [par[cnt]]*(len(depths)-len(new_par))
-                    break
-                new_par.append(par[cnt])
-                if cdepth >= sum(tk[:cnt+1]):
-                    cnt += 1
+        Args:
+            vp_tk, vs_tk, rh_tk : list
+                Container of `int` or `float` denoting the thicknesses
+                of each parameter, one per layer.
+            vp, vs, rh : list
+                Container of `int` or `float` for the value of each
+                parameter. 
+
+        Returns:
+            Instantiated `GroundModel` object.
+        """
+        new_depths = (cls.thick_to_depth(vp_tk) +
+                      cls.thick_to_depth(vs_tk) +
+                      cls.thick_to_depth(rh_tk))
+        new_depths = list(dict.fromkeys(new_depths))
+        new_depths.sort()
+
+        def define_par(new_depths, new_par, tk, par):
+            c_lay = 0
+            for cid in range(len(new_depths)):
+                # When thickness=0, apply last value to all remaining entries.
+                if tk[c_lay] == 0:
+                    new_par += [par[c_lay]]*(len(new_depths)-len(new_par))
+                    return
+                # Otherwise append current par value
+                new_par.append(par[c_lay])
+                # When depth is greater than sum of thickness move to next layer.
+                if new_depths[cid+1] >= sum(tk[:c_lay+1]):
+                    c_lay += 1
 
         new_vp, new_vs, new_rh = [], [], []
-        define_par(depths, new_vp, vp_tk, vp)
-        define_par(depths, new_vs, vs_tk, vs)
-        define_par(depths, new_rh, rh_tk, rh)
+        define_par(new_depths, new_vp, vp_tk, vp)
+        define_par(new_depths, new_vs, vs_tk, vs)
+        define_par(new_depths, new_rh, rh_tk, rh)
+        new_tk = cls.depth_to_thick(new_depths)
         return cls(new_tk, new_vp, new_vs, new_rh)
 
     @property
     def depth(self):
         """Return stair-step version of depth profile."""
-        return self.gm2()[0]
+        return self.gm2(parameter="depth")
 
     @property
     def vp2(self):
         """Return stair-step version of Vp profile."""
-        return self.gm2()[1]
+        return self.gm2(parameter="vp")
 
     @property
     def vs2(self):
         """Return stair-step version of Vs profile."""
-        return self.gm2()[2]
+        return self.gm2(parameter="vs")
 
     @property
     def rh2(self):
         """Return stair-step version of density profile."""
-        return self.gm2()[3]
+        return self.gm2(parameter="rho")
 
-    def gm2(self):
-        """Convert standard ground model to stair step version, so the
-        results can be easily plotted.
+    def gm2(self, parameter):
+        """Return parameter of `GroundModel` in stair-step form.
 
         Args:
-            This method requires no arguements.
+            parameter : {'depth', 'vp', 'vs', 'rho', 'pr'}
+                Desired parameter.
 
         Returns:
-            Tuple of the form (depth2, vp2, vs2, rho2) where for example
-            depth2 is a list of the top and bottom depths of each layer.
+            List of defining the specified parameter. 
 
         Raises:
-            This method raises no exceptions.
+            KeyError if `parameter` is not one of those specified.
         """
-        gm2 = [[0],
-               [self.vp[0]],
-               [self.vs[0]],
-               [self.rh[0]]]
-        lay = 1
+        if parameter == "pr":
+            vp = self.gm2(parameter="vs")
+            vs = self.gm2(parameter="vp")
+            return self.calc_pr(vp, vs)
 
-        for pnt in range(1, 2*self.nlay):
-            logging.debug(f"pnt = {pnt}, lay = {lay}")
-            # If half-space
-            if pnt == (2*self.nlay-1):
-                gm2[0].append(9999.0)
-                gm2[1].append(self.vp[-1])
-                gm2[2].append(self.vs[-1])
-                gm2[3].append(self.rh[-1])
-            # Otherwise
-            else:
-                # Thickness to depth
-                gm2[0].append(sum(self.tk[0:lay]))
-                # If odd number point, append previous
-                if pnt % 2 != 0:
-                    gm2[1].append(self.vp[lay-1])
-                    gm2[2].append(self.vs[lay-1])
-                    gm2[3].append(self.rh[lay-1])
-                # If even number point, start new layere
+        options = {"depth": self.tk, "vp": self.vp,
+                   "vs": self.vs, "rho": self.rh}
+        par = options[parameter]
+
+        if parameter == "depth":
+            gm2 = [0]
+            lay = 1
+            for pnt in range(1, 2*self.nlay):
+                if pnt == (2*self.nlay-1):
+                    gm2.append(9999.0)
                 else:
-                    gm2[1].append(self.vp[lay])
-                    gm2[2].append(self.vs[lay])
-                    gm2[3].append(self.rh[lay])
-                    lay += 1
-        return (gm2[0], gm2[1], gm2[2], gm2[3])
-
-    def gm2_par(self, param='depth'):
-        """Similar to gm2 method, except only a single parameter is
-        returned.
-
-        Args:
-            param: Select parameter of interest (i.e., 'depth', 'vp',
-                'vs', 'rho', 'pr') to be returned as a stair-step
-                version for ease of plotting.
-
-        Returns:
-            List of the selected parameter.
-
-        Raises:
-            This method raises no exceptions.
-        """
-        par_options = {'depth': 0, 'vp': 1, 'vs': 2, 'rho': 3, 'pr': 4}
-        parameter = par_options[param]
-        if parameter == par_options['pr']:
-            return self.calc_pr(self.gm2()[par_options['vp']],
-                                self.gm2()[par_options['vs']])
+                    depth = sum(self.tk[0:lay])
+                    gm2.append(depth)
+                    if pnt % 2 == 0:
+                        lay += 1
         else:
-            return self.gm2()[parameter]
+            gm2 = [par[0]]
+            lay = 1
+            for pnt in range(1, 2*self.nlay):
+                if pnt == (2*self.nlay-1):
+                    gm2.append(par[-1])
+                if pnt % 2 != 0:
+                    gm2.append(par[lay-1])
+                else:
+                    gm2.append(par[lay])
+                    lay += 1
+        return gm2
 
-    def gm2_disc(self, dmax, dy=0.5, param='vs'):
+    def gm2_disc(self, dmax, dy=0.5, parameter='vs'):
         """Returns a discretized stair-step model.
 
         The stair step model is discretized by depth from the surface to
@@ -242,38 +273,56 @@ class GroundModel():
         discretized models for plotting as they may be misleading.
 
         Args:
-            dmax: Maximum depth of discretization.
-
-            dy: Linear step of discretizaton in terms of depth.
-
-            param: Parameter to be discretized.
+            dmax : float
+                Maximum depth of discretization.
+            dy : float, optional
+                Linear step of discretizaton in terms of depth, default
+                is 0.5 meter.
+            parameter : {'vp', 'vs', 'rho', 'pr'}, optional
+                Parameter to be discretized, default is 'vs'.
 
         Returns:
-            Tuple of the form (depth, param) where depth is a list of
-            the discretized depths, and param is a list of the
-            discretized param at those depths.
+            Tuple of the form `(depth, param)` where `depth` is a `list`
+            of the discretized depths, and `parameter` is a `list` of
+            the discretized parameter at those depths.
 
         Raises:
-            This method raises no exceptions.
+            KeyError:
+                If `param` is not one of those options specified.
         """
-        par_options = {'depth': 0, 'vp': 1, 'vs': 2, 'rho': 3, 'pr': 4}
-        depth = self.gm2()[par_options['depth']]
-        parameter = par_options[param]
-        par_to_disc = self.gm2()[parameter]
+        disc_depth = np.linspace(0, dmax, int(dmax//dy)+1).tolist()
 
-        ddepth = []
-        dpar = []
-        cdepth = 0
-        for n in range(len(depth)-1):
-            dnp1 = depth[n+1]
-            pn = par_to_disc[n]
-            while ((cdepth <= dnp1) & (cdepth <= dmax)):
-                ddepth += [cdepth]
-                dpar += [pn]
-                cdepth += dy
-            if cdepth > dmax:
-                break
-        return (ddepth, dpar)
+        if parameter == "pr":
+            disc_par = self.calc_pr(self.gm2_disc(dmax, dy, "vp")[1],
+                                    self.gm2_disc(dmax, dy, "vs")[1])
+            return (disc_depth, disc_par)
+
+        options = {"vp": self.vp, "vs": self.vs, "rho": self.rh}
+        try:
+            par_to_disc = options[parameter]
+        except KeyError:
+            msg = f"Bad `parameter`={parameter}, try 'vp', 'vs', 'rho', or 'pr'."
+            raise KeyError(msg)
+        
+        # For each layer
+        disc_par = [par_to_disc[0]]
+        residual = 0
+        if len(self.tk) > 1:
+            for c_lay, c_tk in enumerate(self.tk[:-1]):
+                float_disc = c_tk/dy
+                int_disc = int(c_tk // dy)
+
+                residual += (float_disc - int_disc)
+                if residual >= 1:
+                    int_disc += 1
+                disc_par += [par_to_disc[c_lay]]*int_disc
+
+        else:
+            c_lay = -1
+        # Half-space
+        disc_par += [par_to_disc[c_lay+1]]*(len(disc_depth)-len(disc_par))
+
+        return (disc_depth, disc_par)
 
     def simplify(self, param='vs'):
         """Remove unecessary breaks due to those parameters other than
@@ -338,59 +387,107 @@ class GroundModel():
         """
         if fname.endswith(".mat"):
             fname = fname[:-4]
-        depth2, vp2, vs2, rh2 = self.gm2()
         sio.savemat(fname+".mat", {"thickness": self.tk,
                                    "vp1": self.vp,
                                    "vs1": self.vs,
                                    "rho1": self.rh,
-                                   "depth": depth2,
-                                   "vp2": vp2,
-                                   "vs2": vs2,
-                                   "rho2": rh2,
+                                   "depth": self.depth,
+                                   "vp2": self.vp2,
+                                   "vs2": self.vs2,
+                                   "rho2": self.rh2,
                                    })
 
-    # TODO (jpv): Decide whether top or bottom of each layer is more desirable.
     @staticmethod
     def depth_to_thick(depths):
-        """Return list of thicknesses from a list of depths (at bottom of each layer)."""
-        thicknesses = [depths[0]]
-        for cid in range(1, len(depths)-1):
+        """`List` of thicknesses from a `list` of depths (at top of each
+        layer)."""
+        if depths[0] != 0:
+            msg = "`depths` are defined from the top of each layer."
+            raise ValueError(msg)
+
+        # Half-space/single-layered system
+        if len(depths) == 1:
+            return [0]
+
+        # Two-layered system
+        if len(depths) == 2:
+            return [depths[1], 0]
+
+        # Multi-layered system
+        thicknesses = [depths[1]]
+        for cid in range(2, len(depths)):
             thicknesses.append(depths[cid]-depths[cid-1])
         thicknesses.append(0)
         return thicknesses
 
     @staticmethod
     def thick_to_depth(thicknesses):
-        """Return list of depths (at the top of each layer)."""
+        """Return `list` of depths (at the top of each layer)."""
         depths = [0]
-        for clay in range(1, len(thicknesses)):
-            depths.append(sum(thicknesses[:clay]))
+        for clayer in range(1, len(thicknesses)):
+            depths.append(sum(thicknesses[:clayer]))
         return depths
 
-    def write_model(self, fileobj, model_num=1, misfit=0.0000):
-        """Write/Append ground model to an existing fileobject."""
-        fileobj.write(f"# Layered model {model_num}: value={misfit}\n")
-        fileobj.write(f"{self.nlay}\n")
+    @property
+    def txt_repr(self):
+        lines = f"{self.nlay}\n"
         for tk, vp, vs, rh in zip(self.tk, self.vp, self.vs, self.rh):
-            fileobj.write(f"{tk} {vp} {vs} {rh}\n")
+            lines += f"{tk} {vp} {vs} {rh}\n"
+        return lines
+
+    def write_model(self, fileobj, model_num=1, misfit=0.0000):
+        """Write `GroundModel` to opened fileobj.
+        
+        Args:
+            fileobj : _io.TextIOWrapper
+                Name of file, may contain a relative or the full path.
+            model_num : int, optional
+                Model number, required to be consistent with Geopsy
+                naming convention when exporting inversion results,
+                default is 1.
+            misfit : float, optional
+                Misfit, required to be consistent with Geopsy
+                naming convention when exporting inversion results,
+                default is 0.0000.
+        
+        Returns:
+            `None`, writes file to disk.
+        """
+        fileobj.write(f"# Layered model {model_num}: value={misfit}\n")
+        for line in self.txt_repr:
+            fileobj.write(line)
 
     def write_to_txt(self, fname, model_num=1, misfit=0.0000):
-        """Write ground model to a text file that follows the geospy
-        format."""
+        """Write `GroundModel` to file that follows the Geospy format.
+        
+        Args:
+            fname : str
+                Name of file, may contain a relative or the full path.
+            model_num : int, optional
+                Model number, required to be consistent with Geopsy
+                naming convention when exporting inversion results,
+                default is 1.
+            misfit : float, optional
+                Misfit, required to be consistent with Geopsy
+                naming convention when exporting inversion results,
+                default is 0.0000.
+        
+        Returns:
+            `None`, writes file to disk.
+        """
         with open(fname, "w") as f:
             f.write(f"# Layered model {model_num}: value={misfit}\n")
             f.write(f"{self.nlay}\n")
-            for tk, vp, vs, rh in zip(self.tk, self.vp, self.vs, self.rh):
-                f.write(f"{tk} {vp} {vs} {rh}\n")
+            for line in self.txt_repr:
+                f.write(line)
 
     @classmethod
     def from_geopsy(cls, fname):
-        """Alternate constuctor for instantiating a GroundModel
-        from a file exported from Geopsy.
+        """Instantiate a `GroundModel` from a file exported from Geopsy.
 
         Args:
-            fname: Name of file to be read, may contain a relative or
-                full path if desired.
+            fname : fname
+                File name, may contain a relative or the full path.
 
         Returns:
             Initialized GroundModel object.
@@ -399,7 +496,7 @@ class GroundModel():
             Various errors if ground model file is not of the correct 
             format. See example files for details.
         """
-
+        # TODO (jpv): Go by linenumbers to speed up looping procedure.
         with open(fname, "r") as f:
             lines = f.read().splitlines()
         thk, vps, vss, rho = [], [], [], []
@@ -437,6 +534,10 @@ class GroundModel():
         else:
             return True
 
+    def __str__(self):
+        """Define un-official representation of an instantiated object."""
+        return self.txt_repr
+
     def __repr__(self):
         """Define official representation of an instantiated object."""
-        return f"thickness = {self.tk}\nvp = {self.vp}\nvs = {self.vs}\nrh = {self.rh}\n"
+        return f"GroundModel(thickness = {self.tk},\nvp = {self.vp},\nvs = {self.vs},\nrh = {self.rh})\n"

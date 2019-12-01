@@ -11,8 +11,8 @@ class TestDispersionCurve(unittest.TestCase):
         frequency = [1, 2, 3, 4.5, 6.7]
         velocity = [4, 5, 6., 8.5, 2.2]
         test = swipp.DispersionCurve(frequency=frequency, velocity=velocity)
-        self.assertListEqual(frequency, test.frq)
-        self.assertListEqual(velocity, test.vel)
+        self.assertListEqual(frequency, test.frq.tolist())
+        self.assertListEqual(velocity, test.vel.tolist())
 
     def test_wav(self):
         frequency = [1, 1, 2, 2, 5, 5]
@@ -20,7 +20,7 @@ class TestDispersionCurve(unittest.TestCase):
         wavelength = [100, 200, 200, 50, 100, 200]
         mydc = swipp.DispersionCurve(frequency=frequency,
                                      velocity=velocity)
-        self.assertListEqual(mydc.wav, wavelength)
+        self.assertListEqual(wavelength, mydc.wav.tolist())
 
 
 if __name__ == "__main__":

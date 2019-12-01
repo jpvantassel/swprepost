@@ -1,9 +1,8 @@
-"""This file includes a class for developing parameterizations for use
-in the open-source software Dinver, part of the Geopsy suite."""
+"""This file includes the definition of the `Parameterization` class."""
 
 import tarfile as tar
 import os
-from .parameter import Parameter
+from swipp import Parameter
 import warnings
 import logging
 logging.Logger(name=__name__)
@@ -12,13 +11,13 @@ logging.Logger(name=__name__)
 class Parameterization():
     """Class for developing inversion parameterizations.
 
-    `Parameter` is intended to be used for developing various simple
+    This class is intended to be used for developing various
     parameterization files for use in the open-source software Dinver.
-    While parameterizations can be built quickly using this tool, it
-    does have limited functionality to that of the full user interface.
-    And so it is recommended that the user, batch create general
-    parameterizations using this tool, then fine tune any necessary
-    using the Dinver user interface.
+    While parameterizations of various kinds can be built quickly using
+    this tool, it does have limited functionality compared to the full
+    user interface. It is recommended that the user, use this tool to 
+    batch create general parameterizations, then fine tune them if
+    necessary using the Dinver user interface.
 
     Attributes:
         This class contains no public attributes.
@@ -27,87 +26,63 @@ class Parameterization():
     @staticmethod
     def check_parameter(name, val):
         """Check input for the parameter."""
-        logging.info(f"Checking {name}...")
+        if type(val) != Parameter:
+            msg=f"{name} must be of type `Parameter`, not `{type(val)}`."
+            raise TypeError(msg)
 
-        if val.get("type"):
-            if val["type"] not in ["FX", "FTL", "LN", "LNI", "LR", "UserDefined"]:
-                raise ValueError(f"Invalid type in {name}.")
-        else:
-            val.update({"type": "UserDefined"})
+        # logging.info(f"Checking {name}...")
 
-        if not val.get("value"):
-            val.update({"value": "UserDefined"})
+        # if val.get("type"):
+        #     if val["type"] not in ["FX", "FTL", "LN", "LNI", "LR", "UserDefined"]:
+        #         raise ValueError(f"Invalid type in {name}.")
+        # else:
+        #     val.update({"type": "UserDefined"})
 
-        if val.get("thickness"):
-            logging.info(f"{name} is defined with thickness.")
-            if val.get("depth") is not None:
-                raise ValueError(
-                    f"{name} must include either `thickness` or `depth`, not both.")
-            keys = ["thickness"]
-            test_len = len(val["thickness"]["min"])
-        elif val.get("depth"):
-            logging.info(f"{name} is defined with depth.")
-            if val.get("thickness") is not None:
-                raise ValueError(
-                    f"{name} must include either `thickness` or `depth`, not both.")
-            keys = ["depth"]
-            test_len = len(val["depth"]["min"])
-        else:
-            raise ValueError(f"{name} must have `thickness` or `depth`.")
+        # if not val.get("value"):
+        #     val.update({"value": "UserDefined"})
 
-        logging.debug(f"len of parameters for {name} is {val}.")
-        keys.append("par")
-        for key in keys:
-            for value in val[key].values():
-                if test_len != len(value):
-                    raise ValueError(f"Length of {name} is not consistent.")
+        # if val.get("thickness"):
+        #     logging.info(f"{name} is defined with thickness.")
+        #     if val.get("depth") is not None:
+        #         raise ValueError(
+        #             f"{name} must include either `thickness` or `depth`, not both.")
+        #     keys = ["thickness"]
+        #     test_len = len(val["thickness"]["min"])
+        # elif val.get("depth"):
+        #     logging.info(f"{name} is defined with depth.")
+        #     if val.get("thickness") is not None:
+        #         raise ValueError(
+        #             f"{name} must include either `thickness` or `depth`, not both.")
+        #     keys = ["depth"]
+        #     test_len = len(val["depth"]["min"])
+        # else:
+        #     raise ValueError(f"{name} must have `thickness` or `depth`.")
+
+        # logging.debug(f"len of parameters for {name} is {val}.")
+        # keys.append("par")
+        # for key in keys:
+        #     for value in val[key].values():
+        #         if test_len != len(value):
+        #             raise ValueError(f"Length of {name} is not consistent.")
 
     def __init__(self, vp, pr, vs, rh):
-        """ Initialize an instance of the Parameter class.
+        """Initialize an instance of the `Parameterization` class.
 
-        Initialize a parameterization using Shear Wave Velocity (Vs),
-        Compression Wave Velocity (Vp), Poisson's Ratio, Mass Density,
-        and minimum and maximum Wavelengths available.
+        Initialize a `Parameterization` using instantiated `Parameter`
+        objects. 
 
         Args:
-            vp, pr, vs, rh: Are dictionaries of the form:
-                {'thickness':{'min':[min_thicknesses],
-                              'max':[max_thicknesses]
-                             },
-                'depth':{'min':[min_depths],
-                         'max':[max_depths]
-                        },
-                'par':{'min':[par_mins],
-                        'max':[par_maxs],
-                        'rev':[par_revs]
-                      },
-                'type':type
-                'value':value
-                }
-                where either 'thickness' or 'depth' may exist for any
-                given parameterization. 'par' is for the parameter so if
-                this dictionary is for the vs parameter then the entries
-                in 'par' will represent Vs values.
-
-                All quanties represented by brackets are lists of floats
-                or ints with the exception of [par_revs] which is a list
-                of booleans.
-
-                'type' and 'value' are optional keys corresponding to a 
-                string that denotes the type and value of layering used.
-                It should generally not be used as the correct default 
-                value will be assigned if the appropriate constructor is
-                used. Refer to the class methods `from_xlsx` and 
-                `from_min_max` to understand how to use the alternate
-                constructors.
-
+            vp, pr, vs, rh : Parameter
+                Instantitated `Parameter` objects, see :meth: `Parameter
+                <swipp.Parameter.__init__>`.
+                
         Returns:
-            An initialized instance of the Parameter class.
+            An initialized Parameterization object.
 
         Raises:
-            Various exceptions including: TypeError, ValueError,
-                NotImplementedError with messages detailing the problem
-                encountered and how to repair it.
+            TypeError
+                If `vp`, `pr`, `vs`, and `rh` are not instantiated
+                `Parameter` objects.
         """
 
         for name, par in zip(("vp", "pr", "vs", "rh"), [vp, pr, vs, rh]):
@@ -120,193 +95,110 @@ class Parameterization():
 
     @classmethod
     def from_min_max(cls, vp, pr, vs, rh, wv, factor=2):
-        """Intilize an instance of a Parameter class from an estimate of
-        minimum and maximum values of Vp, Poisson's Ratio, Vs, and
-        Mass Density.
+        """Intilize an instance of the Parameterization class from
+        min/max.
+
+        This method is left for backwards compatability.
 
         Args:
-            vp, pr, vs, rh: Are lists of the form [type, value, min,
-                max, bool] where type is discussed below, min and max
-                are the minimum and maximum values which the parameter
-                may assume, and bool indicates whether a non-typical
-                condition (e.g., Vs decreasing with depth) is allowed.
+            vp, pr, vs, rh : list
+                Of the form `[type, value, min, max, bool]` where `type`
+                is discussed below, `min` and `max` are the minimum and
+                maximum values which the parameter may assume, and
+                `bool` indicates whether the non-typical condition is
+                allowed.
 
                 Type:
-                    If type = 'FX' layinering is fixed, the next and only
-                    argument is its value.
+                    If type = 'FX'
+                        Layering is Fixed, the next and only argument
+                        is its value.
+
                     Ex. ['FX', value]
 
-                    If type = 'FTL' layinering follows fixed thickness
-                    layinering, the second argument is then the number of
-                    layiners desired, followed by their thickness, min,
-                    max, and bool for reversal condition.
+                    If type = 'FTL'
+                        Layering follows Fixed Thickness Layinering, the
+                        second argument is the number of layers desired,
+                        followed by their thickness, min, max, and bool.
+
                     Ex. ['FTL', nlay, thickness, min, max, bool]
 
-                    If type = 'LN' layering follows layering by
-                    number, the next argument is number of layers
-                    followed by the min and max for those layers and
-                    bool for reversal condition.
+                    If type = 'LN'
+                        Layering follows Layering by Number, the next
+                        argument is number of layers followed by min,
+                        max, and bool. 
+
                     Ex. ['LN', ln, min, max, reversal]
 
-
-                    If type = 'LNI' layering follows layering by number
-                    with increasing thickness, which is similar to 'LN',
-                    but with the requirement that the thickness of each
-                    layer increases with depth.
+                    If type = 'LNI'
+                        Layering follows Layering by Number with
+                        Increasing thickness, which is similar to 'LN',
+                        but with the requirement that the thickness of
+                        each layer increases with depth.
+                    
                     Ex. ['LNI', ln, fac, min, max, reversal]
 
-
-                    If type = 'LR' layering follows the layering ratio,
-                    the next arguemnt is the layering ratio followed by
-                    the min and max for those layers and bool for the
-                    reversal conditon.
+                    If type = 'LR' 
+                        Layering follows the Layering Ratio, the next
+                        arguement is the layering ratio followed by
+                        min, max, and bool.
+                    
                     Ex. ['LR', lr, min, max, reversal]
 
-                An Example:
+                Example:
 
                     vs = ['LR', 3.0, 100, 300, False]
 
-                Vs is to follow a LR=3.0, with the minimum value of Vs
-                set at 100 m/s and maximum value of Vs set at 300 m/s,
+                Vs follows LR=3.0, with the minimum value of Vs set to
+                100 m/s and the maximum value of Vs set to 300 m/s,
                 with no velocity reversals permitted.
 
-            wv: List of the form [min_wave, max_wave] where min_wave and
-                max_wave are floats or ints idicating the minimum and
-                maximum measured wavelength from the fundemental mode
-                Rayleigh wave disperison.
+            wv : list
+                Container of the form [min_wave, max_wave] where 
+                `min_wave` and `max_wave` are of type `float` or `int`
+                and indicate the minimum and maximum measured wavelength
+                from the fundemental mode Rayleigh wave disperison.
 
-            factor: Float or int by which the maximum wavelength is
-                divided to estimate the maxium depth of profiling.
+            factor : [float, int], optional
+                Factor by which the maximum wavelength is
+                divided to estimate the maxium depth of profiling,
+                default is 2.
 
         Returns:
-            An initialized instance of the Parameter class.
+            Instantiated `Paramterization` object.
 
         Raises:
-            Various exceptions including: TypeError, ValueError,
-                NotImplementedError with messages detailing the problem
-                encountered and how to repair it.
+            Various:
+                If entered values do not comply with the instructions
+                listed above.
         """
+        
         input_arguements = {"vs": vs, "vp": vp, "pr": pr, "rh": rh}
         valid_options = ('FX', 'FTL', 'LN', 'LNI', 'LR')
         for key, value in input_arguements.items():
             # Ensure entry is a list
-            if type(value) not in (list,):
-                raise TypeError("Entry for argument {} must be a list, not {}."
-                                .format(key, type(value)))
+            if type(value) != list:
+                msg = f"Entry for argument {key} must be a list, not {type(value)}."
+                raise TypeError(msg)
 
             # Ensure the first entry of that list is a valid option
             if value[0] not in valid_options:
-                raise ValueError("{} entered for {} not recognized use {}."
-                                 .format(value[0], key, valid_options))
+                msg = f"{value[0]} entered for {key} not recognized use {valid_options}."
+                raise ValueError(msg)
 
-            # Fixed value must be positve integer or float
-            if value[0] == 'FX':
-                if type(value[1]) not in (int, float):
-                    raise TypeError("Fixed value must be int or float. Not {}."
-                                    .format(type(value[1])))
-                if value[1] <= 0:
-                    raise ValueError("Fixed value must be postive.")
-
-            # Number layers must be an int where thickness is pos int or float.
-            elif value[0] == 'FTL':
-                pass
-            # Number of layers is an integer greater than zero
-            elif value[0] == 'LN':
-                if type(value[1]) not in (int,):
-                    raise TypeError("Number of layers must be integer.")
-                if value[1] <= 0:
-                    raise ValueError("Number of layers must be postive.")
-
-            # Number of layers is integer and factor positive int or float > 1.
-            elif value[0] == 'LNI':
-                if type(value[1]) not in (int,):
-                    raise TypeError(
-                        "Number of layers for {} must be integer. Not {}."
-                        .format(key, type(value[1])))
-                if value[1] < 2:
-                    raise ValueError("Number of layers for {} must be >= 2."
-                                     .format(key))
-                if type(value[2]) not in (int, float):
-                    raise TypeError(
-                        "layer factor for {} must be integer or float. Not {}."
-                        .format(key, type(value[2])))
-                if value[2] <= 1:
-                    raise ValueError("layer factor {} must be greater than 1."
-                                     .format(key))
-
-            # layering ratio is integer or float greater than one.
-            elif value[0] == 'LR':
-                if type(value[1]) not in (int, float):
-                    raise TypeError(
-                        "layering ratio must be integer or float.")
-                if value[1] <= 1:
-                    raise ValueError(
-                        "layering ratio must be greater than 1.")
+            if value[0] == "FX":
+                input_arguements[key] = Parameter.from_fx(value[1])
+            elif value[0] == "FTL":
+                input_arguements[key] = Parameter.from_ftl(*value[1:])
+            elif value[0] == "LN":
+                input_arguements[key] = Parameter.from_ln(*wv, *value[1:], False)
+            elif value[0] == "LNI":
+                input_arguements[key] = Parameter.from_ln(*wv, *value[2:], True, value[2])
+            elif value[0] == "LR":
+                input_arguements[key] = Parameter.from_ln(*wv, *value[1:5])
             else:
-                raise NotImplementedError(
-                    "This functionality is not yet implemented.")
+                raise NotImplementedError
 
-        vp_out, pr_out, vs_out, rh_out = {}, {}, {}, {}
-        pars_out = [vp_out, pr_out, vs_out, rh_out]
-        pars_in = [vp, pr, vs, rh]
-        for par_in, par_out in zip(pars_in, pars_out):
-            if par_in[0] == "FX":
-                par_out.update({"type": "FX",
-                                "value": "FX",
-                                "depth": {"min": [1122],
-                                          "max": [1994]},
-                                "par": {"min": [par_in[1]],
-                                        "max": [par_in[1]],
-                                        "rev": [False]}})
-
-            elif par_in[0] == "FTL":
-                min_thk, max_thk = cls._set_depth_ftl(wv,
-                                                      par_in[1],
-                                                      par_in[2])
-                par_out.update({"type": "FTL",
-                                "value": str(par_in[1]),
-                                "thickness": {"min": min_thk,
-                                              "max": max_thk},
-                                "par": {"min": [par_in[3]]*par_in[1],
-                                        "max": [par_in[4]]*par_in[1],
-                                        "rev": [par_in[5]]*par_in[1]}})
-            elif par_in[0] == "LN":
-                min_thk, max_thk = cls._set_depth_ln(wv,
-                                                     par_in[1],
-                                                     factor,
-                                                     increasing=False)
-                par_out.update({"type": "LN",
-                                "value": str(par_in[1]),
-                                "thickness": {"min": min_thk,
-                                              "max": max_thk},
-                                "par": {"min": [par_in[2]]*par_in[1],
-                                        "max": [par_in[3]]*par_in[1],
-                                        "rev": [par_in[4]]*par_in[1]}})
-            elif par_in[0] == "LNI":
-                min_thk, max_thk = cls._set_depth_ln(wv,
-                                                     par_in[1],
-                                                     factor,
-                                                     increasing=True)
-                par_out.update({"type": "LNI",
-                                "value": f"{par_in[1]} {par_in[2]}",
-                                "thickness": {"min": min_thk,
-                                              "max": max_thk},
-                                "par": {"min": [par_in[3]]*par_in[1],
-                                        "max": [par_in[4]]*par_in[1],
-                                        "rev": [par_in[5]]*par_in[1]}})
-            elif par_in[0] == "LR":
-                min_dpt, max_dpt = cls._depth_lr(wv, par_in[1], factor)
-                par_out.update({"type": "LR",
-                                "value": str(par_in[1]),
-                                "depth": {"min": min_dpt,
-                                          "max": max_dpt},
-                                "par": {"min": [par_in[2]]*len(min_dpt),
-                                        "max": [par_in[3]]*len(min_dpt),
-                                        "rev": [par_in[4]]*len(min_dpt)}})
-            else:
-                raise NameError("Layering '{}' not found.".format(par_in[0]))
-        return cls(vp_out, pr_out, vs_out, rh_out)
-
+    # TODO (jpv): Check this method
     def write_to_file(self, fname, version='2.9.0'):
         """Write paramterization to .param that can be read by DINVER.
 

@@ -11,7 +11,7 @@ full_path = __file__[:-len(file_name)]
 
 class TestDispersionSuite(unittest.TestCase):
     def test_check_input(self):
-        # DispersionSuite to be instantiated with DispersionSet object.
+        # DispersionSuite to be instantiated with DispersionSet object only.
         for test in [[1, 2, 3], (1, 2, 3), True, "DC"]:
             self.assertRaises(
                 TypeError, swipp.DispersionSuite, test, "Test")
@@ -24,8 +24,10 @@ class TestDispersionSuite(unittest.TestCase):
         dc_set = swipp.DispersionSet(identifier="Test", misfit=None,
                                      rayleigh={0: dc}, love=None)
         mysuite = swipp.DispersionSuite(dispersionset=dc_set)
-        self.assertListEqual(frequency, mysuite.sets[0].rayleigh[0].frq)
-        self.assertListEqual(velocity, mysuite.sets[0].rayleigh[0].vel)
+        self.assertListEqual(frequency,
+                             mysuite.sets[0].rayleigh[0].frq.tolist())
+        self.assertListEqual(velocity,
+                             mysuite.sets[0].rayleigh[0].vel.tolist())
 
     def test_append(self):
         frequency = [1, 2, 3]
@@ -38,14 +40,15 @@ class TestDispersionSuite(unittest.TestCase):
                                      rayleigh={0: dc}, love=None)
         mysuite.append(dispersionset=dc_set)
         for c_set in mysuite.sets:
-            self.assertListEqual(frequency, c_set.rayleigh[0].frq)
-            self.assertListEqual(velocity, c_set.rayleigh[0].vel)
+            self.assertListEqual(frequency, c_set.rayleigh[0].frq.tolist())
+            self.assertListEqual(velocity, c_set.rayleigh[0].vel.tolist())
         self.assertListEqual(["Test", "Test1"], mysuite.ids)
         self.assertListEqual([None, None], mysuite.misfits)
 
     def test_from_geopsy(self):
         # Two Sets with Two Rayleigh Modes Each
-        mysuite = swipp.DispersionSuite.from_geopsy(fname=full_path+"data/test_dc_mod2_ray2_lov0_shrt.txt")
+        mysuite = swipp.DispersionSuite.from_geopsy(
+            fname=full_path+"data/test_dc_mod2_ray2_lov0_shrt.txt")
 
         true_rays_frq = [[[0.15, 64], [0.479030947360446, 68]],
                          [[0.1, 61.5], [0.479030947360446, 62.2]]]
@@ -60,12 +63,12 @@ class TestDispersionSuite(unittest.TestCase):
         for set_num, c_set in enumerate(mysuite.sets):
             for mode_num, (ray_frq, ray_vel) in enumerate(zip(true_rays_frq[set_num],
                                                               true_rays_vel[set_num])):
-                self.assertListEqual(c_set.rayleigh[mode_num].frq, ray_frq)
-                self.assertListEqual(c_set.rayleigh[mode_num].vel, ray_vel)
+                self.assertListEqual(ray_frq, c_set.rayleigh[mode_num].frq.tolist())
+                self.assertListEqual(ray_vel, c_set.rayleigh[mode_num].vel.tolist())
         self.assertListEqual(mysuite.misfits, true_msfts)
         self.assertListEqual(mysuite.ids, true_ids)
 
-    #     # Two Sets with Two Love Modes Each
+        # Two Sets with Two Love Modes Each
         mysuite = swipp.DispersionSuite.from_geopsy(
             fname=full_path+"data/test_dc_mod2_ray0_lov2_shrt.txt")
 
@@ -82,8 +85,8 @@ class TestDispersionSuite(unittest.TestCase):
         for set_num, c_set in enumerate(mysuite.sets):
             for mode_num, (lov_frq, lov_vel) in enumerate(zip(true_lovs_frq[set_num],
                                                               true_lovs_vel[set_num])):
-                self.assertListEqual(c_set.love[mode_num].frq, lov_frq)
-                self.assertListEqual(c_set.love[mode_num].vel, lov_vel)
+                self.assertListEqual(lov_frq, c_set.love[mode_num].frq.tolist())
+                self.assertListEqual(lov_vel, c_set.love[mode_num].vel.tolist())
         self.assertListEqual(mysuite.misfits, true_msfts)
         self.assertListEqual(mysuite.ids, true_ids)
 
@@ -107,12 +110,12 @@ class TestDispersionSuite(unittest.TestCase):
         for set_num, c_set in enumerate(mysuite.sets):
             for mode_num, (ray_frq, ray_vel) in enumerate(zip(true_rays_frq[set_num],
                                                               true_rays_vel[set_num])):
-                self.assertListEqual(c_set.rayleigh[mode_num].frq, ray_frq)
-                self.assertListEqual(c_set.rayleigh[mode_num].vel, ray_vel)
+                self.assertListEqual(ray_frq, c_set.rayleigh[mode_num].frq.tolist())
+                self.assertListEqual(ray_vel, c_set.rayleigh[mode_num].vel.tolist())
             for mode_num, (lov_frq, lov_vel) in enumerate(zip(true_lovs_frq[set_num],
                                                               true_lovs_vel[set_num])):
-                self.assertListEqual(c_set.love[mode_num].frq, lov_frq)
-                self.assertListEqual(c_set.love[mode_num].vel, lov_vel)
+                self.assertListEqual(lov_frq, c_set.love[mode_num].frq.tolist())
+                self.assertListEqual(lov_vel, c_set.love[mode_num].vel.tolist())
         self.assertListEqual(mysuite.misfits, true_msfts)
         self.assertListEqual(mysuite.ids, true_ids)
 
@@ -140,12 +143,12 @@ class TestDispersionSuite(unittest.TestCase):
         for set_num, c_set in enumerate(mysuite.sets):
             for mode_num, (ray_frq, ray_vel) in enumerate(zip(true_rays_frq[set_num],
                                                               true_rays_vel[set_num])):
-                self.assertListEqual(c_set.rayleigh[mode_num].frq, ray_frq)
-                self.assertListEqual(c_set.rayleigh[mode_num].vel, ray_vel)
+                self.assertListEqual(ray_frq, c_set.rayleigh[mode_num].frq.tolist())
+                self.assertListEqual(ray_vel, c_set.rayleigh[mode_num].vel.tolist())
             for mode_num, (lov_frq, lov_vel) in enumerate(zip(true_lovs_frq[set_num],
                                                               true_lovs_vel[set_num])):
-                self.assertListEqual(c_set.love[mode_num].frq, lov_frq)
-                self.assertListEqual(c_set.love[mode_num].vel, lov_vel)
+                self.assertListEqual(lov_frq, c_set.love[mode_num].frq.tolist())
+                self.assertListEqual(lov_vel, c_set.love[mode_num].vel.tolist())
         self.assertListEqual(mysuite.misfits, true_msfts)
         self.assertListEqual(mysuite.ids, true_ids)
 
@@ -191,10 +194,10 @@ class TestDispersionSuite(unittest.TestCase):
 
         pick_id = mysuite.ids.index(picked_model)
         myset = mysuite.sets[pick_id]
-        self.assertListEqual(myset.rayleigh[1].frq[:16], known_freq_r1)
+        self.assertListEqual(known_freq_r1, myset.rayleigh[1].frq[:16].tolist())
         known_vel_r1 = [1/p for p in known_slow_r1]
-        self.assertListEqual(myset.rayleigh[1].vel[:16], known_vel_r1)
-        self.assertEqual(mysuite.misfits[pick_id], known_misfit)
+        self.assertListEqual(known_vel_r1, myset.rayleigh[1].vel[:16].tolist())
+        self.assertEqual(known_misfit, mysuite.misfits[pick_id])
 
 
 if __name__ == "__main__":

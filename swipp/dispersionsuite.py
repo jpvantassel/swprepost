@@ -1,6 +1,4 @@
-"""This file contains a class DispersionSuite for handling suites of
-instantiated DispersionSet objects.
-"""
+"""This file contains the class definintion for `DispersionSuite`."""
 
 import re
 from swipp import Suite, DispersionCurve, DispersionSet
@@ -9,47 +7,56 @@ logging.Logger(name=__name__)
 
 
 class DispersionSuite(Suite):
-    """Class for handling suites of instantiated DispersionSet objects.
+    """Class for handling suites of instantiated `DispersionSet`
+    objects.
 
     Attributes:
-
+        sets : list
+            Container for instantiated `DispersionSet` objects.
+        
+        
     """
-    @classmethod
-    def check_input(cls, curveset, set_type):
-        """Check inputs comply with the required format."""
+    @staticmethod
+    def check_input(curveset, set_type):
+        """Check inputs comply with the required format.
+        
+        Specifically:
+            1. `curveset` is of type `set_type`.
+        """
         if not isinstance(curveset, set_type):
-            raise TypeError(
-                f"Must be an instance of {type(set_type)}, not {type(curveset)}.")
+            msg = f"Must be an instance of {type(set_type)}, not {type(curveset)}."
+            raise TypeError(msg)
 
     def __init__(self, dispersionset):
-        """Initialize a DispersionSuite object, from a DispersionSet
+        """Initialize a `DispersionSuite` object, from a `DispersionSet`
         object.
 
         Args:
-            dispersionset: Instantiated DispersionSet object.
+            dispersionset : DispersionSet
+                Initialized `DispersionSet` object.
 
         Returns:
             Instantiated DispersionSuite object.
 
         Raises:
-            This method raises no exceptions.
+            TypeError:
+                If `dispersionset` is not of type `DispersionSet`.
         """
         self.check_input(dispersionset, DispersionSet)
         self.sets = [dispersionset]
 
     def append(self, dispersionset):
-        """Append an instantiated DispersionSet object to an existing
-        DispersionSuite object.
+        """Append `DispersionSet` object to `DispersionSuite`.
 
         Args:
-            Same as __init__, refer to that documentation.
+            Refer to meth: `__init__ <DispersionSuite.__init__>`.
 
         Returns:
-            This method returns no value, instead updates the state of
-            the object upon which it was called.
+            `None`, updates the attribute `sets`.
 
         Raises:
-            This method raises no exceptions.
+            TypeError:
+                If `dispersionset` is not of type `DispersionSet`.
         """
         self.check_input(dispersionset, DispersionSet)
         self.sets.append(dispersionset)
@@ -70,24 +77,21 @@ class DispersionSuite(Suite):
 
     @classmethod
     def from_geopsy(cls, fname):
-        """Create an instance of the DispersionSuite class from a text
-        file created by the geopsy command `gpdc`.
+        """Create `DispersionSuite` from a text file created by the 
+        Geopsy command `gpdc`.
 
         Args:
-            fname: Name of file to be read, may contain a relative or
-                full path if desired.
-            ndc: Number of dispersion curve sets to extract. Default is
-                None and will extract all available curve sets.
-            nrayleigh: Number of rayleigh modes. Default is None and will
-                extract all available mode.
-            nlove: Number of love modes. Default is None and will
-                extract all available modes.
+            fname : str
+                Name of file to be read, may be a relative or full path.
+            ndc : int, optional
+                Number of sets to extract, default is `None` so all 
+                available sets will be extracted.
+            nrayleigh, nlove : int, optional
+                Number of Rayleigh and Love modes respectively, default
+                is `None` so all available modes will be extracted.
 
         Returns:
-            An instance of the DipersionSuite class.
-
-        Raises:
-            This method raises no exceptions.
+            Instantiated `DispersionSuite` object.
         """
         with open(fname, "r") as f:
             lines = f.read().splitlines()

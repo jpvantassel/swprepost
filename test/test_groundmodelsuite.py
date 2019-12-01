@@ -43,7 +43,7 @@ class TestGroundModelSuite(unittest.TestCase):
             self.assertListEqual(mysuite.gms[mod_num].vp, vps)
             self.assertListEqual(mysuite.gms[mod_num].rh, rho)
 
-    def test_fromgeopsy(self):
+    def test_from_geopsy(self):
         # # Single Model
         true_tk = [0.68, 9.69, 0.018, 22.8, 43.9, 576.4, 0]
         true_vp = [196.7, 295.8, 1600.2, 1600.2, 1600.2, 4232.5, 4232.5]

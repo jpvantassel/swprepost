@@ -1,39 +1,35 @@
-"""This file contains a derived class DispersionCurve for handling a 
-dispersion curve object.
-"""
+"""This file contains a derived class DispersionCurve."""
 
 import re
 from swipp import Curve
+import numpy as np
 
 
 class DispersionCurve(Curve):
-    """Class for handling a dispersion curve for a particualr 
-    velocity model.
+    """Class for a dispersion curve from a particualr velocity model.
 
     Attributes:
-        frequency: List of floats or ints denoting the dispersion 
-            curve's frequency values.
-        velocity: List of floats or ints denoting the dispersion curve's
-            velocity values (one per velocity).
+        frequency : ndarray
+            Vector of the dispersion curve's frequency values.
+        velocity : ndarray
+            Vector of the dispersion curve's velocity values, one per
+            frequency.
     """
 
     def __init__(self, frequency, velocity):
-        """Initialize a DispersionCurve object, from a set of dispersion
-        data.
+        """Initialize a `DispersionCurve` object, from dispersion data.
 
         Args:
-            frequency: List of floats or ints denoting the dispersion 
-                curve's frequency values.
-            velocity: List of floats or ints denoting the dispersion 
-                curve's velocity values (one per velocity).
+            frequency : ndarray
+                Vector of the dispersion curve's frequency values.
+            velocity : ndarray
+                Vector of the dispersion curve's velocity values, one
+                per velocity.
 
         Returns:
-            Instantiated DispersionCurve object.
-
-        Raises:
-            This method raises no exceptions.
+            Initialized `DispersionCurve` object.
         """
-        self.check_input(x=frequency, y=velocity, name_y="velocity")
+        frequency, velocity = self.check_input(x=frequency, y=velocity)
         super().__init__(x=frequency, y=velocity)
 
     @property
@@ -46,4 +42,8 @@ class DispersionCurve(Curve):
 
     @property
     def wav(self):
-        return [v/f for v, f in zip(self._y, self._x)]
+        return self._y/self._x
+    
+    @property
+    def slo(self):
+        return 1/self._y

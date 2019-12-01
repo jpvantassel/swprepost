@@ -1,43 +1,51 @@
-"""This file contains an abstract base class Curve for which specific
-instances are derived.
-"""
+"""This file contains an abstract base class Curve."""
 
 import copy
+import numpy as np
 
 
 class Curve():
 
-    @classmethod
-    def check_types(cls, x, y, name_x="velocity", name_y="frequency"):
-        if (type(x) != list) or (type(y) != list):
-            msg = f"'{name_x}' and '{name_y}' must be of type list, not {type(x)} and {type(y)}."
-            raise TypeError(msg)
-        if len(x) != len(y):
-            msg = f"'{name_x}' and '{name_y}' must be of the same length, currently 'len(x)={len(x)}' and 'len(y)={len(y)}', respectively."
+    @staticmethod
+    def check_types(x, y, name_x="velocity", name_y="frequency"):
+
+        for value, name in zip([x, y], [name_x, name_y]):
+            if type(value) not in [np.ndarray, list, tuple]:
+                msg = f"'{name}' must be an `ndarray`, not {type(value)}."
+                raise TypeError(msg)
+        
+        # TODO (jpv): Find a cleaner way to perform type conversion.
+        if type(x) in [list, tuple]:
+            x = np.array(x)
+        if type(y) in [list, tuple]:
+            y = np.array(y)
+
+        if x.size != y.size:
+            msg = f"'{name_x}' and '{name_y}' must be the same size, currently {x.size} and {y.size}, respectively."
             raise IndexError(msg)
 
-        for val in x+y:
-            if type(val) not in [int, float]:
-                msg = f"'{name_x}' and '{name_y}' must be lists of floats or ints, not {type(val)}."
-                raise TypeError(msg)
+        return (x, y)
 
-    @classmethod
-    def check_values(cls, x, y, name_x="frequency", name_y="velocity"):
-        for val in x+y:
-            if val <= 0:
-                msg = f"'{name_x}' and '{name_y}' must be >= 0, bad value={val}."
-                raise ValueError(msg)
+    @staticmethod
+    def check_values(x, y, name_x="frequency", name_y="velocity"):
+        for par in [x, y]:
+            for val in par:
+                if val <= 0:
+                    msg = f"`{name_x}` and `{name_y}` must be >= 0, bad value={val}."
+                    raise ValueError(msg)
 
     @classmethod
     def check_input(cls, x, y, name_x="frequency", name_y="velocity"):
         """Check inputs comply with the required formatting."""
-        cls.check_types(x, y, name_x, name_y)
+        x, y = cls.check_types(x, y, name_x, name_y)
         cls.check_values(x, y, name_x, name_y)
+        return (x,y)
 
     def __init__(self, x, y):
         """Intialize a curve object."""
         self._x = copy.deepcopy(x)
         self._y = copy.deepcopy(y)
 
+    # TODO (jpv): Relocate resample.
     def resample(self, min, max, npts):
         pass

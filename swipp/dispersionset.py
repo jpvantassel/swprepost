@@ -1,60 +1,54 @@
-"""This file contains a class DispersionSet for handling sets of
-dispersion curves which belong to a common velocity model.
-"""
+"""This file contains the definition of the class `DispersionSet`."""
 
 import re
 import copy
 from swipp import CurveSet, DispersionCurve
-# TODO (jpv): Refactor DispersionSuite.from_geopsy so that it calls
-# a DispersionSet.from_geopsy rather than the other way around.
-
 
 class DispersionSet(CurveSet):
-    """Class for handling sets of DispersionCurve objects which all
-    belong to a common velocity model.
+    """Class for handling sets of 
+    :meth `DispersionCurve <swipp.DispersionCurve>`
+    objects which all belong to a common velocity model.
 
     Attributes:
-        rayleigh: Dictionary of the form:
-                {0:disp_curve_obj0,
-                 1:disp_curve_obj1,
-                ...
-                 N:disp_curve_objN}
-            where each key, 0, 1, and N in this case, represent the
-            rayleigh wave mode number and disp_curve_obj the
+        rayleigh, love : dict
+            Container for `DispersionCurve` objects, of the form:
+            {0:disp_curve_obj0, 1:disp_curve_obj1, ... N:disp_curve_objN}
+            where each key is the mode number and the value is the
             corresponding instantiated DispersionCurve object.
-        love: Same as rayleigh but for the love-wave modes.
-        
     """
 
     @classmethod
     def check_input_local(cls, identifier, misfit):
-        """Check inputs comply with the required format."""
+        """Check inputs comply with the required format.
+
+        Specfically:
+            1. `identifier` is a `str`.
+            2. `misfit` is an `int` or `float`.
+        """
         if not isinstance(identifier, str):
-            raise TypeError(
-                f"'{identifier}' must be of type str, not {type(identifier)}.")
+            msg = f"'{identifier}' must be `str`, not {type(identifier)}."
+            raise TypeError(msg)
         if misfit != None:
             if type(misfit) not in [int, float]:
-                raise ValueError(
-                    f"'misfit' must be of type int or float, not {type(misfit)}.")
-
+                msg = f"`misfit` must be `int` or `float`, not {type(misfit)}."
+                raise TypeError(msg)
 
     def __init__(self, identifier, misfit=None, rayleigh=None, love=None,):
-        """Initializes a DispersionSet object from a dictionary
-        containing instantiated DispersionCurve objects.
+        """Initialize a `DispersionSet` object from a `dict` of 
+        instantiated `DispersionCurve` objects.
 
         Args:
-            identifier: String uniquely identifying the DispersionSet.
-            misfit: Float or int denoting the DispersionSet's misfit.
-            rayleigh: Dictionary of the form:
-                    {0:disp_curve_obj0,
-                     1:disp_curve_obj1,
-                    ...
-                     N:disp_curve_objN}
-                where each key, 0, 1, and N in this case, represent the
-                rayleigh wave mode number and disp_curve_obj the
-                corresponding instantiated DispersionCurve object.
-            love: Same as rayleigh but for the love-wave modes.
-
+            identifier : str
+                Unique identifier of the `DispersionSet`.
+            misfit : float, int
+                `DispersionSet` misfit.
+            rayleigh, love : dict
+                Container for `DispersionCurve` objects, of the form:
+                {0:disp_curve_obj0,
+                 1:disp_curve_obj1, 
+                 ... N:disp_curve_objN}
+                where each key is the mode number and the value is the
+                corresponding `DispersionCurve` object.
         """
         self.check_input([rayleigh, love], DispersionCurve)
         self.check_input_local(identifier, misfit)
@@ -63,24 +57,23 @@ class DispersionSet(CurveSet):
         self.identifier = identifier
         self.misfit = misfit
 
+    # TODO (jpv): Refactor DispersionSuite.from_geopsy so that it calls
+    # DispersionSet.from_geopsy.
+
     @classmethod
     def from_geopsy(cls, fname):
-        """Create an instance of the DispersionSet class from a text
-        file created by the geopsy command `gpdc`.
+        """Create an instance of `DispersionSet` from a text file
+        created by the Geopsy command `gpdc`.
 
         Args:
-            fname: Name of file to be read, may contain a relative or
-                full path if desired.
-            nrayleigh: Number of rayleigh modes. Default is None and will
-                extract all available mode.
-            nlove: Number of love modes. Default is None and will
-                extract all available modes.
+            fname : str
+                Name of file to be read, may be a relative or full path.
+            nrayleigh, nlove : int, optional
+                Number of Rayleigh and Love modes respectively, default
+                is `None` so all available modes will be extracted.
 
         Returns:
-            An instance of the DipersionSet class.
-
-        Raises:
-            This method raises no exceptions.
+            Instantiated `DispersionSet` object.
         """
         with open(fname, "r") as f:
             lines = f.read().splitlines()

@@ -1,5 +1,4 @@
-"""This file contains an abstract class CurveSuite for handling suites 
-of instantiated CurveSet objects."""
+"""This file contains an abstract class CurveSuite."""
 
 import re
 import logging

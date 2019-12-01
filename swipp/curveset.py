@@ -1,56 +1,41 @@
-"""This file contains an abstract class CurveSet for handling sets of
-curves which share some common source."""
-
+"""This file contains an abstract class `CurveSet`."""
 
 class CurveSet():
     """Abstract class to handle sets of `Curve` objects.
 
     Attributes:
-        rayleigh: Dictionary of the form:
-                {0:disp_curve_obj0,
-                 1:disp_curve_obj1,
-                ...
-                 N:disp_curve_objN}
-            where each key, 0, 1, and N in this case, represent the
-            rayleigh wave mode number and disp_curve_obj the
-            corresponding instantiated DispersionCurve object.
-        love: Same as rayleigh but for the love-wave modes.
     """
 
     @classmethod
     def check_input(cls, curvesets, valid_type):
-        """Check that arguements 'rayleigh' and 'love' comply with the
-        proper formating.
+        """Check that the `curvesets` each comply with the proper
+        formating.
+
+        Specifically:
+            1. Assume `curvesets` is an iterable container of `dicts`.
+            2. Check that all values of those `dicts` are of type 
+            `valid_type`.
+            3. If the entry in `curvesets` is not `dict`, check if it is
+            `None`. In this case there must be at least one non-None
+            entry in `curvesets`.
+            4. If entry is not `dict` or `None` raise `TypeError`.
         """
         none_count = 0
         for curveset in curvesets:
             try:
                 for key, value in curveset.items():
                     if not isinstance(value, valid_type):
-                        raise TypeError(
-                            f"{key} must be type {valid_type}, not {type(value)}.")
+                        msg =f"{key} must be a {valid_type}, not {type(value)}."
+                        raise TypeError(msg)
             except AttributeError:
-                if curveset == None:
+                if curveset is None:
                     none_count += 1
                 else:
-                    raise TypeError(f"{key} must be dict, not {type(value)}.")
+                    msg = f"must be `dict`, not {type(curveset)}."
+                    raise TypeError(msg)
         if none_count == len(curvesets):
-            raise TypeError("All values cannot be None.")
+            raise TypeError("All values cannot be `None`.")
 
     def __init__(self):
-        """Initializes a CurveSet object from a dictionary or list of 
-        dictionaries containing instantiated derived Curve objects.
-
-        Args:
-            rayleigh: Dictionary of the form:
-                    {0:disp_curve_obj0,
-                     1:disp_curve_obj1,
-                    ...
-                     N:disp_curve_objN}
-                where each key, 0, 1, and N in this case, represent the
-                rayleigh wave mode number and disp_curve_obj the
-                corresponding instantiated DispersionCurve object.
-            love: Same as rayleigh but for the love-wave modes.
-        """
         pass
     
