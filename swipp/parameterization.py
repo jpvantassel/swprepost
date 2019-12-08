@@ -326,3 +326,12 @@ class Parameterization():
         with tar.open(fname, "w:gz") as f:
             f.add("contents.xml")
         os.remove("contents.xml")
+
+    def __eq__(self, other):
+        pars_a = [self.vp, self.pr, self.vs, self.rh]
+        pars_b = [other.vp, other.pr, other.vs, other.rh]
+        
+        for par_a, par_b in zip(pars_a, pars_b):
+            if par_a != par_b:
+                return False
+        return True

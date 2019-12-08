@@ -21,7 +21,8 @@ class GroundModel():
         vs:
         rh:
     """
-
+    # TODO (jpv): Complete documentation.
+    
     @staticmethod
     def check_input_type(values, names):
         """Check `values` are of the appropriate type.
@@ -322,6 +323,10 @@ class GroundModel():
         # Half-space
         disc_par += [par_to_disc[c_lay+1]]*(len(disc_depth)-len(disc_par))
 
+        # TODO (jpv): Properly account for the fact that the entire profile
+        # may not be discretized (i.e., for loop should not extend to self.tk[:-1])
+        disc_par = disc_par[:len(disc_depth)]
+        
         return (disc_depth, disc_par)
 
     def simplify(self, param='vs'):
@@ -477,7 +482,6 @@ class GroundModel():
         """
         with open(fname, "w") as f:
             f.write(f"# Layered model {model_num}: value={misfit}\n")
-            f.write(f"{self.nlay}\n")
             for line in self.txt_repr:
                 f.write(line)
 

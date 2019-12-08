@@ -7,9 +7,9 @@ import numpy as np
 class Curve():
 
     @staticmethod
-    def check_types(x, y, name_x="velocity", name_y="frequency"):
+    def check_types(x, y):
 
-        for value, name in zip([x, y], [name_x, name_y]):
+        for value, name in zip([x, y], ["abscissa", "ordinate"]):
             if type(value) not in [np.ndarray, list, tuple]:
                 msg = f"'{name}' must be an `ndarray`, not {type(value)}."
                 raise TypeError(msg)
@@ -21,7 +21,7 @@ class Curve():
             y = np.array(y)
 
         if x.size != y.size:
-            msg = f"'{name_x}' and '{name_y}' must be the same size, currently {x.size} and {y.size}, respectively."
+            msg = f"Abscissa and ordinate must be the same size, currently {x.size} and {y.size}, respectively."
             raise IndexError(msg)
 
         return (x, y)
@@ -35,14 +35,16 @@ class Curve():
                     raise ValueError(msg)
 
     @classmethod
-    def check_input(cls, x, y, name_x="frequency", name_y="velocity"):
+    def check_input(cls, x, y):
         """Check inputs comply with the required formatting."""
-        x, y = cls.check_types(x, y, name_x, name_y)
-        cls.check_values(x, y, name_x, name_y)
+        x, y = cls.check_types(x, y)
+        # TODO (jpv): Introduce option check
+        # cls.check_values(x, y, name_x, name_y)
         return (x,y)
 
     def __init__(self, x, y):
         """Intialize a curve object."""
+        x, y = self.check_input(x, y)
         self._x = copy.deepcopy(x)
         self._y = copy.deepcopy(y)
 

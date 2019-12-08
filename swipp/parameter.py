@@ -256,8 +256,8 @@ class Parameter():
         if type(nlayers) != int:
             msg = f"`nlayers` must be `int`. Not {type(nlayers)}."
             raise TypeError(msg)
-        if nlayers < 2:
-            raise ValueError("Number of layers for must be >= 2.")
+        if nlayers < 1:
+            raise ValueError("Number of layers for must be >= 1.")
 
         depth_factor = Parameter.check_depth_factor(depth_factor)
 
@@ -433,3 +433,15 @@ class Parameter():
         obj = cls("LR", lay_min, lay_max, par_min, par_max, par_rev)
         obj.par_value = lr
         return obj
+
+    def __eq__(self, other):
+        sub_pars_a = [self.lay_min, self.lay_max, self.par_min, self.par_max, self.par_rev]
+        sub_pars_b = [other.lay_min, other.lay_max, other.par_min, other.par_max, other.par_rev]
+        for sub_par_a, sub_par_b in zip(sub_pars_a, sub_pars_b):
+            if len(sub_par_a) != len(sub_par_b):
+                return False
+            else:
+                for val_a, val_b in zip(sub_par_a, sub_par_b):
+                    if val_a != val_b:
+                        return False
+        return True
