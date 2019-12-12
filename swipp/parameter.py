@@ -1,6 +1,7 @@
 """This file includes the defnition of the Parameter class."""
 
 import warnings
+import matplotlib.pyplot as plt
 import logging
 logging.Logger(name=__name__)
 
@@ -9,6 +10,7 @@ class Parameter():
     """Class for defining the bounds of an inversion parameter.
 
     Attributes:
+    # TODO (jpv): Update par_types.
         par_type : {'FX', 'FTL', 'LN', 'LNI' 'LR', 'CT', 'CD'}
             String to denote how the layering was defined.
         par_value,  par_add_value : [int, float]
@@ -225,7 +227,7 @@ class Parameter():
         return obj
 
     @staticmethod
-    def depth_ln(wmin, wmax, nlayers, depth_factor=2, increasing=False):
+    def depth_ln_thickness(wmin, wmax, nlayers, depth_factor=2, increasing=False):
         """Calculate the minimum and maximum thickness for each layer 
         using Layering by Number.
 
@@ -267,7 +269,7 @@ class Parameter():
         return ([minthickness]*nlayers, [maxthickness]*nlayers)
 
     @classmethod
-    def from_ln(cls, wmin, wmax, nlayers, par_min, par_max, par_rev, depth_factor=2, increasing=False, increasing_factor=1.2):
+    def from_ln_thickness(cls, wmin, wmax, nlayers, par_min, par_max, par_rev, depth_factor=2, increasing=False, increasing_factor=1.2):
         """Alternate constructor to instantiate a `Parameter` using LN
         or LNI.
 
@@ -310,15 +312,95 @@ class Parameter():
             if increasing_factor <= 1:
                 raise ValueError("`increasing_factor` must be greater than 1.")
 
-        lay_min, lay_max = cls.depth_ln(wmin, wmax, nlayers,
-                                        depth_factor, increasing)
+        lay_min, lay_max = cls.depth_ln_thickness(wmin, wmax, nlayers,
+                                                  depth_factor, increasing)
         par_min, par_max, par_rev = cls.min_max_rev(nlayers,
                                                     par_min, par_max, par_rev)
-        par_type = "LNI" if increasing else "LN"
+        par_type = "LNI" if increasing else "LN-thickness"
         obj = cls(par_type, lay_min, lay_max, par_min, par_max, par_rev)
         obj.par_value = nlayers if increasing else nlayers
         obj.par_add_value = increasing_factor if increasing else 0
-        
+
+        return obj
+
+    @staticmethod
+    def depth_ln_depth(wmin, wmax, nlayers, depth_factor=2):
+        """Calculate the minimum and maximum depth for each layer 
+        using Layering by Number.
+
+        Args:
+            wmin, wmax : float
+                Minimum and maximum measured wavelength from the
+                fundemental mode Rayleigh wave disperison.
+            nlayers : int
+                Desired number of layers.
+            depth_factor : [float, int], optional
+                Factor by which the maximum wavelength is
+                divided to estimate the maxium depth of profiling,
+                default is 2.
+            increasing : bool, optional
+                Indicate whether the layering thickness should be 
+                contrained to increase, default value is `False`
+                meaning that layers are not contrained to increase.
+
+        Returns:
+            Tuple of lists indicating depths of the form
+            ([mindepth...], [maxdepth...]).
+
+        Example:
+            TODO (jpv): Example
+        """
+        wmin, wmax = Parameter.check_wavelengths(wmin, wmax)
+
+        if type(nlayers) != int:
+            msg = f"`nlayers` must be `int`. Not {type(nlayers)}."
+            raise TypeError(msg)
+        if nlayers < 1:
+            raise ValueError("Number of layers for must be >= 1.")
+
+        depth_factor = Parameter.check_depth_factor(depth_factor)
+
+        minthickness = wmin/3
+        dmax = wmax/depth_factor
+        return ([minthickness]*nlayers, [dmax]*nlayers)
+
+    @classmethod
+    def from_ln_depth(cls, wmin, wmax, nlayers, par_min, par_max, par_rev, depth_factor=2):
+        """Alternate constructor to instantiate a `Parameter` using LN
+
+        Use Layering by Number (LN) or Layering by Number to define the
+        `Parameter`.
+
+        Args:
+            wmin, wmax : float
+                Minimum and maximum measured wavelength from the
+                fundemental mode Rayleigh wave disperison.
+            nlayers : int
+                Desired number of layers.
+            par_min, par_max : float
+                Minimum and maximum potential value of the parameter,
+                applied to all layers. 
+            par_rev : bool, optional
+                Indicate whether layers are allowed to reverse or not,
+                default is `False` (i.e., no reversal allowed).
+            depth_factor : [float, int], optional
+                Factor by which the maximum wavelength is
+                divided to estimate the maxium depth of profiling,
+                default is 2.
+
+        Returns:
+            Instantiated `Parameter` object.
+        """
+
+        lay_min, lay_max = cls.depth_ln_depth(wmin, wmax, nlayers,
+                                              depth_factor)
+        par_min, par_max, par_rev = cls.min_max_rev(nlayers,
+                                                    par_min, par_max, par_rev)
+
+        obj = cls("LN-depth", lay_min, lay_max, par_min, par_max, par_rev)
+        obj.par_value = nlayers
+        obj.par_add_value = "depth"
+
         return obj
 
     @staticmethod
@@ -435,8 +517,10 @@ class Parameter():
         return obj
 
     def __eq__(self, other):
-        sub_pars_a = [self.lay_min, self.lay_max, self.par_min, self.par_max, self.par_rev]
-        sub_pars_b = [other.lay_min, other.lay_max, other.par_min, other.par_max, other.par_rev]
+        sub_pars_a = [self.lay_min, self.lay_max,
+                      self.par_min, self.par_max, self.par_rev]
+        sub_pars_b = [other.lay_min, other.lay_max,
+                      other.par_min, other.par_max, other.par_rev]
         for sub_par_a, sub_par_b in zip(sub_pars_a, sub_pars_b):
             if len(sub_par_a) != len(sub_par_b):
                 return False
@@ -445,3 +529,59 @@ class Parameter():
                     if val_a != val_b:
                         return False
         return True
+
+    @staticmethod
+    def make_rectangle(left, right, upper, lower):
+        return ([left, left, right, right],
+                [upper, lower, lower, upper])
+
+    def plot(self, ax=None, show_example=True):
+        if ax is None:
+            ax_was_none = True
+            fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(3.5, 5))
+        else:
+            ax_was_none = False
+
+        if show_example:
+            depths = [0]
+            values = []
+
+        spacing = 0.1
+        width = 1 - spacing
+        for count, (upper, lower) in enumerate(zip(self.lay_min, self.lay_max)):
+            left = count + spacing
+            right = left + width
+
+            if count == 1:
+                label = "Permitted Domain for Each Layer"
+            else:
+                label = None
+            
+            if show_example:
+                depths += [(upper+lower)/2]*2
+                values += [left + width/2]*2
+
+            ax.fill(*self.make_rectangle(left, right, upper, lower),
+                    color="#3399ff", label=label)
+
+            ax.text(left + width/2, upper, count+1,
+                    horizontalalignment="center", verticalalignment="top")
+
+        if show_example:
+            depths = depths[:-2]
+            depths.append(max(self.lay_max))
+            ax.plot(values, depths, label="Example Profile", color="#66ff66", linewidth=4)
+
+        ax.text(0.95, 0.95, f"{len(self.lay_max)} Layers",
+                horizontalalignment="right", verticalalignment="top",
+                transform=ax.transAxes)
+        ax.set_ylabel("Depth (m)")
+        ax.set_ylim(max(self.lay_max), 0)
+        ax.set_xticklabels([])
+        ax.set_xticks([])
+
+        if ax_was_none:
+            ax.legend(loc="lower center",  bbox_to_anchor=(0.5, -0.15))
+            fig.tight_layout(h_pad=1, w_pad=1, rect=(0, 0, 1, 1))
+
+        return ax

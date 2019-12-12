@@ -91,32 +91,32 @@ class TestParameter(unittest.TestCase):
         wmin, wmax = 1, 100
         # TypeError - nlayers
         for val in ["5", True, 0.5, 2.2]:
-            self.assertRaises(TypeError, swipp.Parameter.depth_ln, wmin, wmax,
+            self.assertRaises(TypeError, swipp.Parameter.depth_ln_thickness, wmin, wmax,
                               val)
         # ValueError - nlayers
         for val in [-1, 0]:
-            self.assertRaises(ValueError, swipp.Parameter.depth_ln, wmin, wmax,
+            self.assertRaises(ValueError, swipp.Parameter.depth_ln_thickness, wmin, wmax,
                               val)
 
-    def test_from_ln(self):
+    def test_from_ln_thickness(self):
         wmin, wmax = 1, 100
         par_min, par_max, par_rev = 100, 200, True
         # TypeError - nlayers
         for val in ["5", True, 0.5, 2.2]:
-            self.assertRaises(TypeError, swipp.Parameter.from_ln, wmin, wmax,
+            self.assertRaises(TypeError, swipp.Parameter.from_ln_thickness, wmin, wmax,
                               val, par_min, par_max, par_rev)
         # ValueError - nlayers
-        for val in [-1, 0, 1]:
-            self.assertRaises(ValueError, swipp.Parameter.from_ln, wmin, wmax,
+        for val in [-1, 0]:
+            self.assertRaises(ValueError, swipp.Parameter.from_ln_thickness, wmin, wmax,
                               val, par_min, par_max, par_rev)
         # TypeError - increasing_factor
         for val in ["5", True]:
-            self.assertRaises(TypeError, swipp.Parameter.from_ln, wmin, wmax,
+            self.assertRaises(TypeError, swipp.Parameter.from_ln_thickness, wmin, wmax,
                               3, par_min, par_max, par_rev, increasing=True,
                               increasing_factor=val)
         # ValueError - increasing_factor
         for val in [-1, 0, 1]:
-            self.assertRaises(ValueError, swipp.Parameter.from_ln, wmin, wmax,
+            self.assertRaises(ValueError, swipp.Parameter.from_ln_thickness, wmin, wmax,
                               3, par_min, par_max, par_rev, increasing=True,
                               increasing_factor=val)
 
@@ -153,6 +153,15 @@ class TestParameter(unittest.TestCase):
             for known1, test1, known2, test2 in zip(mindepth, known_lr[key][0], maxdepth, known_lr[key][1]):
                 self.assertAlmostEqual(known1, test1, delta=0.051)
                 self.assertAlmostEqual(known2, test2, delta=0.051)
+
+    def test_plot(self):
+        import matplotlib.pyplot as plt
+        # par = swipp.Parameter.from_lr(2, 50, 5, 100, 500, False)
+        par = swipp.Parameter.from_ln_depth(2, 50, 5, 100, 500, False)
+
+        par.plot(show_example=True)
+        # par.plot(show_example=False)
+        plt.show()
 
 if __name__ == '__main__':
     unittest.main()
