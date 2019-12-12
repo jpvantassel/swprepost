@@ -359,10 +359,15 @@ class Parameter():
             raise ValueError("Number of layers for must be >= 1.")
 
         depth_factor = Parameter.check_depth_factor(depth_factor)
-
-        minthickness = wmin/3
         dmax = wmax/depth_factor
-        return ([minthickness]*nlayers, [dmax]*nlayers)
+        
+        minthickness = wmin/3
+        
+        minthicknesses = []
+        for nlay in range(1, nlayers+1):
+            minthicknesses.append(minthickness*nlay)
+        
+        return (minthicknesses, [dmax]*nlayers)
 
     @classmethod
     def from_ln_depth(cls, wmin, wmax, nlayers, par_min, par_max, par_rev, depth_factor=2):

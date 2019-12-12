@@ -9,6 +9,10 @@ logging.basicConfig(level=logging.ERROR)
 
 class TestParameter(unittest.TestCase):
 
+    def assertListAlmostEqual(self, list1, list2, places=None, delta=None):
+        for a, b in zip(list1, list2):
+            self.assertAlmostEqual(a, b, places=None, delta=None)
+
     def test_init(self):
         # Define parameterization in terms of depths
         par_type = "CD"
@@ -87,16 +91,36 @@ class TestParameter(unittest.TestCase):
         for val in [-1, 0]:
             self.assertRaises(ValueError, swipp.Parameter.depth_ftl, 1, val)
 
-    def test_depth_ln(self):
+    def test_depth_ln_thickness(self):
         wmin, wmax = 1, 100
         # TypeError - nlayers
         for val in ["5", True, 0.5, 2.2]:
-            self.assertRaises(TypeError, swipp.Parameter.depth_ln_thickness, wmin, wmax,
-                              val)
+            self.assertRaises(TypeError, swipp.Parameter.depth_ln_thickness,
+                              wmin, wmax, val)
         # ValueError - nlayers
         for val in [-1, 0]:
-            self.assertRaises(ValueError, swipp.Parameter.depth_ln_thickness, wmin, wmax,
-                              val)
+            self.assertRaises(ValueError, swipp.Parameter.depth_ln_thickness,
+                              wmin, wmax, val)
+
+    def test_depth_ln_depth(self):
+        wmin, wmax = 1, 100
+        # TypeError - nlayers
+        for val in ["5", True, 0.5, 2.2]:
+            self.assertRaises(TypeError, swipp.Parameter.depth_ln_depth,
+                              wmin, wmax, val)
+        # ValueError - nlayers
+        for val in [-1, 0]:
+            self.assertRaises(ValueError, swipp.Parameter.depth_ln_depth,
+                              wmin, wmax, val)
+        # Simple example
+        nlayers = 5
+        lay_min, lay_max = swipp.Parameter.depth_ln_depth(wmin=wmin, wmax=wmax,
+                                                          nlayers=nlayers,
+                                                          depth_factor=2)
+        expected_lay_min = [1/3, 2/3, 3/3, 4/3, 5/3]
+        expected_lay_max = [wmax/2]*nlayers
+        self.assertListAlmostEqual(expected_lay_min, lay_min)
+        self.assertListAlmostEqual(expected_lay_max, lay_max)
 
     def test_from_ln_thickness(self):
         wmin, wmax = 1, 100
@@ -119,6 +143,18 @@ class TestParameter(unittest.TestCase):
             self.assertRaises(ValueError, swipp.Parameter.from_ln_thickness, wmin, wmax,
                               3, par_min, par_max, par_rev, increasing=True,
                               increasing_factor=val)
+
+    def test_from_ln_depth(self):
+        wmin, wmax = 1, 100
+        par_min, par_max, par_rev = 100, 200, True
+        # TypeError - nlayers
+        for val in ["5", True, 0.5, 2.2]:
+            self.assertRaises(TypeError, swipp.Parameter.from_ln_depth, wmin, wmax,
+                              val, par_min, par_max, par_rev)
+        # ValueError - nlayers
+        for val in [-1, 0]:
+            self.assertRaises(ValueError, swipp.Parameter.from_ln_depth, wmin, wmax,
+                              val, par_min, par_max, par_rev)
 
     def test_depth_lr(self):
         wmin, wmax = 1, 100
@@ -154,14 +190,15 @@ class TestParameter(unittest.TestCase):
                 self.assertAlmostEqual(known1, test1, delta=0.051)
                 self.assertAlmostEqual(known2, test2, delta=0.051)
 
-    def test_plot(self):
-        import matplotlib.pyplot as plt
-        # par = swipp.Parameter.from_lr(2, 50, 5, 100, 500, False)
-        par = swipp.Parameter.from_ln_depth(2, 50, 5, 100, 500, False)
+    # def test_plot(self):
+    #     import matplotlib.pyplot as plt
+    #     # par = swipp.Parameter.from_lr(2, 50, 5, 100, 500, False)
+    #     par = swipp.Parameter.from_ln_depth(2, 50, 5, 100, 500, False)
 
-        par.plot(show_example=True)
-        # par.plot(show_example=False)
-        plt.show()
+    #     par.plot(show_example=True)
+    #     # par.plot(show_example=False)
+    #     plt.show()
+
 
 if __name__ == '__main__':
     unittest.main()
