@@ -3,6 +3,7 @@ __pycache__
 .ipynb_checkpoints
 .tox
 doc
+scratch
 
 # File Types
 *.target
