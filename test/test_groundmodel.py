@@ -42,6 +42,17 @@ class TestGroundModel(unittest.TestCase):
         self.assertListEqual(rho.tolist(), mygm.rh)
 
     def test_gm2(self):
+        # Simple Test
+        tk1 = [5, 0]
+        vp1 = [200, 250]
+        vs1 = [100, 125]
+        rh1 = [2000]*2
+        mygm = swipp.GroundModel(thickness=tk1, vp=vp1, vs=vs1, density=rh1)
+        self.assertListEqual([0,5,5,9999.0], mygm.depth)
+        self.assertListEqual([200, 200, 250 ,250], mygm.vp2)
+        self.assertListEqual([100, 100, 125, 125], mygm.vs2)
+        self.assertListEqual([2000]*4, mygm.rh2)
+
         # Setup
         thks = [1, 3, 5, 7, 0]
         vss = [100, 300, 500, 700, 900]

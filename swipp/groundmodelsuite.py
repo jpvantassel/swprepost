@@ -25,7 +25,7 @@ class GroundModelSuite(Suite):
             2. `identifier` is `str`.
             3. `misfit` is `float` or `int`.
         """
-        if type(groundmodel) != GroundModel:
+        if not isinstance(groundmodel, GroundModel):
             msg = f"`groundmodel` must be of type `GroundModel`, not {type(groundmodel)}."
             raise TypeError(msg)
         if type(identifer) != str:
@@ -88,6 +88,11 @@ class GroundModelSuite(Suite):
                 zip(self.misfits, self.ids), key=lambda pair: pair[0])]
             self.misfits.sort()
 
+    @staticmethod
+    def mkgm(thk, vps, vss, rho):
+        # print("swipp GroundModel")
+        return GroundModel(thickness=thk, vp=vps, vs=vss, density=rho)
+
     @classmethod
     def from_geopsy(cls, fname):
         """Instantiate a `GroundModelSuite` from a file exported from
@@ -125,31 +130,23 @@ class GroundModelSuite(Suite):
                             mod_num, misfit = re.findall(exp1, line)[0]
                             c_misfit = float(misfit)
                             first = False
-                        elif obj == None:
-                            cgm = GroundModel(thickness=thk,
-                                              vp=vps,
-                                              vs=vss,
-                                              density=rho)
+                        elif obj is None:
+                            cgm = cls.mkgm(thk, vps, vss, rho)
                             obj = cls(cgm, mod_num, c_misfit)
                             mod_num, misfit = re.findall(exp1, line)[0]
                             c_misfit = float(misfit)
                             thk, vps, vss, rho = [], [], [], []
                         else:
-                            cgm = GroundModel(thickness=thk,
-                                              vp=vps,
-                                              vs=vss,
-                                              density=rho)
+                            cgm = cls.mkgm(thk, vps, vss, rho)
                             obj.append(cgm, mod_num, c_misfit)
                             mod_num, misfit = re.findall(exp1, line)[0]
                             c_misfit = float(misfit)
                             thk, vps, vss, rho = [], [], [], []
-
-        cgm = GroundModel(thickness=thk, vp=vps, vs=vss, density=rho)
-        if obj == None:
+        cgm = cls.mkgm(thk, vps, vss, rho)
+        if obj is None:
             obj = cls(cgm, mod_num, c_misfit)
         else:
             obj.append(cgm, mod_num, c_misfit)
-
         return obj
 
     def vs30(self, nbest=None):
@@ -218,9 +215,14 @@ class GroundModelSuite(Suite):
         med_vp_tk, med_vp = self.median_simple(nbest=nbest, parameter='vp')
         med_vs_tk, med_vs = self.median_simple(nbest=nbest, parameter='vs')
         med_rh_tk, med_rh = self.median_simple(nbest=nbest, parameter='rh')
-        return GroundModel.from_simple_profiles(med_vp_tk, med_vp,
-                                                med_vs_tk, med_vs,
-                                                med_rh_tk, med_rh)
+        return self.gm().from_simple_profiles(med_vp_tk, med_vp,
+                                              med_vs_tk, med_vs,
+                                              med_rh_tk, med_rh)
+
+    # TODO (jpv): Clean up this method and calls.
+    @classmethod
+    def gm(cls):
+        return GroundModel
 
     @classmethod
     def from_list(cls, groundmodels, ids, misfits):
@@ -248,6 +250,12 @@ class GroundModelSuite(Suite):
                 cgm.write_model(f, cid, cmf)
 
     def __getitem__(self, sliced):
-        return GroundModelSuite.from_groundmodels(self.gms[sliced],
-                                                  self.ids[sliced],
-                                                  self.misfits[sliced])
+        if isinstance(sliced, int):
+            return self.gms[sliced]
+        if isinstance(sliced, slice):
+            return GroundModelSuite.from_list(self.gms[sliced],
+                                          self.ids[sliced],
+                                          self.misfits[sliced])
+
+    def __repr__(self):
+        return f"GroundModelSuite with {len(self.gms)} models."

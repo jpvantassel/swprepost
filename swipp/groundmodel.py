@@ -195,7 +195,7 @@ class GroundModel():
         define_par(new_depths, new_vs, vs_tk, vs)
         define_par(new_depths, new_rh, rh_tk, rh)
         new_tk = cls.depth_to_thick(new_depths)
-        return cls(new_tk, new_vp, new_vs, new_rh)
+        return cls.mkgm(new_tk, new_vp, new_vs, new_rh)
 
     @property
     def depth(self):
@@ -216,6 +216,11 @@ class GroundModel():
     def rh2(self):
         """Return stair-step version of density profile."""
         return self.gm2(parameter="rho")
+    
+    @property
+    def pr2(self):
+        """Return stair-step version of Poisson's ratio profile."""
+        return self.gm2(parameter="pr")
 
     def gm2(self, parameter):
         """Return parameter of `GroundModel` in stair-step form.
@@ -231,8 +236,8 @@ class GroundModel():
             KeyError if `parameter` is not one of those specified.
         """
         if parameter == "pr":
-            vp = self.gm2(parameter="vs")
-            vs = self.gm2(parameter="vp")
+            vp = self.gm2(parameter="vp")
+            vs = self.gm2(parameter="vs")
             return self.calc_pr(vp, vs)
 
         options = {"depth": self.tk, "vp": self.vp,
@@ -246,7 +251,7 @@ class GroundModel():
                 if pnt == (2*self.nlay-1):
                     gm2.append(9999.0)
                 else:
-                    depth = sum(self.tk[0:lay])
+                    depth = sum(self.tk[:lay])
                     gm2.append(depth)
                     if pnt % 2 == 0:
                         lay += 1
@@ -254,8 +259,6 @@ class GroundModel():
             gm2 = [par[0]]
             lay = 1
             for pnt in range(1, 2*self.nlay):
-                if pnt == (2*self.nlay-1):
-                    gm2.append(par[-1])
                 if pnt % 2 != 0:
                     gm2.append(par[lay-1])
                 else:
@@ -485,6 +488,11 @@ class GroundModel():
             for line in self.txt_repr:
                 f.write(line)
 
+    @staticmethod
+    def mkgm(thk, vps, vss, rho):
+        # print("swipp GroundModel")
+        return GroundModel(thickness=thk, vp=vps, vs=vss, density=rho)
+
     @classmethod
     def from_geopsy(cls, fname):
         """Instantiate a `GroundModel` from a file exported from Geopsy.
@@ -523,10 +531,10 @@ class GroundModel():
                         if first == True:
                             first = False
                         elif obj == None:
-                            return cls(thickness=thk, vp=vps, vs=vss, density=rho)
+                            return cls.mkgm(thk=thk, vps=vps, vss=vss, rho=rho)
                         else:
                             break
-        return cls(thickness=thk, vp=vps, vs=vss, density=rho)
+        return cls.mkgm(thk=thk, vps=vps, vss=vss, rho=rho)
 
     def __eq__(self, other):
         """Define when two ground models are equivalent."""
