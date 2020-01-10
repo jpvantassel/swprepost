@@ -3,6 +3,7 @@
 import tarfile as tar
 import os
 from swipp import Parameter
+import numpy as np
 import warnings
 import logging
 logging.Logger(name=__name__)
@@ -121,8 +122,15 @@ class Parameterization():
                         followed by their thickness, min, max, and bool.
 
                     Ex. ['FTL', nlay, thickness, min, max, bool]
+#TODO (jpv): Proper explination of LN-thickness and LN-depth.
+                    If type = 'LN-thickness'
+                        Layering follows Layering by Number, the next
+                        argument is number of layers followed by min,
+                        max, and bool. 
 
-                    If type = 'LN'
+                    Ex. ['LN', ln, min, max, reversal]
+
+                    If type = 'LN-depth'
                         Layering follows Layering by Number, the next
                         argument is number of layers followed by min,
                         max, and bool. 
@@ -189,14 +197,18 @@ class Parameterization():
                 input_arguements[key] = Parameter.from_fx(value[1])
             elif value[0] == "FTL":
                 input_arguements[key] = Parameter.from_ftl(*value[1:])
-            elif value[0] == "LN":
-                input_arguements[key] = Parameter.from_ln(*wv,
-                                                          *value[1:],
-                                                          factor, False)
+            elif value[0] == "LN-thickness":
+                input_arguements[key] = Parameter.from_ln_thickness(*wv,
+                                                                    *value[1:],
+                                                                    factor, False)
+            elif value[0] == "LN-depth":
+                input_arguements[key] = Parameter.from_ln_depth(*wv,
+                                                                *value[1:])
             elif value[0] == "LNI":
-                input_arguements[key] = Parameter.from_ln(*wv,
-                                                          value[1], *value[3:],
-                                                          factor, True, value[2])
+                input_arguements[key] = Parameter.from_ln_thickness(*wv,
+                                                                    value[1],
+                                                                    *value[3:],
+                                                                    factor, True, value[2])
             elif value[0] == "LR":
                 input_arguements[key] = Parameter.from_lr(*wv, *value[1:])
             else:
@@ -205,7 +217,7 @@ class Parameterization():
         return cls(input_arguements["vp"], input_arguements["pr"],
                    input_arguements["vs"], input_arguements["rh"])
 
-    def to_file(self, fname, version='2.9.0'):
+    def to_param(self, fname, version="3"):
         """Write paramterization file to disk that can be read by
         Dinver.
 
@@ -224,7 +236,9 @@ class Parameterization():
             KeyError: 
                 If version does not match those specified exactly.
         """
-        available_versions = {'2.9.0': '2.9.0', '2.10.1': '2.10.1'}
+        # TODO (jpv): Update this documentation.
+        # available_versions = {'2.9.0': '2.9.0', '2.10.1': '2.10.1'}
+        available_versions = {'2':'2', '3':'3'}
         version = available_versions[version]
 
         contents = ['<Dinver>',
@@ -232,7 +246,8 @@ class Parameterization():
                     '  <pluginTitle>Surface Wave Inversion</pluginTitle>',
                     '  <ParamGroundModel>']
 
-        parameters = {"Vp":self.vp, "Nu":self.pr, "Vs":self.vs, "Rho":self.rh}
+        parameters = {"Vp": self.vp, "Nu": self.pr,
+                      "Vs": self.vs, "Rho": self.rh}
 
         for key, value in parameters.items():
             if key == "Vp":
@@ -274,9 +289,9 @@ class Parameterization():
             else:
                 raise NotImplementedError(f"Selection {key} not implemented")
 
-            if value.par_type in ["FX", "FTL", "LN", "LNI", "CT" ]:
+            if value.par_type in ["FX", "FTL", "LN-thickness", "LNI", "CT"]:
                 isdepth = "false"
-            elif value.par_type in ["LR", "CD"]:
+            elif value.par_type in ["LR", "CD", "LN-depth"]:
                 isdepth = "true"
             else:
                 msg = f"`par_type` {value.par_type} not recognized, refer to Parameter.__doc__."
@@ -284,7 +299,7 @@ class Parameterization():
 
             for lnum, (dhmin, dhmax, pmin, pmax, rev) in enumerate(zip(value.lay_min, value.lay_max, value.par_min, value.par_max, value.par_rev)):
                 rev_check = 'true' if not rev else 'false'
-                rev_check = 'false' if len(value.lay_min)==1 else rev_check
+                rev_check = 'false' if len(value.lay_min) == 1 else rev_check
                 contents += ['      <ParamLayer name="'+key+str(lnum)+'">',
                              '        <shape>Uniform</shape>',
                              '        <lastParamCondition>'+rev_check+'</lastParamCondition>',
@@ -302,18 +317,42 @@ class Parameterization():
                      '      <text>']
 
         for key, value in parameters.items():
+
             if value.par_type == "LNI":
+                msg = "LNI additional parameters are not completed."
+                raise NotImplementedError(msg)
+                # nlay = value.par_value
+                # factor = value.par_add_value
+                # if nlay > 2:
+                #     for lay in range(nlay-2):
+                #         if ((lay == 0) & (version == '2.10.1')):
+                #             contents[-1] += 'linear("H'+key+str(lay+1) + \
+                #                 '", ">" ,'+str(factor)+',"D' + \
+                #                 key+str(lay)+'",0);'
+                #         else:
+                #             contents += ['linear("H'+key+str(lay+1)+'", ">" ,' +
+                #                          str(factor)+',"H'+key+str(lay)+'",0);']
+
+            elif value.par_type == "LN-depth":
                 nlay = value.par_value
-                factor = value.par_add_value
+                min_thickness = np.round(value.lay_min[0], decimals=2)
                 if nlay > 2:
                     for lay in range(nlay-2):
-                        if ((lay == 0) & (version == '2.10.1')):
-                            contents[-1] += 'linear("H'+key+str(lay+1) + \
-                                '", ">" ,'+str(factor)+',"D' + \
-                                key+str(lay)+'",0);'
+                        
+                        if version in ["2", "3"]:                          
+                            condition = f'linear("D{key}{lay+1}",">",{1},"D{key}{lay}",{min_thickness});'
+                            contents += [condition]
+
                         else:
-                            contents += ['linear("H'+key+str(lay+1)+'", ">" ,' +
-                                         str(factor)+',"H'+key+str(lay)+'",0);']
+                            msg = f"LN-depth not implemented for version {version}."
+                            raise NotImplementedError(msg)
+
+                            # if ((lay == 0) and (version == '2.10.1')):
+                            #     condition = f'linear("H{key}{lay+1}", ">" ,{1},"D{key}{lay}",{min_thickness});'
+                            #     contents[-1] += [condition]
+                            # else:
+                            #     condition = f'linear("H{key}{lay+1}", ">" ,{1},"H{key}{lay}",{min_thickness});'
+                            #     contents += [condition]
 
         contents += ['      </text>'
                      '    </ParamSpaceScript>',
@@ -330,7 +369,7 @@ class Parameterization():
     def __eq__(self, other):
         pars_a = [self.vp, self.pr, self.vs, self.rh]
         pars_b = [other.vp, other.pr, other.vs, other.rh]
-        
+
         for par_a, par_b in zip(pars_a, pars_b):
             if par_a != par_b:
                 return False
