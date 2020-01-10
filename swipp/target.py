@@ -18,18 +18,18 @@ class Target:
     class contains a number of methods for instantiating a `Target`
     object, such as:
 
-    From List : 
+    From List :
     >> SOME EXAMPLE
 
-    From csv file : 
+    From csv file :
     >> SOME OTHER EXAMPLE
 
     Manipualting the `Target` such as:
 
-    Resampling : 
+    Resampling :
     >> SOME RESAMPLING EXAMPLE
 
-    SETTING MINIMUM ERROR : 
+    SETTING MINIMUM ERROR :
     >> SOME MINCOV EXAMPLE
 
     Writting the `Target` to a file:
@@ -111,7 +111,7 @@ class Target:
         """Instantiate a Target object.
 
         Create a Target object from `ndarrays` of `frequency`,
-        `velocity`, and optionally velocity standard deviation 
+        `velocity`, and optionally velocity standard deviation
         (`velstd`).
 
         Args:
@@ -123,8 +123,8 @@ class Target:
                 dispersion curve.
             velstd : None, float, ndarray, optional
                 velocity standard deviation in the experimental
-                dispersion curve. 
-                If `None`, no standard deviation is defined. 
+                dispersion curve.
+                If `None`, no standard deviation is defined.
                 If `float`, a constant coefficient of variation (COV) is
                 applied, the default is 0.05.
                 If `ndarray`, standard deviation is defined point by
@@ -190,7 +190,7 @@ class Target:
             An initialized instance of the Target class.
 
         Raises:
-            ValueError: 
+            ValueError:
                 If the format of the input file does not match that
                 detailed above.
         """
@@ -261,7 +261,7 @@ class Target:
         points with uncertainty below this threshold will be modified
         and those above this threshold will be left alone.
 
-        If no measure of uncertainty has been provided, use :meth: 
+        If no measure of uncertainty has been provided, use :meth:
         `setcov`.
 
         Args:
@@ -324,9 +324,9 @@ class Target:
         Args:
             velocity_factor : float
                 Factor by which the mean Rayleigh wave velocity is
-                multiplied to produce an estimate of shear-wave 
+                multiplied to produce an estimate of shear-wave
                 velocity. Typically between 1 and 1.2, and is dependent
-                upon the expected Poisson's ratio, default is 1.1. 
+                upon the expected Poisson's ratio, default is 1.1.
 
         Returns:
             `ndarray` of pseudo-depth.
@@ -348,7 +348,7 @@ class Target:
                 Domain along which to perform the cut.
 
         Returns:
-            `None`, may update attributes `frequency`, `velocity`, and 
+            `None`, may update attributes `frequency`, `velocity`, and
             `velstd`.
         """
         if domain == "wavelength":
@@ -385,7 +385,7 @@ class Target:
                 Domain along which to perform the resampling.
 
             inplace : bool
-                Indicating whether the resampling should be done in 
+                Indicating whether the resampling should be done in
                 place or if a new Target object should be returned.
 
         Returns:
@@ -397,7 +397,7 @@ class Target:
                 A new instantiated `Target` object is returned.
 
         Raises:
-            NotImplementedError: 
+            NotImplementedError:
                 If `res_type` and/or `domain` are not amoung the options
                 specified.
         """
@@ -460,13 +460,13 @@ class Target:
             warnings.warn("A wavelength of 40m is out of range")
             return None
 
-    def to_txt(self, fname):
-        """Write `Target` to text format readily accepted by dinver's 
+    def to_txt_dinver(self, fname):
+        """Write `Target` to text format readily accepted by dinver's
         pre-processor.
 
         Args:
             fname : str
-                Name of output file, may a relative or full path. 
+                Name of output file, may a relative or full path.
 
         Returns:
             `None`, writes a file to disk.
@@ -475,18 +475,38 @@ class Target:
             for frq, slo, cov in zip(self.frequency, self.slowness, self.cov):
                 f.write(f"{frq}\t{slo}\t{slo*cov}\n")
 
-    def to_target(self, fname):
-        """Write `Target` to `.target` file format that can be imported
-        into dinver.
+    def to_txt_swipp(self, fname):
+        """Write `Target` to text format readily accepted by swipp.
 
         Args:
             fname : str
-                Name of target file without the .target suffix, a
-                relative or full path may be provided.
+                Name of output file, may a relative or full path.
 
         Returns:
             `None`, writes a file to disk.
         """
+        with open(fname, "w") as f:
+            f.write("#Frequency,Velocity,Velstd\n")
+            for c_frq, c_vel, c_velstd in zip(self.frequency, self.velocity, self.velstd):
+                f.write(f"{c_frq},{c_vel},{c_velstd}\n")
+
+    def to_target(self, fname_prefix, version="3"):
+        """Write `Target` to `.target` file format that can be imported
+        into dinver.
+
+        Args:
+            fname_prefix : str
+                Name of target file without the .target suffix, a
+                relative or full path may be provided.
+
+            version : {'3', '2'}
+                Major version of Geopsy being used.
+
+        Returns:
+            `None`, writes a file to disk.
+        """
+
+        self._sort_data()
 
         # TODO (jpv): Decide on how best to include ell.
         self.__ell_weight = 0
@@ -500,43 +520,91 @@ class Target:
                     "  <pluginTag>DispersionCurve</pluginTag>",
                     "  <pluginTitle>Surface Wave Inversion</pluginTitle>"]
 
-        contents += ["  <TargetList>",
-                     "    <ModalCurveTarget type=\"dispersion\">",
-                     "      <selected>true</selected>",
-                     "      <misfitWeight>" +
-                     str(self.dc_weight)+"</misfitWeight>",
-                     "      <minimumMisfit>0</minimumMisfit>",
-                     "      <misfitType>L2_Normalized</misfitType>",
-                     "      <ModalCurve>",
-                     "        <name>UTinvert</name>",
-                     "        <log>UTinvert written by J. Vantassel</log>",
-                     "        <Mode>",
-                     "          <slowness>Phase</slowness>",
-                     "          <polarisation>Rayleigh</polarisation>",
-                     "          <ringIndex>0</ringIndex>",
-                     "          <index>0</index>",
-                     "        </Mode>"]
+        if version in ["2"]:
+            contents += [f"  <TargetList>",
+                         f"    <ModalCurveTarget type=\"dispersion\">",
+                         f"      <selected>true</selected>",
+                         f"      <misfitWeight>{self.dc_weight}</misfitWeight>",
+                         f"      <minimumMisfit>0</minimumMisfit>",
+                         f"      <misfitType>L2_Normalized</misfitType>",
+                         f"      <ModalCurve>",
+                         f"        <name>SWIPP</name>",
+                         f"        <log>SWIPP written by J. Vantassel</log>",
+                         f"        <Mode>",
+                         f"          <slowness>Phase</slowness>",
+                         f"          <polarisation>Rayleigh</polarisation>",
+                         f"          <ringIndex>0</ringIndex>",
+                         f"          <index>0</index>",
+                         f"        </Mode>"]
 
-        for freq, mean, stddev in zip(self.frequency, self.slowness, self.slowness*self.cov):
-            contents += ["        <StatPoint>",
-                         "          <x>"+str(freq)+"</x>",
-                         "          <mean>"+str(mean)+"</mean>",
-                         "          <stddev>"+str(stddev)+"</stddev>",
-                         "          <weight>1</weight>",
-                         "          <valid>true</valid>",
-                         "        </StatPoint>"]
+        elif version in ["3"]:
+            contents += [f"  <TargetList>",
+                         f"    <position>0 0 0</position>",
+                         f"    <DispersionTarget type=\"dispersion\">",
+                         f"      <selected>true</selected>",
+                         f"      <misfitWeight>{self.dc_weight}</misfitWeight>",
+                         f"      <minimumMisfit>0</minimumMisfit>",
+                         f"      <misfitType>L2_LogNormalized</misfitType>",
+                         f"      <ModalCurve>",
+                         f"        <name>SWIPP</name>",
+                         f"        <log>SWIPP written by J. Vantassel</log>",
+                         f"        <enabled>true</enabled>"
+                         f"        <Mode>",
+                         f"          <slowness>Phase</slowness>",
+                         f"          <polarisation>Rayleigh</polarisation>",
+                         f"          <ringIndex>0</ringIndex>",
+                         f"          <index>0</index>",
+                         f"        </Mode>"]
 
-        contents += ["      </ModalCurve>",
-                     "    </ModalCurveTarget>",
-                     "    <AutocorrTarget>",
+        else:
+            raise NotImplementedError
+
+        if version in ["2"]:
+            for freq, mean, stddev in zip(self.frequency, self.slowness, self.slowness*self.cov):
+                contents += [f"        <StatPoint>",
+                             f"          <x>{freq}</x>",
+                             f"          <mean>{mean}</mean>",
+                             f"          <stddev>{stddev}</stddev>",
+                             f"          <weight>1</weight>",
+                             f"          <valid>true</valid>",
+                             f"        </StatPoint>"]
+
+        elif version in ["3"]:
+            for freq, mean, cov in zip(self.frequency, self.slowness, self.cov):
+                # From DispersionProxy.cpp Line 194
+                slostd = mean*cov
+                siglog = 0.5*(((mean+slostd)/mean) + (mean/(mean-slostd)))
+                contents += [f"        <RealStatisticalPoint>",
+                             f"          <x>{freq}</x>",
+                             f"          <mean>{mean}</mean>",
+                             f"          <stddev>{siglog}</stddev>",
+                             f"          <weight>1</weight>",
+                             f"          <valid>true</valid>",
+                             f"        </RealStatisticalPoint>"]
+        else:
+            raise NotImplementedError
+
+        contents += ["      </ModalCurve>"]
+
+        if version in ["2"]:
+            contents += ["    </ModalCurveTarget>"]
+
+        elif version in ["3"]:
+            contents += ["    </DispersionTarget>"]
+
+        else:
+            raise NotImplementedError
+
+        contents += ["    <AutocorrTarget>",
                      "      <selected>false</selected>",
                      "      <misfitWeight>1</misfitWeight>",
                      "      <minimumMisfit>0</minimumMisfit>",
                      "      <misfitType>L2_NormalizedBySigmaOnly</misfitType>",
                      "      <AutocorrCurves>",
                      "      </AutocorrCurves>",
-                     "    </AutocorrTarget>",
-                     "    <ModalCurveTarget type=\"ellipticity\">",
+                     "    </AutocorrTarget>"]
+        
+        contents += ["    <ModalCurveTarget type=\"ellipticity\">",
                      "      <selected>false</selected>",
                      "      <misfitWeight>1</misfitWeight>",
                      "      <minimumMisfit>0</minimumMisfit>",
@@ -544,38 +612,60 @@ class Target:
                      "    </ModalCurveTarget>"]
 
         selected = "true" if self.__ell_def else "false"
-        contents += ["    <ValueTarget type=\"ellipticity peak\">",
-                     "      <selected>"+selected+"</selected>",
-                     "      <misfitWeight>" +
-                     str(self.__ell_weight)+"</misfitWeight>",
-                     "      <minimumMisfit>0</minimumMisfit>",
-                     "      <misfitType>L2_Normalized</misfitType>",
-                     "      <StatValue>",
-                     "        <mean>"+str(self.__ell_mean)+"</mean>",
-                     "        <stddev>"+str(self.__ell_std)+"</stddev>",
-                     "        <weight>1</weight>",
-                     "        <valid>"+selected+"</valid>",
-                     "      </StatValue>",
-                     "    </ValueTarget>"]
+        contents += [f"    <ValueTarget type=\"ellipticity peak\">",
+                     f"      <selected>{selected}</selected>",
+                     f"      <misfitWeight>{self.__ell_weight}</misfitWeight>",
+                     f"      <minimumMisfit>0</minimumMisfit>",
+                     f"      <misfitType>L2_Normalized</misfitType>"]
+        
+        if version in ["2"]:
+            contents += [f"      <StatValue>",
+                         f"        <mean>{self.__ell_mean}</mean>",
+                         f"        <stddev>{self.__ell_std}</stddev>",
+                         f"        <weight>1</weight>",
+                         f"        <valid>{selected}</valid>",
+                         f"      </StatValue>",
+                         f"    </ValueTarget>"]
+        elif version in ["3"]:
+            contents += [f"      <RealStatisticalValue>",
+                         f"        <mean>{self.__ell_mean}</mean>",
+                         f"        <stddev>{self.__ell_std}</stddev>",
+                         f"        <weight>1</weight>",
+                         f"        <valid>{selected}</valid>",
+                         f"      </RealStatisticalValue>",
+                         f"    </ValueTarget>"]
+        else:
+            raise NotImplementedError
+
 
         contents += ["    <RefractionTarget type=\"Vp\">",
                      "      <selected>false</selected>",
                      "      <misfitWeight>1</misfitWeight>",
                      "      <minimumMisfit>0</minimumMisfit>",
                      "      <misfitType>L2_Normalized</misfitType>",
-                     "    </RefractionTarget>",
-                     "    <RefractionTarget type=\"Vs\">",
+                     "    </RefractionTarget>"]
+
+        contents += ["    <RefractionTarget type=\"Vs\">",
                      "      <selected>false</selected>",
                      "      <misfitWeight>1</misfitWeight>",
                      "      <minimumMisfit>0</minimumMisfit>",
                      "      <misfitType>L2_Normalized</misfitType>",
-                     "    </RefractionTarget>",
-                     "  </TargetList>",
+                     "    </RefractionTarget>"]
+
+        if version in ["3"]:
+            contents += ["    <MagnetoTelluricTarget>"
+                         "      <selected>false</selected>"
+                         "      <misfitWeight>1</misfitWeight>"
+                         "      <minimumMisfit>0</minimumMisfit>"
+                         "      <misfitType>L2_Normalized</misfitType>"
+                         "    </MagnetoTelluricTarget>"]
+
+        contents += ["  </TargetList>",
                      "</Dinver>"]
 
         with open("contents.xml", "w") as f:
             for row in contents:
                 f.write(row+"\n")
-        with tar.open(fname+".target", "w:gz") as f:
+        with tar.open(fname_prefix+".target", "w:gz") as f:
             f.add("contents.xml")
         os.remove("contents.xml")
