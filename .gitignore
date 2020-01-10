@@ -2,6 +2,8 @@
 __pycache__
 .ipynb_checkpoints
 .tox
+dist
+build
 doc
 scratch
 
