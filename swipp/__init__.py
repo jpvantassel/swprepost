@@ -3,6 +3,7 @@ Docstring here for print(utinvert.__doc__)
 """
 
 from .curve import *
+from .curveuncertain import *
 from .dispersioncurve import *
 
 from .curveset import *

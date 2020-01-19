@@ -47,7 +47,7 @@ class Test_Target(TestCase):
         # With unequal lists.
         a = [1, 2, 3]
         b = [1, 2]
-        self.assertRaises(ValueError, swipp.Target, a, b, a)
+        self.assertRaises(IndexError, swipp.Target, a, b, a)
 
     def test_from_csv(self):
         # With standard deviation provided.
@@ -152,6 +152,7 @@ class Test_Target(TestCase):
         new_tar = tar.resample(pmin=50, pmax=100, pn=5,
                                res_type='log', domain="wavelength",
                                inplace=False)
+
         for known, test in zip(known_wavelength, new_tar.wavelength):
             self.assertAlmostEqual(known, test, places=1)
         for known, test in zip(known_velocity, new_tar.velocity):

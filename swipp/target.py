@@ -7,10 +7,11 @@ import numpy as np
 import scipy.interpolate as sp
 import warnings
 import logging
+from swipp import CurveUncertain
 logging.Logger(name=__name__)
 
 
-class Target:
+class Target(CurveUncertain):
     """Class for manipulating inversion target information.
 
     `Target` is a class for loading, manipulating, and writting
@@ -52,60 +53,60 @@ class Target:
             dispersion curve (one per point).
     """
 
-    @staticmethod
-    def check_inputs(names, values):
-        """Check input values type and value.
+    # @staticmethod
+    # def check_inputs(names, values):
+    #     """Check input values type and value.
 
-        Specifically:
-            1. All values are 1D `ndarray`s or convertable to 1D
-            `ndarray`s.
-            2. If value is not convertable to `ndarray` check if `float`
-            , `int`, or `None`. As these are valid options for `velstd`.
-            3. If necessary convert to `ndarray`.
-        """
+    #     Specifically:
+    #         1. All values are 1D `ndarray`s or convertable to 1D
+    #         `ndarray`s.
+    #         2. If value is not convertable to `ndarray` check if `float`
+    #         , `int`, or `None`. As these are valid options for `velstd`.
+    #         3. If necessary convert to `ndarray`.
+    #     """
 
-        for cnt, (name, value) in enumerate(zip(names, values)):
+    #     for cnt, (name, value) in enumerate(zip(names, values)):
 
-            # Set valid types.
-            if name == "velstd":
-                valid_type = [type(None), float, list, tuple, np.ndarray]
-            else:
-                valid_type = [list, tuple, np.ndarray]
+    #         # Set valid types.
+    #         if name == "velstd":
+    #             valid_type = [type(None), float, list, tuple, np.ndarray]
+    #         else:
+    #             valid_type = [list, tuple, np.ndarray]
 
-            # Check types.
-            if type(value) not in valid_type:
-                msg = f"{name} is of an invalid type {type(value)}."
-                raise TypeError(msg)
+    #         # Check types.
+    #         if type(value) not in valid_type:
+    #             msg = f"{name} is of an invalid type {type(value)}."
+    #             raise TypeError(msg)
 
-            # Convert types if necessary.
-            if type(value) == int:
-                values[cnt] = float(value)
-            elif type(value) in [list, tuple]:
-                value = np.array(value)
-                values[cnt] = value
-                # Check if arrays are 1D
-                if len(value.shape) > 1:
-                    f"{name} must be 1D, not {len(value.shape)}D."
-                    raise TypeError(msg)
+    #         # Convert types if necessary.
+    #         if type(value) == int:
+    #             values[cnt] = float(value)
+    #         elif type(value) in [list, tuple]:
+    #             value = np.array(value)
+    #             values[cnt] = value
+    #             # Check if arrays are 1D
+    #             if len(value.shape) > 1:
+    #                 f"{name} must be 1D, not {len(value.shape)}D."
+    #                 raise TypeError(msg)
 
-            # Check value.
-            if type(value) == float:
-                if value < 0:
-                    msg = f"cov must be greater than zero."
-                    raise ValueError(msg)
+    #         # Check value.
+    #         if type(value) == float:
+    #             if value < 0:
+    #                 msg = f"cov must be greater than zero."
+    #                 raise ValueError(msg)
 
-        return values
+    #     return values
 
     def _sort_data(self):
         """Sort Target attributes from smallest to largest."""
-        if (self.velocity.size != self.frequency.size) and (self.velocity.size != self.velstd.size):
-            msg = "`frequency`, `velocity`, and `velstd` (if provided) must have the same size."
+        if (self._y.size != self._x.size) and (self._y.size != self._yerr.size):
+            msg = "`frequency`, `velocity`, and `velstd` must have the same size."
             raise ValueError(msg)
 
-        sort_ids = np.argsort(self.frequency)
-        self.velstd = self.velstd[sort_ids]
-        self.velocity = self.velocity[sort_ids]
-        self.frequency = self.frequency[sort_ids]
+        sort_ids = np.argsort(self._x)
+        self._yerr = self._yerr[sort_ids]
+        self._y = self._y[sort_ids]
+        self._x = self._x[sort_ids]
 
     def __init__(self, frequency, velocity, velstd=0.05):
         """Instantiate a Target object.
@@ -141,23 +142,56 @@ class Target:
                 If `velstd` is provided in the form of COV and the value
                 is less than zero.
         """
-        # Check inputs.
-        names = ["frequency", "velocity", "velstd"]
-        values = [frequency, velocity, velstd]
-        checked_inputs = self.check_inputs(names, values)
-        self.frequency, self.velocity, self.velstd = checked_inputs
+        # # Check inputs.
+        # names = ["frequency", "velocity", "velstd"]
+        # values = [frequency, velocity, velstd]
+        # checked_inputs = self.check_inputs(names, values)
+        # self.frequency, self.velocity, self.velstd = checked_inputs
 
         # Convert velstd input to vector, if necessary.
-        if type(self.velstd) == type(None):
-            self.velstd = np.zeros(self.frequency.shape)
-        elif type(self.velstd) == float:
-            self.velstd = self.velocity*self.velstd
+        frequency = np.array(frequency)
+        velocity = np.array(velocity)
+        if velstd is None:
+            velstd = np.zeros(frequency.shape)
+        elif type(velstd) == float:
+            velstd = velocity*velstd
+
+        super().__init__(x=frequency, y=velocity, yerr=velstd, xerr=None)
 
         # Sort dispersion data by frequency, smallest to largest.
         self._sort_data()
 
-        # Set dipsersion data weight
+        # Set dispersion data weight
         self.dc_weight = 1
+
+    @property
+    def frequency(self):
+        return self._x
+
+    @frequency.setter
+    def frequency(self, value):
+        self._x = value
+
+    @property
+    def velocity(self):
+        return self._y
+
+    @velocity.setter
+    def velocity(self, value):
+        self._y = value
+
+    @property
+    def wavelength(self):
+        """Returns the mean wavelength assoicated with each data point."""
+        return self.velocity/self.frequency
+
+    @property
+    def velstd(self):
+        return self._yerr
+
+    @velstd.setter
+    def velstd(self, value):
+        self._yerr = value
 
     @classmethod
     def from_csv(cls, fname, commentcharachter="#"):
@@ -282,11 +316,6 @@ class Target:
         update_ids = np.where(current_cov < cov)
         self.velstd[update_ids] = self.velocity[update_ids]*cov
 
-    @property
-    def wavelength(self):
-        """Returns the mean wavelength assoicated with each data point."""
-        return self.velocity/self.frequency
-
     def is_no_velstd(self):
         """Indicates `True` if every point has zero `velstd`."""
         return all(std == 0 for std in self.velstd)
@@ -373,17 +402,13 @@ class Target:
             pmin, pmax : float
                 Minimum and maximum parameter value in the resampled
                 dispersion data.
-
             pn : int
                 Number of points in the resampled dispersion data.
-
             res_type : {'log', 'linear'}, optional
                 Resample using either logarithmic or linear sampling,
                 default is logarithmic.
-
             domain : {'frequency', 'wavelength'}, optional
                 Domain along which to perform the resampling.
-
             inplace : bool
                 Indicating whether the resampling should be done in
                 place or if a new Target object should be returned.
@@ -392,7 +417,6 @@ class Target:
             If `inplace=True`:
                 `None`, may update attributes `frequency`, `velocity`,
                 and `velstd`.
-
             If `inplace=False`:
                 A new instantiated `Target` object is returned.
 
@@ -417,8 +441,8 @@ class Target:
         else:
             msg = f"`res_type`={res_type}, has not been implemented."
             raise NotImplementedError(msg)
-
-        # Set domain.
+        
+        # Define x
         if domain == "frequency":
             x = self.frequency
         elif domain == "wavelength":
@@ -426,19 +450,19 @@ class Target:
         else:
             msg = f"`domain`={domain}, has not been implemented."
             raise NotImplementedError(msg)
+        
+        # Define custom resampling functions
+        res_fxn = self.resample_function(x, self.velocity, kind="cubic")
+        res_fxn_yerr = self.resample_function(x, self.velstd, kind="cubic")
 
-        # Create interpolation functions.
-        interp_fxn_vel = sp.interp1d(x, self.velocity, kind="cubic")
-        interp_fxn_cov = sp.interp1d(x, self.cov, kind="cubic")
+        results = super().resample(xx=xx, inplace=False, res_fxn=res_fxn,
+                                   res_fxn_yerr=res_fxn_yerr)
+        xx, new_vel, new_velstd, = results
 
-        # Perform interpolation
-        new_vel = interp_fxn_vel(xx)
-        new_velstd = new_vel * interp_fxn_cov(xx)
         if domain == "frequency":
             new_frq = xx
         else:
-            new_wave = xx
-            new_frq = new_vel/new_wave
+            new_frq = new_vel/xx
 
         # Update attributes or return new object.
         if inplace:
@@ -603,7 +627,7 @@ class Target:
                      "      <AutocorrCurves>",
                      "      </AutocorrCurves>",
                      "    </AutocorrTarget>"]
-        
+
         contents += ["    <ModalCurveTarget type=\"ellipticity\">",
                      "      <selected>false</selected>",
                      "      <misfitWeight>1</misfitWeight>",
@@ -617,7 +641,7 @@ class Target:
                      f"      <misfitWeight>{self.__ell_weight}</misfitWeight>",
                      f"      <minimumMisfit>0</minimumMisfit>",
                      f"      <misfitType>L2_Normalized</misfitType>"]
-        
+
         if version in ["2"]:
             contents += [f"      <StatValue>",
                          f"        <mean>{self.__ell_mean}</mean>",
@@ -636,7 +660,6 @@ class Target:
                          f"    </ValueTarget>"]
         else:
             raise NotImplementedError
-
 
         contents += ["    <RefractionTarget type=\"Vp\">",
                      "      <selected>false</selected>",
