@@ -1,12 +1,12 @@
 """Tests for DispersionCurve class."""
 
-import unittest
+from testtools import unittest, TestCase
 import swipp
 import logging
 logging.basicConfig(level=logging.DEBUG)
 
 
-class TestDispersionCurve(unittest.TestCase):
+class Test_DispersionCurve(TestCase):
     def test_init(self):
         frequency = [1, 2, 3, 4.5, 6.7]
         velocity = [4, 5, 6., 8.5, 2.2]

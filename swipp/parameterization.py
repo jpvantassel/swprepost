@@ -181,7 +181,7 @@ class Parameterization():
         """
 
         input_arguements = {"vs": vs, "vp": vp, "pr": pr, "rh": rh}
-        valid_options = ('FX', 'FTL', 'LN', 'LNI', 'LR')
+        valid_options = ('FX', 'FTL', 'LN-thickness', 'LN-depth', 'LNI', 'LR')
         for key, value in input_arguements.items():
             # Ensure entry is a list
             if type(value) != list:

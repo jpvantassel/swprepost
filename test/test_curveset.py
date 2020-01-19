@@ -1,11 +1,11 @@
 
 """Tests for abstract class CurveSet."""
 
-import unittest
+from testtools import unittest, TestCase
 import swipp
 
 
-class Test(unittest.TestCase):
+class Test_CurveSet(TestCase):
     def test_check_input(self):
         # All sets are None
         bad_disp_set = {0: None}

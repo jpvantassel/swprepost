@@ -1,9 +1,9 @@
 """Tests for Curve object class."""
 
-import unittest
+from testtools import unittest, TestCase
 import swipp
 
-class Test(unittest.TestCase):
+class Test_Curve(TestCase):
     def test_check_input(self):
         bad_frequency_types = ["1", True, (1, 2, 3)]
         bad_frequency_lengths = [[2, 3], [4, 5, 6, 7]]

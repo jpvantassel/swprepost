@@ -1,18 +1,15 @@
 """Tests for DispersionSet class."""
 
-import unittest
+from testtools import unittest, TestCase, get_full_path
 import swipp
 import logging
 logging.basicConfig(level=logging.DEBUG)
 
-file_name = __file__.split("/")[-1]
-full_path = __file__[:-len(file_name)]
 
+class Test_DispersionSet(TestCase):
 
-class TestDispersionSet(unittest.TestCase):
-
-    def assertArrayEqual(self, array1, array2):
-        self.assertListEqual(array1.tolist(), array2.tolist())
+    def setUp(self):
+        self.full_path = get_full_path(__file__)
 
     def test_init(self):
         # Instantiate DispersionCurve objects.
@@ -41,7 +38,7 @@ class TestDispersionSet(unittest.TestCase):
 
     def test_from_geopsy(self):
         myset = swipp.DispersionSet.from_geopsy(
-            fname=full_path+"data/test_dc_mod2_ray2_lov2_shrt.txt")
+            fname=self.full_path+"data/test_dc_mod2_ray2_lov2_shrt.txt")
         self.assertEqual(myset.misfit, 1.08851)
         self.assertEqual(myset.identifier, "149641")
         true_ray = {0: swipp.DispersionCurve([0.15, 64],

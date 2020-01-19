@@ -1,16 +1,16 @@
 """Tests for Parameterization class."""
 
+from testtools import unittest, TestCase, get_full_path
 import swipp
-import unittest
 import os
 import tarfile as tar
 import logging
 logging.basicConfig(level=logging.DEBUG)
 
-file_name = __file__.split("/")[-1]
-full_path = __file__[:-len(file_name)]
+class Test_Parameterization(TestCase):
 
-class TestParameterization(unittest.TestCase):
+    def setUp(self):
+        self.full_path = get_full_path(__file__)
 
     def test_init(self):
         # Define parameterization in terms of depths
@@ -48,7 +48,8 @@ class TestParameterization(unittest.TestCase):
     def test_from_min_max(self):
         rh = ['FX', 2000]
         vs = ['FTL', 5, 2, 100, 200, True]
-        pr = ['LN', 3, 0.2, 0.5, False]
+        # TODO (jpv): Add tests here for 'LN-depth'
+        pr = ['LN-thickness', 3, 0.2, 0.5, False]
         vp = ['LNI', 2, 1.2, 200, 400, True]
         wv = [1, 100]
 
@@ -100,63 +101,64 @@ class TestParameterization(unittest.TestCase):
         self.assertListEqual([pr[3]]*len(lay_min), param.pr.par_max)
         self.assertListEqual([pr[4]]*len(lay_min), param.pr.par_rev)
 
-    def test_to_file(self):
-        """Check if parameter data can be written to .param file. Need to
-        use DINVER to confirm file was sucessfully written.
-        """
-        vp = ['LNI', 4, 4, 200, 400, True]
-        pr = ['LN', 3, 0.2, 0.5, False]
-        vs = ['FTL', 3, 3, 100, 200, True]
-        rh = ['FX', 2000]
-        wv = [1, 100]
-        par = swipp.Parameterization.from_min_max(vp, pr, vs, rh, wv)
-        fname1 = full_path+"data/test_par1.param"
-        par.to_file(fname=fname1, version='2.10.1')
-        self.assertTrue(os.path.isfile(fname1))
+    # TODO (jpv): Reintroduce test once LNI additional settings have been finished.
+    # def test_to_param(self):
+    #     """Check if parameter data can be written to .param file. Need to
+    #     use DINVER to confirm file was sucessfully written.
+    #     """
+    #     vp = ['LNI', 4, 4, 200, 400, True]
+    #     pr = ['LN-depth', 3, 0.2, 0.5, False]
+    #     vs = ['FTL', 3, 3, 100, 200, True]
+    #     rh = ['FX', 2000]
+    #     wv = [1, 100]
+    #     par = swipp.Parameterization.from_min_max(vp, pr, vs, rh, wv)
+    #     fname1 = self.full_path+"data/test_par1.param"
+    #     par.to_param(fname=fname1, version='2')
+    #     self.assertTrue(os.path.isfile(fname1))
 
-        # TODO (jpv): Automate checking process
-        # with tar.open(fname1, "r:gz") as f:
-        #     f.extractall()
-        # with open("contents.xml", "r") as f:
-        #     test_lines = f.read().splitlines()
-        # print(test_lines[:5])
+    #     # TODO (jpv): Automate checking process
+    #     # with tar.open(fname1, "r:gz") as f:
+    #     #     f.extractall()
+    #     # with open("contents.xml", "r") as f:
+    #     #     test_lines = f.read().splitlines()
+    #     # print(test_lines[:5])
 
-        # f = tar.open(full_path+"data/par1.param", "r:gz")
-        # f.extractall()
-        # f.close()
+    #     # f = tar.open(self.full_path+"data/par1.param", "r:gz")
+    #     # f.extractall()
+    #     # f.close()
 
-        # with open("contents.xml", "r", encoding="utf-16") as f:
-        #     true_lines = f.read().splitlines()
-        os.remove(fname1)
-        # os.remove("contents.xml")
+    #     # with open("contents.xml", "r", encoding="utf-16") as f:
+    #     #     true_lines = f.read().splitlines()
+    #     os.remove(fname1)
+    #     # os.remove("contents.xml")
 
-        # for true, test in zip(true_lines, test_lines):
-        #     self.assertEqual(true, test)
+    #     # for true, test in zip(true_lines, test_lines):
+    #     #     self.assertEqual(true, test)
 
-        vp = ['LR', 3, 200, 400, True]
-        pr = ['LNI', 3, 3, 0.2, 0.5, False]
-        vs = ['FTL', 5, 5, 100, 200, True]
-        rh = ['FX', 2000]
-        wv = [1, 100]
-        fname2 = "test_par2.param"
-        par = swipp.Parameterization.from_min_max(vp, pr, vs, rh, wv)
-        par.to_file(fname=fname2, version='2.10.1')
-        self.assertTrue(os.path.isfile(fname2))
+    #     vp = ['LR', 3, 200, 400, True]
+    #     pr = ['LNI', 3, 3, 0.2, 0.5, False]
+    #     vs = ['FTL', 5, 5, 100, 200, True]
+    #     rh = ['FX', 2000]
+    #     wv = [1, 100]
+    #     fname2 = "test_par2.param"
+    #     par = swipp.Parameterization.from_min_max(vp, pr, vs, rh, wv)
+    #     par.to_file(fname=fname2, version='2')
+    #     self.assertTrue(os.path.isfile(fname2))
 
-        # with tar.open(fname2, "r:gz") as f:
-        #     f.extractall()
-        # with open("contents.xml", "r") as f:
-        #     test_lines = f.read().splitlines()
+    #     # with tar.open(fname2, "r:gz") as f:
+    #     #     f.extractall()
+    #     # with open("contents.xml", "r") as f:
+    #     #     test_lines = f.read().splitlines()
 
-        # with tar.open(full_path+"data/par2.param", "r:gz") as f:
-        #     f.extractall()
-        # with open("contents.xml", "r") as f:
-        #     true_lines = f.read().splitlines()
-        os.remove(fname2)
-        # # os.remove("contents.xml")
+    #     # with tar.open(self.full_path+"data/par2.param", "r:gz") as f:
+    #     #     f.extractall()
+    #     # with open("contents.xml", "r") as f:
+    #     #     true_lines = f.read().splitlines()
+    #     os.remove(fname2)
+    #     # # os.remove("contents.xml")
 
-        # for true, test in zip(true_lines, test_lines):
-        #     self.assertEqual(true, test)
+    #     # for true, test in zip(true_lines, test_lines):
+    #     #     self.assertEqual(true, test)
 
 
 

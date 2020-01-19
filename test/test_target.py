@@ -1,19 +1,16 @@
 """This file contains tests for the `Target` class."""
 
+from testtools import unittest, TestCase, get_full_path
 import swipp
-import unittest
 import numpy as np
 import os
 
-file_name = __file__.split("/")[-1]
-full_path = __file__[:-len(file_name)]
 
+class Test_Target(TestCase):
 
-class TestTarget(unittest.TestCase):
-
-    def assertArrayEqual(self, ndarray1, ndarray2):
-        self.assertListEqual(ndarray1.tolist(), ndarray2.tolist())
-
+    def setUp(self):
+        self.full_path = get_full_path(__file__)
+        
     def test_init(self):
         # With standard deviation provided.
         frequency = np.array([1, 2, 3])
@@ -54,7 +51,7 @@ class TestTarget(unittest.TestCase):
 
     def test_from_csv(self):
         # With standard deviation provided.
-        tar = swipp.Target.from_csv(full_path+"data/test_tar_wstd.csv")
+        tar = swipp.Target.from_csv(self.full_path+"data/test_tar_wstd.csv")
         self.assertListEqual(tar.frequency.tolist(), [1.55, 2.00])
         self.assertListEqual(tar.velocity.tolist(), [200, 500.01245])
         self.assertListEqual(tar.velstd.tolist(), [60.012111, 100.00001])
@@ -62,7 +59,7 @@ class TestTarget(unittest.TestCase):
                              [200/1.55, 500.01245/2.00])
 
         # Without standard deviation provided.
-        tar = swipp.Target.from_csv(full_path+"data/test_tar_wostd.csv")
+        tar = swipp.Target.from_csv(self.full_path+"data/test_tar_wostd.csv")
         self.assertListEqual(tar.frequency.tolist(), [1.55, 2.00])
         self.assertListEqual(tar.velocity.tolist(), [200, 500.01245])
         self.assertListEqual(tar.velstd.tolist(), [0, 0])
@@ -130,7 +127,7 @@ class TestTarget(unittest.TestCase):
 
     def test_resample(self):
         "Check resample calculation is working correctly."
-        fname = full_path+"data/test_tar_wstd_linear.csv"
+        fname = self.full_path+"data/test_tar_wstd_linear.csv"
         tar = swipp.Target.from_csv(fname)
         known_vals = (0.5, 1.5, 2.5, 3.5, 4.5)
         new_tar = tar.resample(pmin=0.5, pmax=4.5, pn=5,
@@ -139,7 +136,7 @@ class TestTarget(unittest.TestCase):
         for known, test in zip(known_vals,  new_tar.frequency):
             self.assertAlmostEqual(known, test, places=1)
 
-        fname = full_path+"data/test_tar_wstd_linear.csv"
+        fname = self.full_path+"data/test_tar_wstd_linear.csv"
         tar = swipp.Target.from_csv(fname)
         known_vals = (2., 2.8284, 4.0)
         new_tar = tar.resample(pmin=2, pmax=4, pn=3,
@@ -148,7 +145,7 @@ class TestTarget(unittest.TestCase):
         for known, test in zip(known_vals, new_tar.frequency):
             self.assertAlmostEqual(known, test, places=1)
 
-        fname = full_path+"data/test_tar_wstd_nonlin_0.csv"
+        fname = self.full_path+"data/test_tar_wstd_nonlin_0.csv"
         tar = swipp.Target.from_csv(fname)
         known_velocity = (112.8, 118.3, 125.6, 135.6, 150)
         known_wavelength = (100, 84.09, 70.7, 59.5, 50)
@@ -161,11 +158,11 @@ class TestTarget(unittest.TestCase):
             self.assertAlmostEqual(known, test, places=0)
 
     def test_vr40(self):
-        fname = full_path+"data/test_tar_wstd_nonlin_0.csv"
+        fname = self.full_path+"data/test_tar_wstd_nonlin_0.csv"
         tar = swipp.Target.from_csv(fname)
         self.assertAlmostEqual(tar.vr40, 180, places=1)
 
-        fname = full_path+"data/test_tar_wstd_nonlin_1.csv"
+        fname = self.full_path+"data/test_tar_wstd_nonlin_1.csv"
         tar = swipp.Target.from_csv(fname)
         self.assertAlmostEqual(tar.vr40, 267.2, places=1)
 
@@ -175,11 +172,11 @@ class TestTarget(unittest.TestCase):
         be written to .target file. Need to use DINVER to confirm file
         was sucessfully written.
         """
-        fname = full_path+"data/test_tar_wstd_nonlin_1.csv"
+        fname = self.full_path+"data/test_tar_wstd_nonlin_1.csv"
         tar = swipp.Target.from_csv(fname)
-        tar.to_target(fname=full_path+"data/test")
-        self.assertTrue(os.path.isfile(full_path+"data/test.target"))
-        os.remove(full_path+"data/test.target")
+        tar.to_target(fname_prefix=self.full_path+"data/test")
+        self.assertTrue(os.path.isfile(self.full_path+"data/test.target"))
+        os.remove(self.full_path+"data/test.target")
 
         # TODO (jpv): Write code to uncompress and compare the two files.
 

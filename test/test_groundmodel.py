@@ -3,18 +3,19 @@
 import scipy.io as sio
 import numpy as np
 import swipp
-import unittest
+from testtools import unittest, TestCase, get_full_path
 import os
 from hypothesis import given, settings
 import hypothesis.strategies as st
 import logging
 logging.basicConfig(level=logging.WARN)
 
-file_name = __file__.split("/")[-1]
-full_path = __file__[:-len(file_name)]
 
-
-class TestGroundModel(unittest.TestCase):
+class Test_GroundModel(TestCase):
+    
+    def setUp(self):
+        self.full_path = get_full_path(__file__)
+        print(self.full_path)
 
     def test_init(self):
         # List
@@ -248,7 +249,7 @@ class TestGroundModel(unittest.TestCase):
 
     def test_from_geopsy(self):
         mygm = swipp.GroundModel.from_geopsy(
-            full_path+"data/test_gm_mod1_self.txt")
+            self.full_path+"data/test_gm_mod1_self.txt")
         self.assertListEqual(mygm.tk, [2., 4., 0.])
         self.assertListEqual(mygm.vp, [300, 700, 400])
         self.assertListEqual(mygm.vs, [100, 275, 300])

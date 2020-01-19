@@ -1,17 +1,13 @@
 """Tests for Parameter class."""
 
+from testtools import unittest, TestCase
 import swipp
-import unittest
 import os
 import logging
 logging.basicConfig(level=logging.ERROR)
 
 
-class TestParameter(unittest.TestCase):
-
-    def assertListAlmostEqual(self, list1, list2, places=None, delta=None):
-        for a, b in zip(list1, list2):
-            self.assertAlmostEqual(a, b, places=None, delta=None)
+class Test_Parameter(TestCase):
 
     def test_init(self):
         # Define parameterization in terms of depths

@@ -1,16 +1,16 @@
 """Tests for GroundModelSuite class."""
 
-import unittest
+from testtools import unittest, TestCase, get_full_path
 import os
 import numpy as np
 import swipp
 import logging
 logging.basicConfig(level=logging.INFO)
 
-file_name = __file__.split("/")[-1]
-full_path = __file__[:-len(file_name)]
+class Test_GroundModelSuite(TestCase):
 
-class TestGroundModelSuite(unittest.TestCase):
+    def setUp(self):
+        self.full_path = get_full_path(__file__)
 
     def test_init(self):
         # One GroundModel
@@ -51,7 +51,7 @@ class TestGroundModelSuite(unittest.TestCase):
         true_rh = [2000.]*7
 
         test_suite = swipp.GroundModelSuite.from_geopsy(
-            full_path+"data/test_gm_mod1.txt")
+            self.full_path+"data/test_gm_mod1.txt")
 
         self.assertListEqual(test_suite.gms[0].tk, true_tk)
         self.assertListEqual(test_suite.gms[0].vs, true_vs)
@@ -65,7 +65,7 @@ class TestGroundModelSuite(unittest.TestCase):
         true_rh1 = [2000.]*7
 
         test_suite = swipp.GroundModelSuite.from_geopsy(
-            full_path+"data/test_gm_mod2.txt")
+            self.full_path+"data/test_gm_mod2.txt")
         self.assertListEqual(test_suite.gms[0].tk, true_tk)
         self.assertListEqual(test_suite.gms[0].vs, true_vs)
         self.assertListEqual(test_suite.gms[0].vp, true_vp)
@@ -79,7 +79,7 @@ class TestGroundModelSuite(unittest.TestCase):
 
         # Full File
         test_suite = swipp.GroundModelSuite.from_geopsy(
-            full_path+"data/test_gm_mod100.txt")
+            self.full_path+"data/test_gm_mod100.txt")
         # TODO (jpv): Write test for full file.
 
     def test_vs30(self):
