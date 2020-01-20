@@ -7,6 +7,7 @@ import numpy as np
 import scipy.interpolate as sp
 import warnings
 import logging
+import re
 from swipp import CurveUncertain
 logging.Logger(name=__name__)
 
@@ -166,32 +167,63 @@ class Target(CurveUncertain):
 
     @property
     def frequency(self):
+        """Get frequency."""
         return self._x
 
     @frequency.setter
     def frequency(self, value):
+        """Set frequency."""
         self._x = value
 
     @property
     def velocity(self):
+        """Get velocity"""
         return self._y
 
     @velocity.setter
     def velocity(self, value):
+        """Set velocity."""
         self._y = value
 
     @property
     def wavelength(self):
-        """Returns the mean wavelength assoicated with each data point."""
+        """Get wavelength."""
         return self.velocity/self.frequency
 
     @property
     def velstd(self):
+        """Get velocity standard deviation."""
         return self._yerr
 
     @velstd.setter
     def velstd(self, value):
+        """Set velocity standard deviation."""
         self._yerr = value
+
+    @property
+    def cov(self):
+        """Returns the coefficent of variation (COV) of each data point."""
+        return self.velstd/self.velocity
+
+    @property
+    def slowness(self):
+        """Returns the mean slowness of each data point."""
+        return 1/self.velocity
+
+    @property
+    def slostd(self):
+        """Get slowness standard deviation."""
+        upper = self.velocity+self.velstd
+        lower = self.velocity-self.velstd
+        return 0.5*((1/lower - self.slowness) + (self.slowness - 1/upper))
+
+    @property
+    def logstd(self):
+        """Get logarithmic slowness standard deviation."""
+        p = self.slowness
+        pstd = self.slowness * self.cov
+        # From DispersionProxy.cpp Line 194
+        return 0.5*(((p+pstd)/p) + (p/(p-pstd)))
 
     @classmethod
     def from_csv(cls, fname, commentcharachter="#"):
@@ -276,16 +308,6 @@ class Target(CurveUncertain):
         if cov < 0:
             raise ValueError("`cov` must be greater than zero.")
         self.velstd = self.velocity*cov
-
-    @property
-    def cov(self):
-        """Returns the coefficent of variation (COV) of each data point."""
-        return self.velstd/self.velocity
-
-    @property
-    def slowness(self):
-        """Returns the mean slowness of each data point."""
-        return 1/self.velocity
 
     def setmincov(self, cov):
         """Set minimum coefficient of variation (COV) for targets.
@@ -523,22 +545,26 @@ class Target(CurveUncertain):
                 Name of target file without the .target suffix, a
                 relative or full path may be provided.
 
-            version : {'3', '2'}
-                Major version of Geopsy being used.
+            version : {'3', '2'}, optional
+                Major version of Geopsy, default is version
+                3.
 
         Returns:
-            `None`, writes a file to disk.
+            `None`, writes target file to disk.
+
+        Raises:
+            NotImplementedError
+                If `version` does not match the options provided.
         """
 
         self._sort_data()
 
         # TODO (jpv): Decide on how best to include ell.
-        self.__ell_weight = 0
+        self.__ell_weight = 1
         self.__ell_def = False
         self.__ell_mean = 0
         self.__ell_std = 0
 
-        # TODO (jpv): Include optional kwarg for version of geopsy.
         # TODO (jpv): Recode this writter to use json or xml libarary.
         contents = ["<Dinver>",
                     "  <pluginTag>DispersionCurve</pluginTag>",
@@ -553,7 +579,7 @@ class Target(CurveUncertain):
                          f"      <misfitType>L2_Normalized</misfitType>",
                          f"      <ModalCurve>",
                          f"        <name>SWIPP</name>",
-                         f"        <log>SWIPP written by J. Vantassel</log>",
+                         f"        <log>SWIPP by Joseph P. Vantassel</log>",
                          f"        <Mode>",
                          f"          <slowness>Phase</slowness>",
                          f"          <polarisation>Rayleigh</polarisation>",
@@ -572,10 +598,10 @@ class Target(CurveUncertain):
                          f"      <ModalCurve>",
                          f"        <name>SWIPP</name>",
                          f"        <log>SWIPP written by J. Vantassel</log>",
-                         f"        <enabled>true</enabled>"
+                         f"        <enabled>true</enabled>",
                          f"        <Mode>",
                          f"          <slowness>Phase</slowness>",
-                         f"          <polarisation>Rayleigh</polarisation>",
+                         f"          <polarization>Rayleigh</polarization>",
                          f"          <ringIndex>0</ringIndex>",
                          f"          <index>0</index>",
                          f"        </Mode>"]
@@ -584,9 +610,9 @@ class Target(CurveUncertain):
             raise NotImplementedError
 
         if version in ["2"]:
-            for freq, mean, stddev in zip(self.frequency, self.slowness, self.slowness*self.cov):
+            for x, mean, stddev in zip(self.frequency, self.slowness, self.slostd):
                 contents += [f"        <StatPoint>",
-                             f"          <x>{freq}</x>",
+                             f"          <x>{x}</x>",
                              f"          <mean>{mean}</mean>",
                              f"          <stddev>{stddev}</stddev>",
                              f"          <weight>1</weight>",
@@ -594,14 +620,11 @@ class Target(CurveUncertain):
                              f"        </StatPoint>"]
 
         elif version in ["3"]:
-            for freq, mean, cov in zip(self.frequency, self.slowness, self.cov):
-                # From DispersionProxy.cpp Line 194
-                slostd = mean*cov
-                siglog = 0.5*(((mean+slostd)/mean) + (mean/(mean-slostd)))
+            for x, mean, stddev in zip(self.frequency, self.slowness, self.logstd):
                 contents += [f"        <RealStatisticalPoint>",
-                             f"          <x>{freq}</x>",
+                             f"          <x>{x}</x>",
                              f"          <mean>{mean}</mean>",
-                             f"          <stddev>{siglog}</stddev>",
+                             f"          <stddev>{stddev}</stddev>",
                              f"          <weight>1</weight>",
                              f"          <valid>true</valid>",
                              f"        </RealStatisticalPoint>"]
@@ -632,7 +655,7 @@ class Target(CurveUncertain):
                      "      <selected>false</selected>",
                      "      <misfitWeight>1</misfitWeight>",
                      "      <minimumMisfit>0</minimumMisfit>",
-                     "      <misfitType>L2_LogNormalized</misfitType>",
+                     "      <misfitType>L2_Normalized</misfitType>",
                      "    </ModalCurveTarget>"]
 
         selected = "true" if self.__ell_def else "false"
@@ -640,7 +663,7 @@ class Target(CurveUncertain):
                      f"      <selected>{selected}</selected>",
                      f"      <misfitWeight>{self.__ell_weight}</misfitWeight>",
                      f"      <minimumMisfit>0</minimumMisfit>",
-                     f"      <misfitType>L2_Normalized</misfitType>"]
+                     f"      <misfitType>L2_LogNormalized</misfitType>"]
 
         if version in ["2"]:
             contents += [f"      <StatValue>",
@@ -676,11 +699,11 @@ class Target(CurveUncertain):
                      "    </RefractionTarget>"]
 
         if version in ["3"]:
-            contents += ["    <MagnetoTelluricTarget>"
-                         "      <selected>false</selected>"
-                         "      <misfitWeight>1</misfitWeight>"
-                         "      <minimumMisfit>0</minimumMisfit>"
-                         "      <misfitType>L2_Normalized</misfitType>"
+            contents += ["    <MagnetoTelluricTarget>",
+                         "      <selected>false</selected>",
+                         "      <misfitWeight>1</misfitWeight>",
+                         "      <minimumMisfit>0</minimumMisfit>",
+                         "      <misfitType>L2_Normalized</misfitType>",
                          "    </MagnetoTelluricTarget>"]
 
         contents += ["  </TargetList>",
@@ -692,3 +715,71 @@ class Target(CurveUncertain):
         with tar.open(fname_prefix+".target", "w:gz") as f:
             f.add("contents.xml")
         os.remove("contents.xml")
+
+    @classmethod
+    def from_target(cls, target_prefix, version="3"):
+        """Create Target object from target file.
+        
+        Args:
+            target_prefix : str
+                Name of target file to be opened without the '.target'
+                suffix, may include the relative or full path.
+            version : {'2', '3'}, optional
+                Major version of Geopsy used to write the target file,
+                default is '3'.
+        
+        Returns:
+            Instantiated Target object.
+        """
+        with tar.open(target_prefix+".target", "r:gz") as a:
+            a.extractall()
+
+        try:
+            with open("contents.xml", "r", encoding="utf-8") as f:
+                    lines = f.read()
+            if "<Dinver>" not in lines[:10]:
+                raise RuntimeError
+        except (UnicodeDecodeError, RuntimeError) as e:
+            with open("contents.xml", "r", encoding="utf_16_le") as f:
+                lines = f.read()
+            if "<Dinver>" not in lines[:10]:
+                raise ValueError("File encoding not recognized.")                
+                
+        os.remove("contents.xml")
+
+        number = f"(-?\d+.?\d*[eE]?[+-]?\d*)"
+        newline = r"[\r\n|\r|\n]\s+"
+        regex = f"<x>{number}</x>{newline}<mean>{number}</mean>{newline}<stddev>{number}</stddev>"
+        
+        search = re.findall(regex, lines)
+        xs, means, stddevs = np.zeros(len(search)), np.zeros(len(search)), np.zeros(len(search))
+        for cid, item in enumerate(search):
+            tmp_x, tmp_mean, tmp_stddev = item
+            xs[cid] = float(tmp_x)
+            means[cid] = float(tmp_mean)
+            stddevs[cid] = float(tmp_stddev)
+
+        frequency = xs
+        velocity = 1/means
+        if version=="2":
+            inv_stddevs = 1/stddevs
+            velstd = 0.5*(np.sqrt(inv_stddevs*inv_stddevs + 4*velocity*velocity) - inv_stddevs)
+        elif version=="3":
+            cov =  stddevs - np.sqrt(stddevs*stddevs -2*stddevs + 2)
+            velstd = cov*velocity
+        else:
+            msg = f"version={version}, is not recognized, refer to documentation for details."
+            raise NotImplementedError(msg)
+
+        return cls(frequency, velocity, velstd)
+
+    def __eq__(self, obj):
+        if self.frequency.size == obj.frequency.size:
+            for attr in ["frequency", "velocity", "slostd"]:
+                for f1, f2 in zip(np.round(getattr(self,attr),6), np.round(getattr(obj,attr),6)):
+                    if f1 != f2:
+                        print(attr, f1, f2)
+                        return False
+        else:
+            return False
+        return True
