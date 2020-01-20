@@ -18,96 +18,19 @@ class Target(CurveUncertain):
     `Target` is a class for loading, manipulating, and writting
     target information in preparation for surface-wave inversion. The
     class contains a number of methods for instantiating a `Target`
-    object, such as:
-
-    From List :
-    >> SOME EXAMPLE
-
-    From csv file :
-    >> SOME OTHER EXAMPLE
-
-    Manipualting the `Target` such as:
-
-    Resampling :
-    >> SOME RESAMPLING EXAMPLE
-
-    SETTING MINIMUM ERROR :
-    >> SOME MINCOV EXAMPLE
-
-    Writting the `Target` to a file:
-
-    DINVER Style:
-    >> BLAH
-
-    Standard Text File:
-    >> BLAH BLAH .txt
+    object.
 
     Attributes:
-        freq : ndarray
+        frequency : ndarray
             Vector of frequency values in the experimental dispersion
             curve (one per point).
-        vel : ndarray
+        velocity : ndarray
             Vector of velocity values in the experimental dispersion
             curve (one per point).
         velstd : ndarray
             Vector of standard deviation values in the experimental
             dispersion curve (one per point).
     """
-
-    # @staticmethod
-    # def check_inputs(names, values):
-    #     """Check input values type and value.
-
-    #     Specifically:
-    #         1. All values are 1D `ndarray`s or convertable to 1D
-    #         `ndarray`s.
-    #         2. If value is not convertable to `ndarray` check if `float`
-    #         , `int`, or `None`. As these are valid options for `velstd`.
-    #         3. If necessary convert to `ndarray`.
-    #     """
-
-    #     for cnt, (name, value) in enumerate(zip(names, values)):
-
-    #         # Set valid types.
-    #         if name == "velstd":
-    #             valid_type = [type(None), float, list, tuple, np.ndarray]
-    #         else:
-    #             valid_type = [list, tuple, np.ndarray]
-
-    #         # Check types.
-    #         if type(value) not in valid_type:
-    #             msg = f"{name} is of an invalid type {type(value)}."
-    #             raise TypeError(msg)
-
-    #         # Convert types if necessary.
-    #         if type(value) == int:
-    #             values[cnt] = float(value)
-    #         elif type(value) in [list, tuple]:
-    #             value = np.array(value)
-    #             values[cnt] = value
-    #             # Check if arrays are 1D
-    #             if len(value.shape) > 1:
-    #                 f"{name} must be 1D, not {len(value.shape)}D."
-    #                 raise TypeError(msg)
-
-    #         # Check value.
-    #         if type(value) == float:
-    #             if value < 0:
-    #                 msg = f"cov must be greater than zero."
-    #                 raise ValueError(msg)
-
-    #     return values
-
-    def _sort_data(self):
-        """Sort Target attributes from smallest to largest."""
-        if (self._y.size != self._x.size) and (self._y.size != self._yerr.size):
-            msg = "`frequency`, `velocity`, and `velstd` must have the same size."
-            raise ValueError(msg)
-
-        sort_ids = np.argsort(self._x)
-        self._yerr = self._yerr[sort_ids]
-        self._y = self._y[sort_ids]
-        self._x = self._x[sort_ids]
 
     def __init__(self, frequency, velocity, velstd=0.05):
         """Instantiate a Target object.
@@ -143,12 +66,6 @@ class Target(CurveUncertain):
                 If `velstd` is provided in the form of COV and the value
                 is less than zero.
         """
-        # # Check inputs.
-        # names = ["frequency", "velocity", "velstd"]
-        # values = [frequency, velocity, velstd]
-        # checked_inputs = self.check_inputs(names, values)
-        # self.frequency, self.velocity, self.velstd = checked_inputs
-
         # Convert velstd input to vector, if necessary.
         frequency = np.array(frequency)
         velocity = np.array(velocity)
@@ -158,12 +75,19 @@ class Target(CurveUncertain):
             velstd = velocity*velstd
 
         super().__init__(x=frequency, y=velocity, yerr=velstd, xerr=None)
-
-        # Sort dispersion data by frequency, smallest to largest.
         self._sort_data()
-
-        # Set dispersion data weight
         self.dc_weight = 1
+
+    def _sort_data(self):
+        """Sort Target attributes from smallest to largest."""
+        if (self._y.size != self._x.size) and (self._y.size != self._yerr.size):
+            msg = "`frequency`, `velocity`, and `velstd` must have the same size."
+            raise ValueError(msg)
+
+        sort_ids = np.argsort(self._x)
+        self._yerr = self._yerr[sort_ids]
+        self._y = self._y[sort_ids]
+        self._x = self._x[sort_ids]
 
     @property
     def frequency(self):
@@ -229,28 +153,18 @@ class Target(CurveUncertain):
     def from_csv(cls, fname, commentcharachter="#"):
         """Construct instance of Target class from csv file.
 
-        Read a comma seperated file (csv) with header line(s) to
+        Read a comma seperated values (csv) file with header line(s) to
         construct a target object.
 
         Args:
             filename : str
                 Name or path to file containing surface-wave dispersion.
-
                 The file should have at a minimum a column for frequency
                 in Hz and velocity in m/s. Velocity standard devaiton in
                 m/s may also be provided.
-
-                Example :
-                >>> with open("example.csv", "w") as f:
-                ...     f.write("# frequency (Hz), velocity (m/s), velstd (m/s)\n")
-                ...     f.write("10, 100, 5\n")
-                ...     f.write("5, 120, 6\n")
-                ...     f.write("1, 150, 7\n")
-                TODO (jpv): Finish example
-
             commentcharachter : str, optional
-                Charachter at the beginning of a line denoting a comment
-                , default value is '#'.
+                Charachter at the beginning of a line denoting a
+                comment, default value is '#'.
 
         Returns:
             An initialized instance of the Target class.
@@ -463,7 +377,7 @@ class Target(CurveUncertain):
         else:
             msg = f"`res_type`={res_type}, has not been implemented."
             raise NotImplementedError(msg)
-        
+
         # Define x
         if domain == "frequency":
             x = self.frequency
@@ -472,7 +386,7 @@ class Target(CurveUncertain):
         else:
             msg = f"`domain`={domain}, has not been implemented."
             raise NotImplementedError(msg)
-        
+
         # Define custom resampling functions
         res_fxn = self.resample_function(x, self.velocity, kind="cubic")
         res_fxn_yerr = self.resample_function(x, self.velstd, kind="cubic")
@@ -506,20 +420,31 @@ class Target(CurveUncertain):
             warnings.warn("A wavelength of 40m is out of range")
             return None
 
-    def to_txt_dinver(self, fname):
+    def to_txt_dinver(self, fname, version="3"):
         """Write `Target` to text format readily accepted by dinver's
         pre-processor.
 
         Args:
             fname : str
                 Name of output file, may a relative or full path.
+            version : {'3', '2'}, optional
+                Major version of Geopsy, default is version
+                3.
 
         Returns:
             `None`, writes a file to disk.
         """
+        if version=="2":
+            stddevs = self.slostd
+        elif version=="3":
+            stddevs = self.logstd
+        else:
+            msg = f"version={version} is not implemented, refer to documentation."
+            raise NotImplementedError(msg)
+
         with open(fname, "w") as f:
-            for frq, slo, cov in zip(self.frequency, self.slowness, self.cov):
-                f.write(f"{frq}\t{slo}\t{slo*cov}\n")
+            for frq, slo, std in zip(self.frequency, self.slowness, stddevs):
+                f.write(f"{frq}\t{slo}\t{std}\n")
 
     def to_txt_swipp(self, fname):
         """Write `Target` to text format readily accepted by swipp.
@@ -544,11 +469,9 @@ class Target(CurveUncertain):
             fname_prefix : str
                 Name of target file without the .target suffix, a
                 relative or full path may be provided.
-
             version : {'3', '2'}, optional
                 Major version of Geopsy, default is version
                 3.
-
         Returns:
             `None`, writes target file to disk.
 
@@ -586,7 +509,6 @@ class Target(CurveUncertain):
                          f"          <ringIndex>0</ringIndex>",
                          f"          <index>0</index>",
                          f"        </Mode>"]
-
         elif version in ["3"]:
             contents += [f"  <TargetList>",
                          f"    <position>0 0 0</position>",
@@ -605,7 +527,6 @@ class Target(CurveUncertain):
                          f"          <ringIndex>0</ringIndex>",
                          f"          <index>0</index>",
                          f"        </Mode>"]
-
         else:
             raise NotImplementedError
 
@@ -709,7 +630,7 @@ class Target(CurveUncertain):
         contents += ["  </TargetList>",
                      "</Dinver>"]
 
-        with open("contents.xml", "w") as f:
+        with open("contents.xml", "w", encoding="utf-8") as f:
             for row in contents:
                 f.write(row+"\n")
         with tar.open(fname_prefix+".target", "w:gz") as f:
@@ -719,7 +640,7 @@ class Target(CurveUncertain):
     @classmethod
     def from_target(cls, target_prefix, version="3"):
         """Create Target object from target file.
-        
+
         Args:
             target_prefix : str
                 Name of target file to be opened without the '.target'
@@ -727,7 +648,7 @@ class Target(CurveUncertain):
             version : {'2', '3'}, optional
                 Major version of Geopsy used to write the target file,
                 default is '3'.
-        
+
         Returns:
             Instantiated Target object.
         """
@@ -736,23 +657,23 @@ class Target(CurveUncertain):
 
         try:
             with open("contents.xml", "r", encoding="utf-8") as f:
-                    lines = f.read()
+                lines = f.read()
             if "<Dinver>" not in lines[:10]:
                 raise RuntimeError
         except (UnicodeDecodeError, RuntimeError) as e:
             with open("contents.xml", "r", encoding="utf_16_le") as f:
                 lines = f.read()
             if "<Dinver>" not in lines[:10]:
-                raise ValueError("File encoding not recognized.")                
-                
+                raise ValueError("File encoding not recognized.")
+
         os.remove("contents.xml")
 
         number = f"(-?\d+.?\d*[eE]?[+-]?\d*)"
         newline = r"[\r\n|\r|\n]\s+"
         regex = f"<x>{number}</x>{newline}<mean>{number}</mean>{newline}<stddev>{number}</stddev>"
-        
         search = re.findall(regex, lines)
-        xs, means, stddevs = np.zeros(len(search)), np.zeros(len(search)), np.zeros(len(search))
+        xs, means, stddevs = np.zeros(len(search)), np.zeros(
+            len(search)), np.zeros(len(search))
         for cid, item in enumerate(search):
             tmp_x, tmp_mean, tmp_stddev = item
             xs[cid] = float(tmp_x)
@@ -761,25 +682,31 @@ class Target(CurveUncertain):
 
         frequency = xs
         velocity = 1/means
-        if version=="2":
+        if version == "2":
             inv_stddevs = 1/stddevs
-            velstd = 0.5*(np.sqrt(inv_stddevs*inv_stddevs + 4*velocity*velocity) - inv_stddevs)
-        elif version=="3":
-            cov =  stddevs - np.sqrt(stddevs*stddevs -2*stddevs + 2)
+            velstd = 0.5*(np.sqrt(inv_stddevs*inv_stddevs +
+                                  4*velocity*velocity) - inv_stddevs)
+        elif version == "3":
+            cov = stddevs - np.sqrt(stddevs*stddevs - 2*stddevs + 2)
             velstd = cov*velocity
         else:
-            msg = f"version={version}, is not recognized, refer to documentation for details."
+            msg = f"version={version}, is not recognized, refer to documentation for accepted versions."
             raise NotImplementedError(msg)
 
         return cls(frequency, velocity, velstd)
 
     def __eq__(self, obj):
         if self.frequency.size == obj.frequency.size:
-            for attr in ["frequency", "velocity", "slostd"]:
-                for f1, f2 in zip(np.round(getattr(self,attr),6), np.round(getattr(obj,attr),6)):
+            for attr in ["frequency", "velocity", "velstd"]:
+                for f1, f2 in zip(np.round(getattr(self, attr), 6), np.round(getattr(obj, attr), 6)):
                     if f1 != f2:
-                        print(attr, f1, f2)
                         return False
         else:
             return False
         return True
+
+    def __repr__(self):
+        frq_str = str(np.round(self.frequency,2))
+        vel_str = str(np.round(self.velocity,2))
+        std_str = str(np.round(self.velstd,2))
+        return f"Target(frequency={frq_str}, velocity={vel_str}, velstd={std_str})"
