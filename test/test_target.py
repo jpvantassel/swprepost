@@ -126,37 +126,34 @@ class Test_Target(TestCase):
         self.assertListEqual(tar.velstd.tolist(), [2, 3, 4])
 
     def test_resample(self):
-        "Check resample calculation is working correctly."
         fname = self.full_path+"data/test_tar_wstd_linear.csv"
         tar = swipp.Target.from_csv(fname)
-        known_vals = (0.5, 1.5, 2.5, 3.5, 4.5)
-        new_tar = tar.resample(pmin=0.5, pmax=4.5, pn=5,
-                               res_type='linear', domain="frequency",
-                               inplace=False)
-        for known, test in zip(known_vals,  new_tar.frequency):
-            self.assertAlmostEqual(known, test, places=1)
+        returned = tar.resample(pmin=0.5, pmax=4.5, pn=5,
+                                res_type='linear', domain="frequency",
+                                inplace=False).frequency
+        expected = np.array([0.5, 1.5, 2.5, 3.5, 4.5])
+        self.assertArrayAlmostEqual(expected, returned, places=1)
 
         fname = self.full_path+"data/test_tar_wstd_linear.csv"
         tar = swipp.Target.from_csv(fname)
-        known_vals = (2., 2.8284, 4.0)
-        new_tar = tar.resample(pmin=2, pmax=4, pn=3,
+        expected = np.array([2., 2.8, 4.0])
+        returned = tar.resample(pmin=2, pmax=4, pn=3,
                                res_type='log', domain="frequency",
-                               inplace=False)
-        for known, test in zip(known_vals, new_tar.frequency):
-            self.assertAlmostEqual(known, test, places=1)
+                               inplace=False).frequency
+        self.assertArrayAlmostEqual(expected, returned, places=1)
 
         fname = self.full_path+"data/test_tar_wstd_nonlin_0.csv"
         tar = swipp.Target.from_csv(fname)
-        known_velocity = (112.8, 118.3, 125.6, 135.6, 150)
-        known_wavelength = (100, 84.09, 70.7, 59.5, 50)
         new_tar = tar.resample(pmin=50, pmax=100, pn=5,
                                res_type='log', domain="wavelength",
                                inplace=False)
+        expected = np.array([112.5, 118.1, 125.5, 135.6, 150])
+        returned = new_tar.velocity
+        self.assertArrayAlmostEqual(expected, returned, places=1)
 
-        for known, test in zip(known_wavelength, new_tar.wavelength):
-            self.assertAlmostEqual(known, test, places=1)
-        for known, test in zip(known_velocity, new_tar.velocity):
-            self.assertAlmostEqual(known, test, places=0)
+        expected = np.array([100, 84.09, 70.7, 59.5, 50])
+        returned = new_tar.wavelength
+        self.assertArrayAlmostEqual(expected, returned, places=1)
 
     def test_vr40(self):
         fname = self.full_path+"data/test_tar_wstd_nonlin_0.csv"
@@ -168,19 +165,18 @@ class Test_Target(TestCase):
         self.assertAlmostEqual(tar.vr40, 267.2, places=1)
 
     def test_to_target(self):
-        """
-        Check if dispersion data as well as dispersion data with H/V can
-        be written to .target file. Need to use DINVER to confirm file
-        was sucessfully written.
-        """
-        fname = self.full_path+"data/test_tar_wstd_nonlin_1.csv"
-        tar = swipp.Target.from_csv(fname)
-        tar.to_target(fname_prefix=self.full_path+"data/test")
-        self.assertTrue(os.path.isfile(self.full_path+"data/test.target"))
-        os.remove(self.full_path+"data/test.target")
+        prefix = self.full_path+"data/test_tar_wstd_nonlin_1" 
+        tar = swipp.Target.from_csv(prefix + ".csv")
+        tar.to_target(fname_prefix=prefix+"_swipp_v3", version="3")
+        tar.to_target(fname_prefix=prefix+"_swipp_v2", version="2")
 
-        # TODO (jpv): Write code to uncompress and compare the two files.
+        tar_swipp = swipp.Target.from_target(prefix+"_swipp_v3", version="3")
+        tar_geopsy = swipp.Target.from_target(prefix+"_geopsy_v3", version="3")
+        self.assertEqual(tar_geopsy, tar_swipp)
 
+        tar_swipp = swipp.Target.from_target(prefix+"_swipp_v2", version="2")
+        tar_geopsy = swipp.Target.from_target(prefix+"_geopsy_v2", version="2")
+        self.assertEqual(tar_geopsy, tar_swipp)
 
 if __name__ == '__main__':
     unittest.main()
