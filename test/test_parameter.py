@@ -1,6 +1,7 @@
 """Tests for Parameter class."""
 
 from testtools import unittest, TestCase
+import warnings
 import swipp
 import os
 import logging
@@ -11,15 +12,15 @@ class Test_Parameter(TestCase):
 
     def test_init(self):
         # Define parameterization in terms of depths
-        par_type = "CD"
         lay_min = [1, 5]
         lay_max = [3, 16]
         par_min = [200, 400]
         par_max = [400, 600]
         par_rev = [True, False]
-        mypar = swipp.Parameter(par_type, lay_min, lay_max,
-                                par_min, par_max, par_rev)
-        self.assertEqual(par_type, mypar.par_type)
+        mypar = swipp.Parameter(lay_min, lay_max,
+                                par_min, par_max, par_rev,
+                                lay_type="depth")
+        self.assertEqual("CD", mypar._par_type)
         self.assertListEqual(lay_min, mypar.lay_min)
         self.assertListEqual(lay_max, mypar.lay_max)
         self.assertListEqual(par_min, mypar.par_min)
@@ -27,15 +28,15 @@ class Test_Parameter(TestCase):
         self.assertListEqual(par_rev, mypar.par_rev)
 
         # Define parameters in terms of thicknesses
-        par_type = "CT"
         lay_min = [1, 5]
         lay_max = [3, 16]
         par_min = [200, 400]
         par_max = [400, 600]
         par_rev = [True, False]
-        mypar = swipp.Parameter(par_type, lay_min, lay_max,
-                                par_min, par_max, par_rev)
-        self.assertEqual(par_type, mypar.par_type)
+        mypar = swipp.Parameter(lay_min, lay_max,
+                                par_min, par_max, par_rev,
+                                lay_type="thickness")
+        self.assertEqual("CT", mypar._par_type)
         self.assertListEqual(lay_min, mypar.lay_min)
         self.assertListEqual(lay_max, mypar.lay_max)
         self.assertListEqual(par_min, mypar.par_min)
@@ -92,11 +93,11 @@ class Test_Parameter(TestCase):
         # TypeError - nlayers
         for val in ["5", True, 0.5, 2.2]:
             self.assertRaises(TypeError, swipp.Parameter.depth_ln_thickness,
-                              wmin, wmax, val)
+                            wmin, wmax, val)
         # ValueError - nlayers
         for val in [-1, 0]:
             self.assertRaises(ValueError, swipp.Parameter.depth_ln_thickness,
-                              wmin, wmax, val)
+                            wmin, wmax, val)
 
     def test_depth_ln_depth(self):
         wmin, wmax = 1, 100
@@ -119,26 +120,29 @@ class Test_Parameter(TestCase):
         self.assertListAlmostEqual(expected_lay_max, lay_max)
 
     def test_from_ln_thickness(self):
-        wmin, wmax = 1, 100
-        par_min, par_max, par_rev = 100, 200, True
-        # TypeError - nlayers
-        for val in ["5", True, 0.5, 2.2]:
-            self.assertRaises(TypeError, swipp.Parameter.from_ln_thickness, wmin, wmax,
-                              val, par_min, par_max, par_rev)
-        # ValueError - nlayers
-        for val in [-1, 0]:
-            self.assertRaises(ValueError, swipp.Parameter.from_ln_thickness, wmin, wmax,
-                              val, par_min, par_max, par_rev)
-        # TypeError - increasing_factor
-        for val in ["5", True]:
-            self.assertRaises(TypeError, swipp.Parameter.from_ln_thickness, wmin, wmax,
-                              3, par_min, par_max, par_rev, increasing=True,
-                              increasing_factor=val)
-        # ValueError - increasing_factor
-        for val in [-1, 0, 1]:
-            self.assertRaises(ValueError, swipp.Parameter.from_ln_thickness, wmin, wmax,
-                              3, par_min, par_max, par_rev, increasing=True,
-                              increasing_factor=val)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+
+            wmin, wmax = 1, 100
+            par_min, par_max, par_rev = 100, 200, True
+            # TypeError - nlayers
+            for val in ["5", True, 0.5, 2.2]:
+                self.assertRaises(TypeError, swipp.Parameter.from_ln_thickness,
+                                  wmin, wmax, val, par_min, par_max, par_rev)
+            # ValueError - nlayers
+            for val in [-1, 0]:
+                self.assertRaises(ValueError, swipp.Parameter.from_ln_thickness,
+                                  wmin, wmax, val, par_min, par_max, par_rev)
+            # TypeError - increasing_factor
+            for val in ["5", True]:
+                self.assertRaises(TypeError, swipp.Parameter.from_ln_thickness,
+                                  wmin, wmax, 3, par_min, par_max, par_rev,
+                                increasing=True, increasing_factor=val)
+            # ValueError - increasing_factor
+            for val in [-1, 0]:
+                self.assertRaises(ValueError, swipp.Parameter.from_ln_thickness,
+                                  wmin, wmax, 3, par_min, par_max, par_rev,
+                                  increasing=True, increasing_factor=val)
 
     def test_from_ln_depth(self):
         wmin, wmax = 1, 100
