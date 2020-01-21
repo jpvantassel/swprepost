@@ -365,14 +365,16 @@ class Parameter():
 
         depth_factor = Parameter.check_depth_factor(depth_factor)
         dmax = wmax/depth_factor
+        dmin = wmin/3
 
-        minthickness = wmin/3
+        return ([dmin]*nlayers, [dmax]*nlayers)
+        # minthickness = wmin/3
 
-        minthicknesses = []
-        for nlay in range(1, nlayers+1):
-            minthicknesses.append(minthickness*nlay)
+        # minthicknesses = []
+        # for nlay in range(1, nlayers+1):
+        #     minthicknesses.append(minthickness*nlay)
 
-        return (minthicknesses, [dmax]*nlayers)
+        # return (minthicknesses, [dmax]*nlayers)
 
     @classmethod
     def from_ln_depth(cls, wmin, wmax, nlayers, par_min, par_max, par_rev,
@@ -520,7 +522,9 @@ class Parameter():
         lay_min, lay_max = cls.depth_lr(wmin, wmax, lr, depth_factor)
         par_min, par_max, par_rev = cls.min_max_rev(len(lay_min),
                                                     par_min, par_max, par_rev)
-        obj = cls("LR", lay_min, lay_max, par_min, par_max, par_rev)
+        obj = cls(lay_min, lay_max, par_min, par_max, par_rev)
+        # TODO (jpv): Add test for LR in test_parameter
+        obj._par_type = "LR"
         obj.par_value = lr
         return obj
 

@@ -31,41 +31,6 @@ class Parameterization():
             msg = f"{name} must be an instance of `Parameter`, not `{type(val)}`."
             raise TypeError(msg)
 
-        # logging.info(f"Checking {name}...")
-
-        # if val.get("type"):
-        #     if val["type"] not in ["FX", "FTL", "LN", "LNI", "LR", "UserDefined"]:
-        #         raise ValueError(f"Invalid type in {name}.")
-        # else:
-        #     val.update({"type": "UserDefined"})
-
-        # if not val.get("value"):
-        #     val.update({"value": "UserDefined"})
-
-        # if val.get("thickness"):
-        #     logging.info(f"{name} is defined with thickness.")
-        #     if val.get("depth") is not None:
-        #         raise ValueError(
-        #             f"{name} must include either `thickness` or `depth`, not both.")
-        #     keys = ["thickness"]
-        #     test_len = len(val["thickness"]["min"])
-        # elif val.get("depth"):
-        #     logging.info(f"{name} is defined with depth.")
-        #     if val.get("thickness") is not None:
-        #         raise ValueError(
-        #             f"{name} must include either `thickness` or `depth`, not both.")
-        #     keys = ["depth"]
-        #     test_len = len(val["depth"]["min"])
-        # else:
-        #     raise ValueError(f"{name} must have `thickness` or `depth`.")
-
-        # logging.debug(f"len of parameters for {name} is {val}.")
-        # keys.append("par")
-        # for key in keys:
-        #     for value in val[key].values():
-        #         if test_len != len(value):
-        #             raise ValueError(f"Length of {name} is not consistent.")
-
     def __init__(self, vp, pr, vs, rh):
         """Initialize an instance of the `Parameterization` class.
 
@@ -82,8 +47,8 @@ class Parameterization():
 
         Raises:
             TypeError
-                If `vp`, `pr`, `vs`, and `rh` are not instantiated
-                `Parameter` objects.
+                If `vp`, `pr`, `vs`, and `rh` are not `Parameter`
+                objects.
         """
 
         for name, par in zip(("vp", "pr", "vs", "rh"), [vp, pr, vs, rh]):
@@ -97,9 +62,11 @@ class Parameterization():
     @classmethod
     def from_min_max(cls, vp, pr, vs, rh, wv, factor=2):
         """Intilize an instance of the Parameterization class from
-        min/max.
+        a minimum and maximum value.
 
-        This method is left for backwards compatability.
+        This method can be thought of as a parameterization factory
+        and left largely for backwards compatability, though some may
+        find it useful.
 
         Args:
             vp, pr, vs, rh : list
@@ -122,28 +89,13 @@ class Parameterization():
                         followed by their thickness, min, max, and bool.
 
                     Ex. ['FTL', nlay, thickness, min, max, bool]
-#TODO (jpv): Proper explination of LN-thickness and LN-depth.
-                    If type = 'LN-thickness'
+
+                    If type = 'LN'
                         Layering follows Layering by Number, the next
                         argument is number of layers followed by min,
                         max, and bool. 
 
                     Ex. ['LN', ln, min, max, reversal]
-
-                    If type = 'LN-depth'
-                        Layering follows Layering by Number, the next
-                        argument is number of layers followed by min,
-                        max, and bool. 
-
-                    Ex. ['LN', ln, min, max, reversal]
-
-                    If type = 'LNI'
-                        Layering follows Layering by Number with
-                        Increasing thickness, which is similar to 'LN',
-                        but with the requirement that the thickness of
-                        each layer increases with depth.
-
-                    Ex. ['LNI', ln, fac, min, max, reversal]
 
                     If type = 'LR' 
                         Layering follows the Layering Ratio, the next
@@ -152,7 +104,7 @@ class Parameterization():
 
                     Ex. ['LR', lr, min, max, reversal]
 
-                Example:
+                Examples:
 
                     vs = ['LR', 3.0, 100, 300, False]
 
@@ -160,13 +112,13 @@ class Parameterization():
                 100 m/s and the maximum value of Vs set to 300 m/s,
                 with no velocity reversals permitted.
 
-            wv : list
-                Container of the form [min_wave, max_wave] where 
+            wv : iterable
+                Of the form [min_wave, max_wave] where 
                 `min_wave` and `max_wave` are of type `float` or `int`
                 and indicate the minimum and maximum measured wavelength
                 from the fundemental mode Rayleigh wave disperison.
 
-            factor : [float, int], optional
+            factor : float, optional
                 Factor by which the maximum wavelength is
                 divided to estimate the maxium depth of profiling,
                 default is 2.
@@ -176,12 +128,11 @@ class Parameterization():
 
         Raises:
             Various:
-                If entered values do not comply with the instructions
-                listed above.
+                If values do not comply with the instructions listed.
         """
 
         input_arguements = {"vs": vs, "vp": vp, "pr": pr, "rh": rh}
-        valid_options = ('FX', 'FTL', 'LN-thickness', 'LN-depth', 'LNI', 'LR')
+        valid_options = ('FX', 'FTL', 'LN', 'LNI', 'LN-thickness', 'LR')
         for key, value in input_arguements.items():
             # Ensure entry is a list
             if type(value) != list:
@@ -201,7 +152,7 @@ class Parameterization():
                 input_arguements[key] = Parameter.from_ln_thickness(*wv,
                                                                     *value[1:],
                                                                     factor, False)
-            elif value[0] == "LN-depth":
+            elif value[0] == "LN":
                 input_arguements[key] = Parameter.from_ln_depth(*wv,
                                                                 *value[1:])
             elif value[0] == "LNI":
@@ -217,17 +168,20 @@ class Parameterization():
         return cls(input_arguements["vp"], input_arguements["pr"],
                    input_arguements["vs"], input_arguements["rh"])
 
-    def to_param(self, fname, version="3"):
-        """Write paramterization file to disk that can be read by
-        Dinver.
+    def to_param(self, fname_prefix, version="3", full_version=None):
+        """Write paramterization to .param file that can be imported
+        into Dinver.
 
         Args:
-            fname : str
-                File name, may be a relative or the full path. 
-
-            version : {'2.9.0', '2.10.1'}
-                Version of Geopsy suite, being used.
-                Note '2.9.0' is the version compiled on Stampede2.
+            fname_prefix : str
+                File name prefix (without the .param extension), may be
+                a relative or the full path. 
+            version : {'2', '3'}, optional
+                Major version of Geopsy, default is '3'.
+            full_version : str, optional
+                Full Geopsy version in the form Major.Minor.Micro,
+                default is none and will produce a warning if this
+                additional information is required to avoid ambiguity.
 
         Returns:
             `None`, writes .param file to disk.
@@ -236,8 +190,6 @@ class Parameterization():
             KeyError: 
                 If version does not match those specified exactly.
         """
-        # TODO (jpv): Update this documentation.
-        # available_versions = {'2.9.0': '2.9.0', '2.10.1': '2.10.1'}
         available_versions = {'2':'2', '3':'3'}
         version = available_versions[version]
 
@@ -289,12 +241,12 @@ class Parameterization():
             else:
                 raise NotImplementedError(f"Selection {key} not implemented")
 
-            if value.par_type in ["FX", "FTL", "LN-thickness", "LNI", "CT"]:
+            if value._par_type in ["FX", "FTL", "LN-thickness", "LNI", "CT"]:
                 isdepth = "false"
-            elif value.par_type in ["LR", "CD", "LN-depth"]:
+            elif value._par_type in ["LR", "CD", "LN", "LN-depth"]:
                 isdepth = "true"
             else:
-                msg = f"`par_type` {value.par_type} not recognized, refer to Parameter.__doc__."
+                msg = f"._par_type` {value._par_type} not recognized, refer to Parameter.__doc__."
                 raise NotImplementedError(msg)
 
             for lnum, (dhmin, dhmax, pmin, pmax, rev) in enumerate(zip(value.lay_min, value.lay_max, value.par_min, value.par_max, value.par_rev)):
@@ -318,41 +270,30 @@ class Parameterization():
 
         for key, value in parameters.items():
 
-            if value.par_type == "LNI":
-                msg = "LNI additional parameters are not completed."
-                raise NotImplementedError(msg)
-                # nlay = value.par_value
-                # factor = value.par_add_value
-                # if nlay > 2:
-                #     for lay in range(nlay-2):
-                #         if ((lay == 0) & (version == '2.10.1')):
-                #             contents[-1] += 'linear("H'+key+str(lay+1) + \
-                #                 '", ">" ,'+str(factor)+',"D' + \
-                #                 key+str(lay)+'",0);'
-                #         else:
-                #             contents += ['linear("H'+key+str(lay+1)+'", ">" ,' +
-                #                          str(factor)+',"H'+key+str(lay)+'",0);']
-
-            elif value.par_type == "LN-depth":
+            if value._par_type == "LNI":
+                nlay = value.par_value
+                if nlay > 2:
+                    factor = value.par_add_value
+                    for lay in range(nlay-2):
+                        if lay==0:
+                            char = "D"
+                            if version=="2" and full_version is None:
+                                msg = "If `full_version` is '2.9.0' please so \
+indicate by setting `full_version='2.9.0'`, otherwise no action is required."
+                                warnings.warn(msg)
+                            elif version=="2" and full_version == "2.9.0":
+                                char="H"
+                            else:
+                                pass
+                        else:
+                            char = "H"
+                        contents += [f'linear("H{key}{lay+1}", ">" ,{factor},"{char}{key}{lay}",0);']
+            elif value._par_type == "LN":
                 nlay = value.par_value
                 min_thickness = np.round(value.lay_min[0], decimals=2)
                 if nlay > 2:
                     for lay in range(nlay-2):
-                        
-                        if version in ["2", "3"]:                          
-                            condition = f'linear("D{key}{lay+1}",">",{1},"D{key}{lay}",{min_thickness});'
-                            contents += [condition]
-
-                        else:
-                            msg = f"LN-depth not implemented for version {version}."
-                            raise NotImplementedError(msg)
-
-                            # if ((lay == 0) and (version == '2.10.1')):
-                            #     condition = f'linear("H{key}{lay+1}", ">" ,{1},"D{key}{lay}",{min_thickness});'
-                            #     contents[-1] += [condition]
-                            # else:
-                            #     condition = f'linear("H{key}{lay+1}", ">" ,{1},"H{key}{lay}",{min_thickness});'
-                            #     contents += [condition]
+                        contents += [f'linear("D{key}{lay+1}",">",{1},"D{key}{lay}",{min_thickness});']
 
         contents += ['      </text>'
                      '    </ParamSpaceScript>',
@@ -362,15 +303,13 @@ class Parameterization():
         with open("contents.xml", "w") as f:
             for row in contents:
                 f.write(row+"\n")
-        with tar.open(fname, "w:gz") as f:
+        with tar.open(fname_prefix+".param", "w:gz") as f:
             f.add("contents.xml")
         os.remove("contents.xml")
 
     def __eq__(self, other):
-        pars_a = [self.vp, self.pr, self.vs, self.rh]
-        pars_b = [other.vp, other.pr, other.vs, other.rh]
-
-        for par_a, par_b in zip(pars_a, pars_b):
-            if par_a != par_b:
-                return False
+        for attr in ["vp", "pr", "vs", "rh"]:
+            for a, b in zip(getattr(self, attr), getattr(other, attr)):
+                if a != b:
+                    return False
         return True
