@@ -650,7 +650,7 @@ class Target(CurveUncertain):
                 default is '3'.
 
         Returns:
-            Instantiated Target object.
+            Instantiated `Target` object.
         """
         with tar.open(target_prefix+".target", "r:gz") as a:
             a.extractall()
@@ -669,7 +669,7 @@ class Target(CurveUncertain):
         os.remove("contents.xml")
 
         number = f"(-?\d+.?\d*[eE]?[+-]?\d*)"
-        newline = r"[\r\n|\r|\n]\s+"
+        newline = r"\W+"
         regex = f"<x>{number}</x>{newline}<mean>{number}</mean>{newline}<stddev>{number}</stddev>"
         search = re.findall(regex, lines)
         xs, means, stddevs = np.zeros(len(search)), np.zeros(
