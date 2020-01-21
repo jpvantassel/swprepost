@@ -134,6 +134,7 @@ class Test_Parameterization(TestCase):
         par.to_param(fname_prefix=fname_prefix)
         new_par = swipp.Parameterization.from_param(fname_prefix)
         self.assertEqual(par, new_par)
+        os.remove(fname_prefix+".param")
 
 if __name__ == '__main__':
     unittest.main()

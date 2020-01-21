@@ -173,10 +173,13 @@ class Test_Target(TestCase):
         tar_swipp = swipp.Target.from_target(prefix+"_swipp_v3", version="3")
         tar_geopsy = swipp.Target.from_target(prefix+"_geopsy_v3", version="3")
         self.assertEqual(tar_geopsy, tar_swipp)
+        os.remove(prefix+"_swipp_v3.target")
 
         tar_swipp = swipp.Target.from_target(prefix+"_swipp_v2", version="2")
         tar_geopsy = swipp.Target.from_target(prefix+"_geopsy_v2", version="2")
         self.assertEqual(tar_geopsy, tar_swipp)
+        os.remove(prefix+"_swipp_v2.target")
+
 
 if __name__ == '__main__':
     unittest.main()
