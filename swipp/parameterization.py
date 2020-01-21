@@ -2,6 +2,7 @@
 
 import tarfile as tar
 import os
+import re
 from swipp import Parameter
 import numpy as np
 import warnings
@@ -190,7 +191,7 @@ class Parameterization():
             KeyError: 
                 If version does not match those specified exactly.
         """
-        available_versions = {'2':'2', '3':'3'}
+        available_versions = {'2': '2', '3': '3'}
         version = available_versions[version]
 
         contents = ['<Dinver>',
@@ -251,13 +252,13 @@ class Parameterization():
 
             for lnum, (dhmin, dhmax, pmin, pmax, rev) in enumerate(zip(value.lay_min, value.lay_max, value.par_min, value.par_max, value.par_rev)):
                 rev_check = 'true' if not rev else 'false'
-                rev_check = 'false' if len(value.lay_min) == 1 else rev_check
+                rev_check = 'true' if len(value.lay_min) == 1 else rev_check
                 contents += ['      <ParamLayer name="'+key+str(lnum)+'">',
                              '        <shape>Uniform</shape>',
                              '        <lastParamCondition>'+rev_check+'</lastParamCondition>',
                              '        <nSubayers>5</nSubayers>',
-                             '        <topMin>' + str(pmin)+'</topMin>',
-                             '        <topMax>' + str(pmax)+'</topMax>',
+                             '        <topMin>'+str(pmin)+'</topMin>',
+                             '        <topMax>'+str(pmax)+'</topMax>',
                              '        <linkedTo>Not linked</linkedTo>',
                              '        <isDepth>'+isdepth+'</isDepth>',
                              '        <dhMin>'+str(dhmin)+'</dhMin>',
@@ -275,25 +276,27 @@ class Parameterization():
                 if nlay > 2:
                     factor = value.par_add_value
                     for lay in range(nlay-2):
-                        if lay==0:
+                        if lay == 0:
                             char = "D"
-                            if version=="2" and full_version is None:
+                            if version == "2" and full_version is None:
                                 msg = "If `full_version` is '2.9.0' please so \
 indicate by setting `full_version='2.9.0'`, otherwise no action is required."
                                 warnings.warn(msg)
-                            elif version=="2" and full_version == "2.9.0":
-                                char="H"
+                            elif version == "2" and full_version == "2.9.0":
+                                char = "H"
                             else:
                                 pass
                         else:
                             char = "H"
-                        contents += [f'linear("H{key}{lay+1}", ">" ,{factor},"{char}{key}{lay}",0);']
+                        contents += [
+                            f'linear("H{key}{lay+1}", ">" ,{factor},"{char}{key}{lay}",0);']
             elif value._par_type == "LN":
                 nlay = value.par_value
                 min_thickness = np.round(value.lay_min[0], decimals=2)
                 if nlay > 2:
                     for lay in range(nlay-2):
-                        contents += [f'linear("D{key}{lay+1}",">",{1},"D{key}{lay}",{min_thickness});']
+                        contents += [
+                            f'linear("D{key}{lay+1}",">",{1},"D{key}{lay}",{min_thickness});']
 
         contents += ['      </text>'
                      '    </ParamSpaceScript>',
@@ -307,9 +310,118 @@ indicate by setting `full_version='2.9.0'`, otherwise no action is required."
             f.add("contents.xml")
         os.remove("contents.xml")
 
+    @classmethod
+    def from_param(cls, fname_prefix):
+        """Instantitate a Parameterization object from a .param file.
+
+        Args:
+            fname_prefix : str
+                File name prefix, may include a relative or the full
+                path.
+
+        Returns:
+            Instantitated `Parameterization` object.
+
+        Raises:
+            ValueError:
+                If file encoding is not recognized.
+        """
+        with tar.open(fname_prefix+".param", "r:gz") as a:
+            a.extractall()
+
+        try:
+            with open("contents.xml", "r", encoding="utf-8") as f:
+                lines = f.read()
+            if "<Dinver>" not in lines[:10]:
+                raise RuntimeError
+        except (UnicodeDecodeError, RuntimeError) as e:
+            with open("contents.xml", "r", encoding="utf_16_le") as f:
+                lines = f.read()
+            if "<Dinver>" not in lines[:10]:
+                raise ValueError("File encoding not recognized.")
+        os.remove("contents.xml")
+
+        section_lines = []
+        lines = lines.splitlines()
+        for line_count, line in enumerate(lines):
+            if "<shortName>" in line:
+                section_lines.append(line_count)
+        section_lines.append(len(lines))
+
+        number = f"(-?\d+.?\d*[eE]?[+-]?\d*)"
+        newline = r"\W+"
+        reg_shape = "<shape>.*</shape>"
+        reg_cond = "<lastParamCondition>(true|false)</lastParamCondition>"
+        reg_nsub = "<nSubayers>\d+</nSubayers>"
+        reg_pmin = f"<topMin>{number}</topMin>"
+        reg_pmax = f"<topMax>{number}</topMax>"
+        reg_link = "<linkedTo>.*</linkedTo>"
+        reg_isdepth = "<isDepth>(true|false)</isDepth>"
+        reg_lmin = f"<dhMin>{number}</dhMin>"
+        reg_lmax = f"<dhMax>{number}</dhMax>"
+
+        regex = ""
+        for cond in [reg_shape, reg_cond, reg_nsub, reg_pmin, reg_pmax,
+                     reg_link, reg_isdepth, reg_lmin, reg_lmax]:
+            regex += f"{cond}{newline}"
+
+        # print(section_lines)
+        for section_start, section_end in zip(section_lines[:-1], section_lines[1:]):
+            section_lines = lines[section_start:section_end]
+            name = re.findall(
+                "^\s+<shortName>(.*)</shortName>", section_lines[0])[0]
+            section = "\n".join(section_lines)
+
+            # Assume shape uniform
+            tmp_rev = []
+            # Assume ignore sublayers
+            tmp_pmin = []
+            tmp_pmax = []
+            # Assume unlinked
+            tmp_depth = []
+            tmp_lmin = []
+            tmp_lmax = []
+
+            for rev, pmin, pmax, depth, lmin, lmax in re.findall(regex, section):
+                tmp_rev.append(False if rev == "true" else True)
+                tmp_pmin.append(float(pmin))
+                tmp_pmax.append(float(pmax))
+                tmp_depth.append(True if depth == "true" else False)
+                tmp_lmin.append(float(lmin))
+                tmp_lmax.append(float(lmax))
+
+            # Dont allow for mixed thickness and depth
+            if len(tmp_depth) > 1:
+                isdepth = tmp_depth[1]
+                for val in tmp_depth[1:]:
+                    if val != isdepth:
+                        msg = "Layers with mixed thickness and depth cannot be read."
+                        raise ValueError(msg)
+            else:
+                isdepth = True
+
+            lay_type = "depth" if isdepth else "thickness"
+            par = Parameter(tmp_lmin, tmp_lmax, tmp_pmin,
+                            tmp_pmax, tmp_rev, lay_type)
+            if name == "Vp":
+                vp = par
+            elif name == "Vs":
+                vs = par
+            elif name == "Rho":
+                rh = par
+            elif name == "Nu":
+                pr = par
+            else:
+                raise NotImplementedError
+        return cls(vp, pr, vs, rh)
+
     def __eq__(self, other):
         for attr in ["vp", "pr", "vs", "rh"]:
-            for a, b in zip(getattr(self, attr), getattr(other, attr)):
-                if a != b:
-                    return False
+            my_val = getattr(self, attr)
+            ur_val = getattr(other, attr)
+            if my_val != ur_val:
+                return False
         return True
+
+    def __repr__(self):
+        return f"Parameterization(\nvp={self.vp},\npr={self.pr},\nvs={self.vs},\nrh={self.rh})"

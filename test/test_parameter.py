@@ -93,11 +93,11 @@ class Test_Parameter(TestCase):
         # TypeError - nlayers
         for val in ["5", True, 0.5, 2.2]:
             self.assertRaises(TypeError, swipp.Parameter.depth_ln_thickness,
-                            wmin, wmax, val)
+                              wmin, wmax, val)
         # ValueError - nlayers
         for val in [-1, 0]:
             self.assertRaises(ValueError, swipp.Parameter.depth_ln_thickness,
-                            wmin, wmax, val)
+                              wmin, wmax, val)
 
     def test_depth_ln_depth(self):
         wmin, wmax = 1, 100
@@ -138,7 +138,7 @@ class Test_Parameter(TestCase):
             for val in ["5", True]:
                 self.assertRaises(TypeError, swipp.Parameter.from_ln_thickness,
                                   wmin, wmax, 3, par_min, par_max, par_rev,
-                                increasing=True, increasing_factor=val)
+                                  increasing=True, increasing_factor=val)
             # ValueError - increasing_factor
             for val in [-1, 0]:
                 self.assertRaises(ValueError, swipp.Parameter.from_ln_thickness,
@@ -172,8 +172,8 @@ class Test_Parameter(TestCase):
                     [[0.3, 0.5, 1.2, 2.2, 3.6, 5.5, 8.2, 11.9, 17.2, 24.6, 34.9, 50],
                      [0.5, 1.2, 2.2, 3.6, 5.5, 8.2, 11.9, 17.2, 24.6, 34.9, 50, 51]],
                     '1.5':
-                    [[0.3, 0.5, 1.3, 2.4, 4.1, 6.6, 10.4, 16.1, 24.6, 50],
-                     [0.5, 1.3, 2.4, 4.1, 6.6, 10.4, 16.1, 24.6, 50, 51]],
+                    [[0.3, 0.5, 1.23, 2.4, 4.1, 6.6, 10.4, 16.1, 24.6, 50],
+                     [0.5, 1.23, 2.4, 4.1, 6.6, 10.4, 16.1, 24.6, 50, 51]],
                     '2.0':
                     [[0.3, 0.5, 1.5, 3.5, 7.5, 15.5, 31.5, 50],
                      [0.5, 1.5, 3.5, 7.5, 15.5, 31.5, 50, 51]],
@@ -183,13 +183,40 @@ class Test_Parameter(TestCase):
                     '5.0':
                     [[0.3, 0.5, 3.0, 15.5, 50],
                      [0.5, 3.0, 15.5, 50, 51]]}
-        for key in known_lr.keys():
+        for key, (expected_mindepth, expected_maxdepth) in known_lr.items():
             mindepth, maxdepth = swipp.Parameter.depth_lr(wmin, wmax,
                                                           lr=float(key),
                                                           depth_factor=2)
-            for known1, test1, known2, test2 in zip(mindepth, known_lr[key][0], maxdepth, known_lr[key][1]):
-                self.assertAlmostEqual(known1, test1, delta=0.051)
-                self.assertAlmostEqual(known2, test2, delta=0.051)
+            self.assertListAlmostEqual(expected_mindepth, mindepth, places=1)
+            self.assertListAlmostEqual(expected_maxdepth, maxdepth, places=1)
+
+    def test_from_lr(self):
+        wmin, wmax = 1, 100
+        par_min, par_max, par_rev = 100, 200, True
+        lr = 2.0
+        par = swipp.Parameter.from_lr(wmin, wmax, lr,
+                                      par_min, par_max, par_rev)
+        self.assertEqual("LR", par._par_type)
+        self.assertEqual(lr, par.par_value)
+
+    def test_eq(self):
+        wmin, wmax = 1, 100
+        par_min, par_max, par_rev = 100, 200, True
+        nlay=3
+        # Equal
+        par1 = swipp.Parameter.from_ln_depth(wmin, wmax, nlay, par_min, par_max, par_rev)
+        par2 = swipp.Parameter.from_ln_depth(wmin, wmax, nlay, par_min, par_max, par_rev)
+        self.assertEqual(par1, par2)
+
+        # NotEqual - Different Value
+        par3 = swipp.Parameter.from_ln_depth(wmin, wmax, nlay, par_min, par_max, par_rev)
+        par3.par_min[0] = 5
+        self.assertNotEqual(par1, par3)
+
+        # NotEqual - Different Length
+        par4 = swipp.Parameter.from_ln_depth(wmin, wmax, nlay, par_min, par_max, par_rev)
+        par4.par_min = par4.par_min[:-1]
+        self.assertNotEqual(par1, par4)
 
     # def test_plot(self):
     #     import matplotlib.pyplot as plt

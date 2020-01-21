@@ -52,7 +52,7 @@ class Parameter():
                 msg = f"`{upper_name}[{index}]` must be greater than `{lower_name}[{index}]`."
                 raise ValueError(msg)
 
-        return (lower, upper)
+        return (list(lower), list(upper))
 
     @staticmethod
     def check_rev(par_rev):
@@ -67,7 +67,7 @@ class Parameter():
                 msg = "`par_rev` must be an iterable composed of `bool`s."
                 raise TypeError(msg)
 
-        return (par_rev)
+        return (list(par_rev))
 
     def __init__(self, lay_min, lay_max, par_min, par_max, par_rev, lay_type="thickness"):
         """Initialize a `Parameter` object.
@@ -523,7 +523,6 @@ class Parameter():
         par_min, par_max, par_rev = cls.min_max_rev(len(lay_min),
                                                     par_min, par_max, par_rev)
         obj = cls(lay_min, lay_max, par_min, par_max, par_rev)
-        # TODO (jpv): Add test for LR in test_parameter
         obj._par_type = "LR"
         obj.par_value = lr
         return obj
@@ -587,11 +586,15 @@ class Parameter():
 
     def __eq__(self, other):
         for attr in ["lay_min", "lay_max", "par_min", "par_max", "par_rev"]:
-            for a, b in zip(getattr(self, attr), getattr(other, attr)):
-                if len(a) != len(b):
+            my_vals = getattr(self, attr)
+            ur_vals = getattr(other, attr)
+
+            if len(my_vals) != len(ur_vals):
+                return False
+            for my_val, ur_val in zip(my_vals, ur_vals):
+                if my_val != ur_val:
                     return False
-                else:
-                    for val_a, val_b in zip(a, b):
-                        if val_a != val_b:
-                            return False
         return True
+
+    def __repr__(self):
+        return f"Parameter(\n\tlay_min={self.lay_min},\n\tlay_max={self.lay_max},\n\tpar_min={self.par_min},\n\tpar_max={self.par_max},\n\tpar_rev={self.par_rev},\n\tlay_type={self._par_type})"
