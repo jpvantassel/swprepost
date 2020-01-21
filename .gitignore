@@ -8,8 +8,6 @@ doc
 scratch
 
 # File Types
-*.target
-*.param
 *.xlsx
 *.docx
 *.pptx
