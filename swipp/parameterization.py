@@ -22,7 +22,10 @@ class Parameterization():
     necessary using the Dinver user interface.
 
     Attributes:
-        This class contains no public attributes.
+        vs, vp, pr, rh : Parameter
+            Parameter objects defining shear-wave velocity,
+            compression-wave velocity, Poisson's ratio, and mass density
+            respectively.
     """
 
     @staticmethod
@@ -65,9 +68,9 @@ class Parameterization():
         """Intilize an instance of the Parameterization class from
         a minimum and maximum value.
 
-        This method can be thought of as a parameterization factory
-        and left largely for backwards compatability, though some may
-        find it useful.
+        Note: This method compromises readability for pure charachter
+        efficiency (which is almost always a bad idea!), however some
+        users may find this method useful for quick calculations.
 
         Args:
             vp, pr, vs, rh : list
@@ -104,14 +107,6 @@ class Parameterization():
                         min, max, and bool.
 
                     Ex. ['LR', lr, min, max, reversal]
-
-                Examples:
-
-                    vs = ['LR', 3.0, 100, 300, False]
-
-                Vs follows LR=3.0, with the minimum value of Vs set to
-                100 m/s and the maximum value of Vs set to 300 m/s,
-                with no velocity reversals permitted.
 
             wv : iterable
                 Of the form [min_wave, max_wave] where 
@@ -180,16 +175,18 @@ class Parameterization():
             version : {'2', '3'}, optional
                 Major version of Geopsy, default is '3'.
             full_version : str, optional
-                Full Geopsy version in the form Major.Minor.Micro,
-                default is none and will produce a warning if this
-                additional information is required to avoid ambiguity.
+                Full version of Geopsy in the form Major.Minor.Micro,
+                default is `None`. When equal to `None` the method
+                will produce a warning if `full_version` is required
+                to avoid ambiguity.
 
         Returns:
             `None`, writes .param file to disk.
 
         Raises:
             KeyError: 
-                If version does not match those specified exactly.
+                If `version` does not match any listed in the
+                documenation.
         """
         available_versions = {'2': '2', '3': '3'}
         version = available_versions[version]
@@ -365,16 +362,15 @@ indicate by setting `full_version='2.9.0'`, otherwise no action is required."
                      reg_link, reg_isdepth, reg_lmin, reg_lmax]:
             regex += f"{cond}{newline}"
 
-        # print(section_lines)
         for section_start, section_end in zip(section_lines[:-1], section_lines[1:]):
             section_lines = lines[section_start:section_end]
             name = re.findall(
                 "^\s+<shortName>(.*)</shortName>", section_lines[0])[0]
             section = "\n".join(section_lines)
 
-            # Assume shape uniform
+            # Assume shape is uniform
             tmp_rev = []
-            # Assume ignore sublayers
+            # Ignore sublayers
             tmp_pmin = []
             tmp_pmax = []
             # Assume unlinked
@@ -395,7 +391,7 @@ indicate by setting `full_version='2.9.0'`, otherwise no action is required."
                 isdepth = tmp_depth[1]
                 for val in tmp_depth[1:]:
                     if val != isdepth:
-                        msg = "Layers with mixed thickness and depth cannot be read."
+                        msg = "Parameterizations with layers defined in terms of thickness and depth cannot be parsed at this time."
                         raise ValueError(msg)
             else:
                 isdepth = True

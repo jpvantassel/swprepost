@@ -69,7 +69,8 @@ class Parameter():
 
         return (list(par_rev))
 
-    def __init__(self, lay_min, lay_max, par_min, par_max, par_rev, lay_type="thickness"):
+    def __init__(self, lay_min, lay_max, par_min, par_max, par_rev,
+                 lay_type="thickness"):
         """Initialize a `Parameter` object.
 
         Args:
@@ -240,7 +241,8 @@ class Parameter():
         return obj
 
     @staticmethod
-    def depth_ln_thickness(wmin, wmax, nlayers, depth_factor=2, increasing=False):
+    def depth_ln_thickness(wmin, wmax, nlayers, depth_factor=2,
+                           increasing=False):
         """Calculate the minimum and maximum thickness for each layer 
         using Layering by Number (LN).
 
@@ -280,7 +282,8 @@ class Parameter():
 
     @classmethod
     def from_ln_thickness(cls, wmin, wmax, nlayers, par_min, par_max, par_rev,
-                          depth_factor=2, increasing=False, increasing_factor=1.2):
+                          depth_factor=2, increasing=False,
+                          increasing_factor=1.2):
         """Alternate constructor to instantiate a `Parameter` using
         LN or LNI.
 
@@ -375,6 +378,13 @@ class Parameter():
         #     minthicknesses.append(minthickness*nlay)
 
         # return (minthicknesses, [dmax]*nlayers)
+
+    @classmethod
+    def from_ln(cls, wmin, wmax, nlayers, par_min, par_max, par_rev,
+                depth_factor=2):
+        return cls.from_ln_depth(wmin=wmin, wmax=wmax, nlayers=nlayers,
+                                 par_min=par_min, par_max=par_max,
+                                 par_rev=par_rev, depth_factor=2)
 
     @classmethod
     def from_ln_depth(cls, wmin, wmax, nlayers, par_min, par_max, par_rev,
@@ -487,7 +497,8 @@ class Parameter():
         return (layer_mindepth, layer_maxdepth)
 
     @classmethod
-    def from_lr(cls, wmin, wmax, lr, par_min, par_max, par_rev, depth_factor=2):
+    def from_lr(cls, wmin, wmax, lr, par_min, par_max, par_rev,
+                depth_factor=2):
         """Alternate constructor to instantiate a `Parameter` using LR.
 
         Use Layering Ratio (LR) to define the `Parameter`.
@@ -597,4 +608,4 @@ class Parameter():
         return True
 
     def __repr__(self):
-        return f"Parameter(\n\tlay_min={self.lay_min},\n\tlay_max={self.lay_max},\n\tpar_min={self.par_min},\n\tpar_max={self.par_max},\n\tpar_rev={self.par_rev},\n\tlay_type={self._par_type})"
+        return f"Parameter(lay_min={self.lay_min}, lay_max={self.lay_max}, par_min={self.par_min}, par_max={self.par_max}, par_rev={self.par_rev}, lay_type={self._par_type})"
