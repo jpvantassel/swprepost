@@ -16,3 +16,4 @@ scratch
 *.egg-info
 *.png
 *.hypothesis
+*.tmp_profiler_run
