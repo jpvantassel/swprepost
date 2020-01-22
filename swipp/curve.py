@@ -14,8 +14,13 @@ class Curve():
 
     @staticmethod
     def check_types(x, y):
-        x = np.array(x)
-        y = np.array(y)
+        try:
+            x = np.array(x, dtype=np.double)
+            y = np.array(y, dtype=np.double)
+        except ValueError:
+            msg = f"x and y must be numeric."
+            raise TypeError(msg)
+        
         if x.size != y.size:
             msg = f"""Abscissa and ordinate must be the same size,
                       currently {x.size} and {y.size}, respectively."""
@@ -29,7 +34,7 @@ class Curve():
                 check_fxn(_x, _y)
 
     @classmethod
-    def check_input(cls, x, y, check_fxn):
+    def check_input(cls, x, y, check_fxn=None):
         """Check inputs comply with the required formatting."""
         x, y = cls.check_types(x, y)
         cls.check_values(x, y, check_fxn)
