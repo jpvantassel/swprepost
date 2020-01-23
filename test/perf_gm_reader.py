@@ -19,4 +19,6 @@ stat.print_stats(0.1)
 
 # YEAR - MO - DY : TIME UNIT
 # -------------------------
-# 2020 - 01 - 22 :  0.019s
+# 2020 - 01 - 22 :  0.019s -> Basline
+# 2020 - 01 - 23 :  0.016s -> Refactor for delegation
+
