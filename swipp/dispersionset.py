@@ -2,12 +2,12 @@
 
 import re
 import copy
-from swipp import CurveSet, DispersionCurve
+from swipp import CurveSet, DispersionCurve, regex
 
 class DispersionSet(CurveSet):
     """Class for handling sets of 
     :meth `DispersionCurve <swipp.DispersionCurve>`
-    objects which all belong to a common velocity model.
+    objects, which all belong to a common velocity model.
 
     Attributes:
         rayleigh, love : dict
@@ -57,11 +57,73 @@ class DispersionSet(CurveSet):
         self.identifier = identifier
         self.misfit = misfit
 
-    # TODO (jpv): Refactor DispersionSuite.from_geopsy so that it calls
-    # DispersionSet.from_geopsy.
+    # TODO (jpv): Add in Love and Rayleigh mode optimizations.
+    @classmethod
+    def _from_lines(cls, lines, nrayleigh="all", nlove="all"):
+        """Create an instance of `DispersionSet` from a list of strings.
+
+        Args:
+            lines : list(str)
+                List of strings, one per line, following the syntax of
+                a geopy output file.
+            nrayleigh, nlove : int, optional
+                Number of Rayleigh and Love modes respectively, default
+                is `None` so all available modes will be extracted.
+
+        Returns:
+            Instantiated `DispersionSet` object.
+        """
+        # Find line numbers
+        modes = {"rayleigh": {}, "love": {}}
+        # TODO (jpv): Add in the mode optimizations
+        # stop_search_rayleigh = False if nrayleigh > 0 else True
+        # mode_type = "rayleigh"
+        identifier, misfit = regex.model.findall(lines[0])[0]
+        for line_number, line in enumerate(lines):
+            try:
+                mode_type = regex.wave.findall(line)[0]
+                mode_type = mode_type.lower()
+            except IndexError:
+                # if mode_type == "rayleigh" and stop_search_rayleigh:
+                #     continue
+                try:
+                    mode_number = regex.mode.findall(line)[0]
+                    mode_number = int(mode_number)
+
+                    # check_rayleigh = (mode_type == "rayleigh" and mode_number == nrayleigh)
+                    # check_love = (mode_type == "love" and mode_number == nlove)
+                    # if check_rayleigh:
+                    #     if nlove == 0:
+                    #         break
+                    #     else:
+                    #         stop_search_rayleigh = True
+                    # if check_love:
+                    #     break
+                    modes[mode_type].update({mode_number: line_number})
+
+                except IndexError:
+                    try:
+                        c_identifier, c_misfit = regex.model.findall(line)[0]
+                        if c_identifier != identifier:
+                            break
+                        else:
+                            continue
+                    except IndexError:
+                        continue
+
+        # Pass proper lines to DispersionCurve
+        dcs = {"rayleigh":{}, "love":{}}
+        for wave_type, mode_info in modes.items():
+            for mode_number, starting_line in mode_info.items():
+                dc = DispersionCurve._from_lines(lines[starting_line:])
+                dcs[wave_type].update({mode_number:dc})
+
+        rayleigh = None if dcs["rayleigh"]=={} else dcs["rayleigh"] 
+        love = None if dcs["love"]=={} else dcs["love"] 
+        return cls(identifier, float(misfit), rayleigh=rayleigh, love=love)
 
     @classmethod
-    def from_geopsy(cls, fname):
+    def from_geopsy(cls, fname, nrayleigh="all", nlove="all"):
         """Create an instance of `DispersionSet` from a text file
         created by the Geopsy command `gpdc`.
 
@@ -77,66 +139,17 @@ class DispersionSet(CurveSet):
         """
         with open(fname, "r") as f:
             lines = f.read().splitlines()
-        c_model, c_mode = None, None
-        set_count = 0
-        exp0 = r"^# Layered model (\d+): value=(\d+.?\d*)$"
-        # exp1 = r"^# (\d+) (Rayleigh|Love) dispersion mode\(s\)$"
-        exp2 = r"^# Mode (\d+)"
-        exp3 = r"^(\d+.?\d*[eE]?[+-]?\d*) (\d+.?\d*[eE]?[+-]?\d*)$"
-        # TODO (jpv) have this go by linenumber so it can skip ahead
-        # when necessary
-        for line in lines:
-            # Assume we are on a data line.
-            try:
-                f, p = re.findall(exp3, line)[0]
-                cfrq.append(float(f))
-                camp.append(float(p))
-            # If not, must be on a comment line.
-            except IndexError:
-                # Indicates a new model, or a change in type of dispersion.
-                if line.startswith("# Layered model"):
-                    model_string, misfit_string = re.findall(exp0, line)[0]
-                    model, misfit = int(model_string), float(misfit_string)
-                    # Run once at the start of the file, to initialize vars.
-                    if c_model == None:
-                        ray, lov = {}, {}
-                        c_model, c_misfit = model, misfit
-                    else:
-                        # Update ray or lov dictionaries with captured values.
-                        if modetype == "r":
-                            ray.update({c_mode: DispersionCurve(
-                                cfrq, [1/x for x in camp])})
-                        elif modetype == "l":
-                            lov.update({c_mode: DispersionCurve(
-                                cfrq, [1/x for x in camp])})
-                        # If first set, save a new object and prepare for next.
-                        if (model != c_model) and (set_count == 0):
-                            # if (modetype == "r") or (modetype == "l"):
-                            return cls(identifier=str(c_model), misfit=c_misfit, rayleigh=ray, love=lov)
-                        # This must be the same model, so continue acquisition.
-                        else:
-                            continue
-                elif line.endswith("Rayleigh dispersion mode(s)"):
-                    modetype = "r"
-                elif line.endswith("Love dispersion mode(s)"):
-                    modetype = "l"
-                elif line.startswith("# Mode"):
-                    # If this is not the first loop, update.
-                    if c_mode != None:
-                        if modetype == "r":
-                            ray.update({c_mode: DispersionCurve(
-                                cfrq, [1/x for x in camp])})
-                        elif modetype == "l":
-                            lov.update({c_mode: DispersionCurve(
-                                cfrq, [1/x for x in camp])})
-                    c_mode = int(re.findall(exp2, line)[0])
-                    cfrq, camp = [], []
-                else:
-                    continue
 
-        # Update from last loop.
-        if modetype == "r":
-            ray.update({c_mode: DispersionCurve(cfrq, [1/x for x in camp])})
-        elif modetype == "l":
-            lov.update({c_mode: DispersionCurve(cfrq, [1/x for x in camp])})
-        return cls(identifier=str(c_model), misfit=c_misfit, rayleigh=ray, love=lov)
+        # Start right after introduction of a layered model.
+        model_regex = r"^# Layered model (\d+): value=(\d+.?\d*)$"
+        for line_number, line in enumerate(lines):
+            try:
+                indentifier, misfit = re.findall(model_regex, line)[0]
+                break
+            except IndexError:
+                continue
+
+        return cls._from_lines(lines[line_number:], nrayleigh=nrayleigh, nlove=nlove)
+
+    def __repr__(self):
+        return f"DispersionSet(identifier={self.identifier}, rayleigh={self.rayleigh}, love={self.love}, misfit={self.misfit})"

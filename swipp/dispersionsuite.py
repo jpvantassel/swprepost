@@ -1,7 +1,8 @@
 """This file contains the class definintion for `DispersionSuite`."""
 
 import re
-from swipp import Suite, DispersionCurve, DispersionSet
+from swipp import Suite, DispersionCurve, DispersionSet, regex
+import concurrent.futures
 import logging
 logging.Logger(name=__name__)
 
@@ -95,12 +96,11 @@ class DispersionSuite(Suite):
             lines = f.read().splitlines()
         lines.append(" ")
 
-        model_regex = r"^# Layered model (\d+): value=(\d+.?\d*)$"
-
+        # Find line numbers
         found_models, found_misfits, line_numbers = [], [], []
         for line_number, line in enumerate(lines):
             try:
-                model, misfit = re.findall(model_regex, line)[0]
+                model, misfit = regex.model.findall(line)[0]
 
                 if model not in found_models:
                     found_models.append(model)
@@ -116,9 +116,19 @@ class DispersionSuite(Suite):
 
         dc_sets = []
         for start_line, end_line in zip(line_numbers[:-1], line_numbers[1:]):
-            dc_sets.append(DispersionSet.from_lines(lines[start_line:end_line],
+            dc_sets.append(DispersionSet._from_lines(lines[start_line:end_line],
                                                     nrayleigh=nrayleigh,
                                                     nlove=nlove))
+
+        # Slow Parallel code ...
+        # with concurrent.futures.ProcessPoolExecutor(max_workers=1) as executor:
+        #     processes = []
+        #     for start_line, end_line in zip(line_numbers[:-1], line_numbers[1:]):
+        #         processes.append(executor.submit(DispersionSet.from_lines, lines[start_line:end_line]))
+
+        # dc_sets = []
+        # for process in processes:
+        #     dc_sets.append(process.result())
 
         obj = cls(dc_sets[0])
 

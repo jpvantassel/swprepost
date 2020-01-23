@@ -12,46 +12,49 @@ class Test_DispersionSuite(TestCase):
     def setUp(self):
         self.full_path = get_full_path(__file__)
 
-    # def test_from_geopsy(self):
-    #     # swipp.DispersionSuite.from_geopsy(self.full_path+"data/test_dc_mod1_ray1_lov1_shrt.txt")
-    #     # swipp.DispersionSuite.from_geopsy(self.full_path+"data/test_dc_mod2_ray2_lov2_shrt.txt")
-    #     swipp.DispersionSuite.from_geopsy(self.full_path+"data/test_dc_mod100_ray2_lov2_full.txt")
-
     def test_check_input(self):
-        # DispersionSuite to be instantiated with DispersionSet object only.
+        # DispersionSuite to be instantiated with only a DispersionSet object.
         for test in [[1, 2, 3], (1, 2, 3), True, "DC"]:
-            self.assertRaises(
-                TypeError, swipp.DispersionSuite, test, "Test")
+            self.assertRaises(TypeError, swipp.DispersionSuite, test, "Test")
 
     def test_init(self):
         # Manual instantiation
-        frequency = [1, 2, 3]
-        velocity = [4, 5, 6]
+        frequency = np.array([1, 2, 3])
+        velocity = np.array([4, 5, 6])
         dc = swipp.DispersionCurve(frequency=frequency, velocity=velocity)
         dc_set = swipp.DispersionSet(identifier="Test", misfit=None,
                                      rayleigh={0: dc}, love=None)
-        mysuite = swipp.DispersionSuite(dispersionset=dc_set)
-        self.assertListEqual(frequency,
-                             mysuite.sets[0].rayleigh[0].frequency.tolist())
-        self.assertListEqual(velocity,
-                             mysuite.sets[0].rayleigh[0].velocity.tolist())
-
+        dc_suite = swipp.DispersionSuite(dispersionset=dc_set)
+        
+        # Compare the Result
+        expected = frequency
+        returned = dc_suite[0].rayleigh[0].frequency
+        self.assertArrayEqual(expected, returned)
+        
+        expected = velocity
+        returned = dc_suite[0].rayleigh[0].velocity
+        self.assertArrayEqual(expected, returned)
+        
     def test_append(self):
-        frequency = [1, 2, 3]
-        velocity = [4, 5, 6]
+        # Manual instantiation
+        frequency = np.array([1, 2, 3])
+        velocity = np.array([4, 5, 6])
         dc = swipp.DispersionCurve(frequency=frequency, velocity=velocity)
-        dc_set = swipp.DispersionSet(identifier="Test", misfit=None,
+        dc_set_0 = swipp.DispersionSet(identifier="Test_0", misfit=None,
                                      rayleigh={0: dc}, love=None)
-        mysuite = swipp.DispersionSuite(dispersionset=dc_set)
-        dc_set = swipp.DispersionSet(identifier="Test1", misfit=None,
+        dc_suite = swipp.DispersionSuite(dispersionset=dc_set_0)
+
+        # Manual Append
+        dc_set_1 = swipp.DispersionSet(identifier="Test_1", misfit=None,
                                      rayleigh={0: dc}, love=None)
-        mysuite.append(dispersionset=dc_set)
-        for c_set in mysuite.sets:
-            self.assertListEqual(
-                frequency, c_set.rayleigh[0].frequency.tolist())
-            self.assertListEqual(velocity, c_set.rayleigh[0].velocity.tolist())
-        self.assertListEqual(["Test", "Test1"], mysuite.ids)
-        self.assertListEqual([None, None], mysuite.misfits)
+        dc_suite.append(dispersionset=dc_set_1)
+
+        # Compare the Result
+        for dc_set in dc_suite:
+            self.assertArrayEqual(frequency, dc_set.rayleigh[0].frequency)
+            self.assertArrayEqual(velocity, dc_set.rayleigh[0].velocity)
+        self.assertListEqual(["Test_0", "Test_1"], dc_suite.ids)
+        self.assertListEqual([None, None], dc_suite.misfits)
 
     def test_from_geopsy(self):
 
