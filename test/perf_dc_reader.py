@@ -19,4 +19,7 @@ stat.print_stats(0.1)
 
 # YEAR - MO - DY : TIME UNIT
 # -------------------------
-# 2020 - 01 - 22 :  0.141s
+# 2020 - 01 - 22 :  0.141s -> Baseline
+# 2020 - 01 - 23 :  0.250s -> Refactor with delegation
+# 2020 - 01 - 23 :  0.137s -> Compile regular expressions
+# 2020 - 01 - 23 :  0.128s -> Factor out compilation
