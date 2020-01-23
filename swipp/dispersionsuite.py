@@ -13,13 +13,11 @@ class DispersionSuite(Suite):
     Attributes:
         sets : list
             Container for instantiated `DispersionSet` objects.
-        
-        
     """
     @staticmethod
     def check_input(curveset, set_type):
         """Check inputs comply with the required format.
-        
+
         Specifically:
             1. `curveset` is of type `set_type`.
         """
@@ -76,104 +74,59 @@ class DispersionSuite(Suite):
         return msft
 
     @classmethod
-    def from_geopsy(cls, fname):
+    def from_geopsy(cls, fname, ndc="all", nrayleigh="all", nlove="all"):
         """Create `DispersionSuite` from a text file created by the 
-        Geopsy command `gpdc`.
+        Geopsy module `gpdc`.
 
         Args:
             fname : str
                 Name of file to be read, may be a relative or full path.
             ndc : int, optional
-                Number of sets to extract, default is `None` so all 
+                Number of sets to extract, default is "all" so all 
                 available sets will be extracted.
             nrayleigh, nlove : int, optional
                 Number of Rayleigh and Love modes respectively, default
-                is `None` so all available modes will be extracted.
+                is "all" so all available modes will be extracted.
 
         Returns:
             Instantiated `DispersionSuite` object.
         """
         with open(fname, "r") as f:
             lines = f.read().splitlines()
-        c_model, c_mode, obj = None, None, None
-        set_count = 0
-        exp0 = r"^# Layered model (\d+): value=(\d+.?\d*)$"
-        # exp1 = r"^# (\d+) (Rayleigh|Love) dispersion mode\(s\)$"
-        exp2 = r"^# Mode (\d+)"
-        exp3 = r"^(\d+.?\d*[eE]?[+-]?\d*) (\d+.?\d*[eE]?[+-]?\d*)$"
-        # TODO (jpv) have this go by linenumber so it can skip ahead
-        # when necessary
-        for line in lines:
-            # Assume we are on a data line.
+        lines.append(" ")
+
+        model_regex = r"^# Layered model (\d+): value=(\d+.?\d*)$"
+
+        found_models, found_misfits, line_numbers = [], [], []
+        for line_number, line in enumerate(lines):
             try:
-                f, p = re.findall(exp3, line)[0]
-                cfrq.append(float(f))
-                camp.append(float(p))
-            # If not, must be on a comment line.
+                model, misfit = re.findall(model_regex, line)[0]
+
+                if model not in found_models:
+                    found_models.append(model)
+                    found_misfits.append(misfit)
+                    line_numbers.append(line_number)
+
+                if len(found_models) == ndc:
+                    break
+
             except IndexError:
-                # Indicates a new model, or a change in type of dispersion.
-                if line.startswith("# Layered model"):
-                    model_string, misfit_string = re.findall(exp0, line)[0]
-                    model, misfit = int(model_string), float(misfit_string)
-                    # Run once at the start of the file, to initialize vars.
-                    if c_model == None:
-                        # ray, lov, ell = {}, {}, {}
-                        ray, lov = {}, {}
-                        c_model, c_misfit = model, misfit
-                    else:
-                        # Update ray or lov dictionaries with captured values.
-                        if modetype == "r":
-                            ray.update({c_mode: DispersionCurve(
-                                cfrq, [1/x for x in camp])})
-                        elif modetype == "l":
-                            lov.update({c_mode: DispersionCurve(
-                                cfrq, [1/x for x in camp])})
-                        # If first set, save a new object and prepare for next.
-                        if (model != c_model) and (set_count == 0):
-                            obj = cls(DispersionSet(identifier=str(
-                                c_model), misfit=c_misfit, rayleigh=ray, love=lov))
-                            c_model, c_misfit = model, misfit
-                            set_count += 1
-                        # If it is a new set, but not the first set, append.
-                        elif model != c_model:
-                            obj.append(DispersionSet(identifier=str(
-                                c_model), misfit=c_misfit, rayleigh=ray, love=lov))
-                            c_model, c_misfit = model, misfit
-                            set_count += 1
-                        # This must be the same model, so continue acquisition.
-                        else:
-                            continue
-                elif line.endswith("Rayleigh dispersion mode(s)"):
-                    modetype = "r"
-                elif line.endswith("Love dispersion mode(s)"):
-                    modetype = "l"
-                elif line.endswith("Rayleigh ellipticity mode(s)"):
-                    modetype = "e"
-                elif line.startswith("# Mode"):
-                    if c_mode != None:
-                        if modetype == "r":
-                            ray.update({c_mode: DispersionCurve(
-                                cfrq, [1/x for x in camp])})
-                        elif modetype == "l":
-                            lov.update({c_mode: DispersionCurve(
-                                cfrq, [1/x for x in camp])})
-                    c_mode = int(re.findall(exp2, line)[0])
-                    cfrq, camp = [], []
-                else:
-                    continue
+                continue
+        line_numbers.append(line_number)
 
-        # Update from last loop.
-        if modetype == "r":
-            ray.update({c_mode: DispersionCurve(cfrq, [1/x for x in camp])})
-        elif modetype == "l":
-            lov.update({c_mode: DispersionCurve(cfrq, [1/x for x in camp])})
+        dc_sets = []
+        for start_line, end_line in zip(line_numbers[:-1], line_numbers[1:]):
+            dc_sets.append(DispersionSet.from_lines(lines[start_line:end_line],
+                                                    nrayleigh=nrayleigh,
+                                                    nlove=nlove))
 
-        # Either write or append data, depending if obj has been defined.
-        if obj == None:
-            obj = cls(DispersionSet(identifier=str(c_model),
-                                    misfit=c_misfit, rayleigh=ray, love=lov))
-        else:
-            obj.append(DispersionSet(identifier=str(c_model),
-                                     misfit=c_misfit, rayleigh=ray, love=lov))
+        obj = cls(dc_sets[0])
+
+        if len(dc_sets) > 1:
+            for dc_set in dc_sets[1:]:
+                obj.append(dc_set)
+
         return obj
 
+    def __getitem__(self, aslice):
+        return self.sets[aslice]
