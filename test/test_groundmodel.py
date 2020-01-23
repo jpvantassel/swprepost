@@ -15,7 +15,6 @@ class Test_GroundModel(TestCase):
     
     def setUp(self):
         self.full_path = get_full_path(__file__)
-        print(self.full_path)
 
     def test_init(self):
         # List

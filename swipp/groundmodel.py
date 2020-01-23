@@ -7,7 +7,7 @@ import logging
 import subprocess
 import numpy as np
 import re
-from swipp import DispersionSet
+from swipp import DispersionSet, regex
 import os
 logging.Logger(name=__name__)
 
@@ -494,6 +494,33 @@ class GroundModel():
         return GroundModel(thickness=thk, vp=vps, vs=vss, density=rho)
 
     @classmethod
+    def _from_lines(cls, lines):
+
+        # first = True
+        # obj = None
+        # regex_one = r"(\d+.?\d*[eE]?[+-]?\d*)"
+        # sp = r"\s"
+        # regex_all = f"^{regex_one}{sp}{regex_one}{sp}{regex_one}{sp}{regex_one}$"
+        # # exp1 = r"^# Layered model (\d+): value=(\d+.?\d*)$"
+
+        tks, vps, vss, rhs, seen_data = [], [], [], [], False
+        for line in lines:
+            try:
+                tk, vp, vs, rh = regex.gm.findall(line)[0]
+                seen_data=True
+                tks.append(float(tk))
+                vps.append(float(vp))
+                vss.append(float(vs))
+                rhs.append(float(rh))
+            except IndexError:
+                if seen_data:
+                    break
+                else:
+                    continue
+
+        return cls.mkgm(thk=tks, vps=vps, vss=vss, rho=rhs)
+
+    @classmethod
     def from_geopsy(cls, fname):
         """Instantiate a `GroundModel` from a file exported from Geopsy.
 
@@ -508,33 +535,9 @@ class GroundModel():
             Various errors if ground model file is not of the correct 
             format. See example files for details.
         """
-        # TODO (jpv): Go by linenumbers to speed up looping procedure.
         with open(fname, "r") as f:
             lines = f.read().splitlines()
-        thk, vps, vss, rho = [], [], [], []
-        first = True
-        obj = None
-        regex_one = r"(\d+.?\d*[eE]?[+-]?\d*)"
-        sp = r"\s"
-        regex_all = f"^{regex_one}{sp}{regex_one}{sp}{regex_one}{sp}{regex_one}$"
-        # exp1 = r"^# Layered model (\d+): value=(\d+.?\d*)$"
-        for line in lines:
-            try:
-                thk_i, vps_i, vss_i, rho_i = re.findall(regex_all, line)[0]
-                thk.append(float(thk_i))
-                vps.append(float(vps_i))
-                vss.append(float(vss_i))
-                rho.append(float(rho_i))
-            except IndexError:
-                if line.startswith("# "):
-                    if line.startswith("# Layered model"):
-                        if first == True:
-                            first = False
-                        elif obj == None:
-                            return cls.mkgm(thk=thk, vps=vps, vss=vss, rho=rho)
-                        else:
-                            break
-        return cls.mkgm(thk=thk, vps=vps, vss=vss, rho=rho)
+        return cls._from_lines(lines)
 
     def __eq__(self, other):
         """Define when two ground models are equivalent."""
