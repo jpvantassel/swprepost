@@ -1,5 +1,5 @@
-"""This file includes a derived class CurveUncertian for Curve objects
-with arbitrary uncertainty in terms of x and y."""
+"""This file includes a derived class `CurveUncertian` for `Curve`
+objects with arbitrary uncertainty in x and/or y."""
 
 import numpy as np
 from swipp import Curve
@@ -9,8 +9,12 @@ class CurveUncertain(Curve):
     """Curve object with aribtrary uncertainty in terms of x and y.
 
     Attribtues:
-        Class contains no public attributes. 
+        _isxerr, _isyerr : bool
+            Flags to indicate if x and y error has been provided.
+        _xerr, _yerr : ndarray
+            Vector defining the error in x and y respectively.
     """
+
 
     def __init__(self, x, y, yerr=None, xerr=None):
         """Initialize a new CurveUncertain object.

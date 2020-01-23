@@ -5,11 +5,12 @@ import scipy.interpolate as sp
 
 
 class Curve():
-    """Base class for handling x, y coordinates.
+    """Base class for handling sets x, y coordinates.
 
     Attributes:
         _x, _y = ndarray
-            1D array of x, y coordiantes defining the curve.
+            1D array of x, y coordinates defining the curve. These
+            should, in general, not be accessed directly.
     """
 
     @staticmethod

@@ -1,7 +1,8 @@
-"""This file contains an abstract class `CurveSet`."""
+"""This file contains a class `CurveSet`."""
 
 class CurveSet():
-    """Abstract class to handle sets of `Curve` objects.
+    """Class for handling sets of `Curve` objects with some common
+    source or purpose.
 
     Attributes:
     """
