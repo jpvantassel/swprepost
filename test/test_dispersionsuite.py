@@ -1,4 +1,4 @@
-"""Tests for DispersionSuite Class."""
+"""Tests for `DispersionSuite` class."""
 
 from testtools import unittest, TestCase, get_full_path
 import swipp
@@ -58,8 +58,8 @@ class Test_DispersionSuite(TestCase):
 
     def test_from_geopsy(self):
 
-        def compare(fname, models):
-            dc_suite = swipp.DispersionSuite.from_geopsy(fname=fname)
+        def compare(fname, models, **kwargs):
+            dc_suite = swipp.DispersionSuite.from_geopsy(fname=fname, **kwargs)
 
             for model in models:
                 # Use identifier to select the appropriate DispersionSet
@@ -178,6 +178,26 @@ class Test_DispersionSuite(TestCase):
                                             1/0.00832708237075126]}}}
         models = [e1, e2]
         compare(fname, models)
+
+        # Two Sets with Two Rayleigh and Love Modes Each -> Only Rayleigh
+        e1_tmp = {key:e1[key] if key!="love" else None for key in e1}
+        e2_tmp = {key:e2[key] if key!="love" else None for key in e2}
+        models = [e1_tmp, e2_tmp]
+        compare(fname, models, nrayleigh="all", nlove=0)
+
+        # Two Sets with Two Rayleigh and Love Modes Each -> Only Love
+        e1_tmp = {key:e1[key] if key!="rayleigh" else None for key in e1}
+        e2_tmp = {key:e2[key] if key!="rayleigh" else None for key in e2}
+        models = [e1_tmp, e2_tmp]
+        compare(fname, models, nrayleigh=0, nlove="all")
+
+        # Two Sets with Two Rayleigh and Love Modes Each -> 1 Rayleigh, 1 Love
+        del e1["rayleigh"][1]
+        del e1["love"][1]
+        del e2["rayleigh"][1]
+        del e2["love"][1]
+        models = [e1, e2]
+        compare(fname, models, nrayleigh=1, nlove=1)
 
         # Large File
         fname = self.full_path+"data/test_dc_mod100_ray2_lov2_full.txt"

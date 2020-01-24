@@ -1,4 +1,4 @@
-"""Tests for DispersionSet class."""
+"""Tests for `DispersionSet` class."""
 
 from testtools import unittest, TestCase, get_full_path
 import swipp
@@ -10,11 +10,6 @@ class Test_DispersionSet(TestCase):
 
     def setUp(self):
         self.full_path = get_full_path(__file__)
-
-    # def test_from_geopsy(self):
-    #     fname = self.full_path + "data/test_dc_mod2_ray2_lov2_shrt.txt"
-    #     swipp.DispersionSet.from_geopsy(fname=fname)
-
 
     def test_init(self):
         # Instantiate DispersionCurve objects.
@@ -42,24 +37,28 @@ class Test_DispersionSet(TestCase):
         self.assertListEqual(velocity, ex_c.love[0].velocity.tolist())
 
     def test_from_geopsy(self):
-        myset = swipp.DispersionSet.from_geopsy(
-            fname=self.full_path+"data/test_dc_mod2_ray2_lov2_shrt.txt")
-        self.assertEqual(myset.misfit, 1.08851)
-        self.assertEqual(myset.identifier, "149641")
-        true_ray = {0: swipp.DispersionCurve([0.15, 64],
-                                             [1/0.000334532972901842, 1/0.00917746839997367]),
+        # Quick test -> Full test in DispersionSuite
+        fname = self.full_path+"data/test_dc_mod2_ray2_lov2_shrt.txt"
+        returned = swipp.DispersionSet.from_geopsy(fname=fname)
+        self.assertEqual("149641", returned.identifier)
+        self.assertEqual(1.08851, returned.misfit)
+        rayleigh = {0: swipp.DispersionCurve([0.15, 64],
+                                             [1/0.000334532972901842,
+                                              1/0.00917746839997367]),
                     1: swipp.DispersionCurve([0.479030947360446, 68],
-                                             [1/0.000323646256288129, 1/0.00832719612771301])}
-        true_lov = {0: swipp.DispersionCurve([0.11, 61],
-                                             [1/0.0003055565316784, 1/0.00838314255586564]),
-                    1: swipp.DispersionCurve([0.920128309893243, 69],
-                                             [1/0.000305221889470528, 1/0.00828240730448549])}
-        for test_key, test_value in myset.rayleigh.items():
-            self.assertArrayEqual(true_ray[test_key].frequency, test_value.frequency)
-            self.assertArrayEqual(true_ray[test_key].velocity, test_value.velocity)
-        for test_key, test_value in myset.love.items():
-            self.assertArrayEqual(true_lov[test_key].frequency, test_value.frequency)
-            self.assertArrayEqual(true_lov[test_key].velocity, test_value.velocity)
+                                             [1/0.000323646256288129,
+                                              1/0.00832719612771301])}
+        love = {0: swipp.DispersionCurve([0.11, 61],
+                                         [1/0.0003055565316784,
+                                          1/0.00838314255586564]),
+                1: swipp.DispersionCurve([0.920128309893243, 69],
+                                         [1/0.000305221889470528,
+                                          1/0.00828240730448549])}
+
+        for mode, expected in rayleigh.items():
+            self.assertEqual(expected, returned.rayleigh[mode])
+        for mode, expected in love.items():
+            self.assertEqual(expected, returned.love[mode])
 
 
 if __name__ == "__main__":

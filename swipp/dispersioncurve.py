@@ -1,7 +1,5 @@
-"""This file contains the class `DispersionCurve` which inherits from
-`Curve`."""
+"""This file contains the class `DispersionCurve`."""
 
-import re
 from swipp import Curve, regex
 import numpy as np
 
@@ -40,44 +38,35 @@ class DispersionCurve(Curve):
     @property
     def wavelength(self):
         return self._y/self._x
-    
+
     @property
     def slowness(self):
         return 1/self._y
 
     @classmethod
-    def _from_lines(cls, lines):
-        """Create an instance of `DispersionCurve` from a list of
-        strings which follow the geopsy format.
-
-        Args:
-            lines : list(str)
-                List of strings, one per line, following the syntax of
-                a geopy output file.
-
-        Returns:
-            Instantiated `DispersionSet` object.
-        """
-        frequency, slowness, seen_data = [], [], False
-        for line in lines:
+    def _parse_dc(cls, dc_data):
+        """Parse a `DispersionCurve` from a `str` of data."""
+        frequency, slowness = [], []
+        for curve in regex.data.finditer(dc_data):
+            f, p = curve.groups()
+            f = float(f)
             try:
-                f, p = regex.data.findall(line)[0]
-                seen_data=True
-                frequency.append(f)
-                slowness.append(p)
-            except IndexError:
-                if seen_data:
+                if f < frequency[-1]:
                     break
                 else:
-                    continue
+                    frequency.append(f)
+                    slowness.append(float(p))
+            except IndexError:
+                frequency.append(f)
+                slowness.append(float(p))
 
         return cls(frequency=frequency, velocity=1/np.array(slowness, dtype=np.double))
-                
+
     @classmethod
     def from_geopsy(cls, fname):
-        """Instantiate a `DispersionCurve` object from a text file in
-        the geopsy format.
-        
+        """Instantiate a `DispersionCurve` from a text file in the
+        geopsy format.
+
         Args:
             fname : str
                 Name of file to be read, may be a relative or full path.
@@ -86,8 +75,20 @@ class DispersionCurve(Curve):
             Instantiated `DispersionCurve` object.
         """
         with open(fname, "r") as f:
-            lines = f.read().splitlines()
-        return cls._from_lines(lines)
+            lines = f.read()
+        return cls._parse_dc(lines)
+
+    def __eq__(self, other):
+        attrs = ["frequency", "velocity"]
+        for attr in attrs:
+            my_vals = getattr(self, attr)
+            ur_vals = getattr(other, attr)
+            if len(my_vals) != len(ur_vals):
+                return False
+            for my, ur in zip(my_vals, ur_vals):
+                if my != ur:
+                    return False
+        return True
 
     def __repr__(self):
         return f"DispersionCurve(frequency={self.frequency}, velocity={self.velocity})"

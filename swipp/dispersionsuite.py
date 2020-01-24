@@ -1,8 +1,6 @@
 """This file contains the class definintion for `DispersionSuite`."""
 
-import re
-from swipp import DispersionCurve, DispersionSet, regex
-import concurrent.futures
+from swipp import DispersionSet, regex
 import logging
 logging.Logger(name=__name__)
 
@@ -74,10 +72,6 @@ class DispersionSuite():
             msft.append(cset.misfit)
         return msft
 
-    # @staticmethod
-    # def _map_file(lines):
-    #     models = []
-
     @classmethod
     def from_geopsy(cls, fname, ndc="all", nrayleigh="all", nlove="all"):
         """Create `DispersionSuite` from a text file created by the 
@@ -97,48 +91,62 @@ class DispersionSuite():
             Instantiated `DispersionSuite` object.
         """
         with open(fname, "r") as f:
-            lines = f.read().splitlines()
-        lines.append(" ")
-
-        found_models, found_misfits, line_numbers = [], [], []
-        for line_number, line in enumerate(lines):
-            try:
-                model, misfit = regex.model.findall(line)[0]
-
-                if model not in found_models:
-                    found_models.append(model)
-                    found_misfits.append(misfit)
-                    line_numbers.append(line_number)
-
-                if len(found_models) == ndc:
-                    break
-
-            except IndexError:
-                continue
-        line_numbers.append(line_number)
+            lines = f.read()
 
         dc_sets = []
-        for start_line, end_line in zip(line_numbers[:-1], line_numbers[1:]):
-            dc_sets.append(DispersionSet._from_lines(lines[start_line:end_line],
-                                                    nrayleigh=nrayleigh,
-                                                    nlove=nlove))
+        previous_id, previous_misfit = "start", "0"
+        rayleigh, love = None, None
+        model_count = 0
+        for model_info in regex.dcset.finditer(lines):
+            identifier, misfit, wave_type, data = model_info.groups()
 
-        # Slow Parallel code ...
-        # with concurrent.futures.ProcessPoolExecutor(max_workers=1) as executor:
-        #     processes = []
-        #     for start_line, end_line in zip(line_numbers[:-1], line_numbers[1:]):
-        #         processes.append(executor.submit(DispersionSet.from_lines, lines[start_line:end_line]))
-        # dc_sets = []
-        # for process in processes:
-        #     dc_sets.append(process.result())
+            if identifier != previous_id and previous_id != "start":
+                dc_sets.append(cls._dcset()(previous_id,
+                                            float(previous_misfit),
+                                            rayleigh=rayleigh, love=love))
+                model_count += 1
+                rayleigh, love = None, None
 
+            if wave_type == "Rayleigh":
+                rayleigh = cls._dcset()._parse_dcs(data, nmodes=nrayleigh)
+            elif wave_type == "Love":
+                love = cls._dcset()._parse_dcs(data, nmodes=nlove)
+            else:
+                raise NotImplementedError
+
+            previous_id = identifier
+            previous_misfit = misfit
+
+            if model_count + 1 == ndc:
+                break
+
+        dc_sets.append(cls._dcset()(previous_id,
+                                    float(previous_misfit),
+                                    rayleigh=rayleigh, love=love))
+
+        return cls.from_list(dc_sets)
+
+    @classmethod
+    def _dcset(cls):
+        return DispersionSet
+
+    @classmethod
+    def from_list(cls, dc_sets):
+        """Create `DispersionSuite` from a list of `DispersionSet`
+        objects.
+
+        Args:
+            dc_sets : list
+                List of `DispersionSet` objects.
+
+        Returns:
+            Instatiated `DispersionSuite`.
+        """
         obj = cls(dc_sets[0])
-
         if len(dc_sets) > 1:
             for dc_set in dc_sets[1:]:
                 obj.append(dc_set)
-
         return obj
 
-    def __getitem__(self, aslice):
-        return self.sets[aslice]
+    def __getitem__(self, slce):
+        return self.sets[slce]

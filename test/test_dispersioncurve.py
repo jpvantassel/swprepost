@@ -24,7 +24,7 @@ class Test_DispersionCurve(TestCase):
         velocity = np.array([100, 200, 400, 100, 500, 1000])
         wavelength = velocity/frequency
         dc = swipp.DispersionCurve(frequency=frequency,
-                                     velocity=velocity)
+                                   velocity=velocity)
         self.assertArrayEqual(wavelength, dc.wavelength)
 
     def test_from_geopsy(self):
@@ -32,9 +32,11 @@ class Test_DispersionCurve(TestCase):
         fname = self.full_path + "data/test_dc_mod2_ray2_lov0_shrt.txt"
         dc = swipp.DispersionCurve.from_geopsy(fname)
         expected_frequency = np.array([0.15, 64])
-        expected_slowness = np.array([0.000334532972901842, 0.00917746839997367])
+        expected_slowness = np.array([0.000334532972901842,
+                                      0.00917746839997367])
         self.assertArrayEqual(expected_frequency, dc.frequency)
         self.assertArrayEqual(expected_slowness, dc.slowness)
+
 
 if __name__ == "__main__":
     unittest.main()

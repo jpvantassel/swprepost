@@ -1,12 +1,13 @@
-"""This file contains the definition of the class `DispersionSet`."""
+"""This file contains the definition of a class `DispersionSet`."""
 
 import re
 import copy
 from swipp import CurveSet, DispersionCurve, regex
 
+
 class DispersionSet(CurveSet):
     """Class for handling sets of 
-    :meth `DispersionCurve <swipp.DispersionCurve>`
+    :meth: `DispersionCurve <swipp.DispersionCurve>`
     objects, which all belong to a common velocity model.
 
     Attributes:
@@ -57,70 +58,46 @@ class DispersionSet(CurveSet):
         self.identifier = identifier
         self.misfit = misfit
 
-    # TODO (jpv): Add in Love and Rayleigh mode optimizations.
     @classmethod
-    def _from_lines(cls, lines, nrayleigh="all", nlove="all"):
-        """Create an instance of `DispersionSet` from a list of strings.
+    def _parse_dcs(cls, dcs_data, nmodes="all"):
+        """Parse a grouping of modes into a dict of `DispersionCurves`"""
+        modes = regex.mode.split(dcs_data)
 
-        Args:
-            lines : list(str)
-                List of strings, one per line, following the syntax of
-                a geopy output file.
-            nrayleigh, nlove : int, optional
-                Number of Rayleigh and Love modes respectively, default
-                is `None` so all available modes will be extracted.
+        if nmodes == "all":
+            modes = modes[1:]
+        else:
+            modes = modes[1:nmodes+1]
 
-        Returns:
-            Instantiated `DispersionSet` object.
-        """
-        # Find line numbers
-        modes = {"rayleigh": {}, "love": {}}
-        # TODO (jpv): Add in the mode optimizations
-        # stop_search_rayleigh = False if nrayleigh > 0 else True
-        # mode_type = "rayleigh"
-        identifier, misfit = regex.model.findall(lines[0])[0]
-        for line_number, line in enumerate(lines):
-            try:
-                mode_type = regex.wave.findall(line)[0]
-                mode_type = mode_type.lower()
-            except IndexError:
-                # if mode_type == "rayleigh" and stop_search_rayleigh:
-                #     continue
-                try:
-                    mode_number = regex.mode.findall(line)[0]
-                    mode_number = int(mode_number)
+        dcs = {}
+        for mode_number, dc_data in enumerate(modes):
+            dcs.update({mode_number: cls._dc()._parse_dc(dc_data)})
+        return dcs
 
-                    # check_rayleigh = (mode_type == "rayleigh" and mode_number == nrayleigh)
-                    # check_love = (mode_type == "love" and mode_number == nlove)
-                    # if check_rayleigh:
-                    #     if nlove == 0:
-                    #         break
-                    #     else:
-                    #         stop_search_rayleigh = True
-                    # if check_love:
-                    #     break
-                    modes[mode_type].update({mode_number: line_number})
+    @classmethod
+    def _from_full_file(cls, data, nrayleigh="all", nlove="all"):
+        rayleigh, love = None, None
+        previous_id, previous_misfit = "start", "0"
+        for model_info in regex.dcset.finditer(data):
+            identifier, misfit, wave_type, dcs_data = model_info.groups()
 
-                except IndexError:
-                    try:
-                        c_identifier, c_misfit = regex.model.findall(line)[0]
-                        if c_identifier != identifier:
-                            break
-                        else:
-                            continue
-                    except IndexError:
-                        continue
+            if identifier == previous_id or previous_id == "start":
+                if wave_type == "Rayleigh":
+                    rayleigh = cls._parse_dcs(dcs_data, nmodes=nrayleigh)
+                elif wave_type == "Love":
+                    love = cls._parse_dcs(dcs_data, nmodes=nlove)
+                else:
+                    raise NotImplementedError
+                previous_id = identifier
+                previous_misfit = misfit
+            else:
+                break
 
-        # Pass proper lines to DispersionCurve
-        dcs = {"rayleigh":{}, "love":{}}
-        for wave_type, mode_info in modes.items():
-            for mode_number, starting_line in mode_info.items():
-                dc = DispersionCurve._from_lines(lines[starting_line:])
-                dcs[wave_type].update({mode_number:dc})
+        return cls(previous_id, float(previous_misfit),
+                   rayleigh=rayleigh, love=love)
 
-        rayleigh = None if dcs["rayleigh"]=={} else dcs["rayleigh"] 
-        love = None if dcs["love"]=={} else dcs["love"] 
-        return cls(identifier, float(misfit), rayleigh=rayleigh, love=love)
+    @classmethod
+    def _dc(cls):
+        return DispersionCurve
 
     @classmethod
     def from_geopsy(cls, fname, nrayleigh="all", nlove="all"):
@@ -138,18 +115,9 @@ class DispersionSet(CurveSet):
             Instantiated `DispersionSet` object.
         """
         with open(fname, "r") as f:
-            lines = f.read().splitlines()
-
-        # Start right after introduction of a layered model.
-        model_regex = r"^# Layered model (\d+): value=(\d+.?\d*)$"
-        for line_number, line in enumerate(lines):
-            try:
-                indentifier, misfit = re.findall(model_regex, line)[0]
-                break
-            except IndexError:
-                continue
-
-        return cls._from_lines(lines[line_number:], nrayleigh=nrayleigh, nlove=nlove)
+            data = f.read()
+        return cls._from_full_file(data, nrayleigh=nrayleigh, nlove=nlove)
 
     def __repr__(self):
-        return f"DispersionSet(identifier={self.identifier}, rayleigh={self.rayleigh}, love={self.love}, misfit={self.misfit})"
+        return f"DispersionSet(identifier={self.identifier},\
+rayleigh={self.rayleigh}, love={self.love}, misfit={self.misfit})"
