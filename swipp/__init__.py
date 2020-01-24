@@ -1,6 +1,4 @@
-"""
-Docstring here for print(utinvert.__doc__)
-"""
+"""swipp - Surface-Wave Inversion Pre- and Post-processor"""
 
 from .curve import *
 from .curveuncertain import *
@@ -9,8 +7,6 @@ from .dispersioncurve import *
 from .curveset import *
 from .dispersionset import *
 
-from .suite import *
-from .curvesuite import *
 from .dispersionsuite import *
 
 from .groundmodel import *

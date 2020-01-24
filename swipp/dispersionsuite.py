@@ -1,13 +1,13 @@
 """This file contains the class definintion for `DispersionSuite`."""
 
 import re
-from swipp import Suite, DispersionCurve, DispersionSet, regex
+from swipp import DispersionCurve, DispersionSet, regex
 import concurrent.futures
 import logging
 logging.Logger(name=__name__)
 
 
-class DispersionSuite(Suite):
+class DispersionSuite():
     """Class for handling suites of instantiated `DispersionSet`
     objects.
 
@@ -48,7 +48,7 @@ class DispersionSuite(Suite):
         """Append `DispersionSet` object to `DispersionSuite`.
 
         Args:
-            Refer to meth: `__init__ <DispersionSuite.__init__>`.
+            Refer to :meth: `__init__ <DispersionSuite.__init__>`.
 
         Returns:
             `None`, updates the attribute `sets`.
@@ -74,6 +74,10 @@ class DispersionSuite(Suite):
             msft.append(cset.misfit)
         return msft
 
+    # @staticmethod
+    # def _map_file(lines):
+    #     models = []
+
     @classmethod
     def from_geopsy(cls, fname, ndc="all", nrayleigh="all", nlove="all"):
         """Create `DispersionSuite` from a text file created by the 
@@ -96,7 +100,6 @@ class DispersionSuite(Suite):
             lines = f.read().splitlines()
         lines.append(" ")
 
-        # Find line numbers
         found_models, found_misfits, line_numbers = [], [], []
         for line_number, line in enumerate(lines):
             try:
@@ -125,7 +128,6 @@ class DispersionSuite(Suite):
         #     processes = []
         #     for start_line, end_line in zip(line_numbers[:-1], line_numbers[1:]):
         #         processes.append(executor.submit(DispersionSet.from_lines, lines[start_line:end_line]))
-
         # dc_sets = []
         # for process in processes:
         #     dc_sets.append(process.result())

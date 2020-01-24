@@ -2,20 +2,20 @@
 
 import numpy as np
 import os
-from swipp import Suite, GroundModel, DispersionSuite, regex
+from swipp import GroundModel, DispersionSuite, regex
 import logging
 logging.Logger(name=__name__)
 
 
-class GroundModelSuite(Suite):
+class GroundModelSuite():
     """Class for manipulating suites of `GroundModel` objects.
 
     Attributes:
-        gms : GroundModel
+        gms : list
             List of `GroundModel` objects, composing the suite.
-        ids : str
+        ids : list
             List of identifiers, one per `GroundModel` in the suite.
-        misfits : float
+        misfits : list
             List of misfits, one per `GroundModel` in the suite.
     """
     @staticmethod
