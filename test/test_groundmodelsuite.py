@@ -7,6 +7,7 @@ import swipp
 import logging
 logging.basicConfig(level=logging.INFO)
 
+
 class Test_GroundModelSuite(TestCase):
 
     def setUp(self):
@@ -20,12 +21,9 @@ class Test_GroundModelSuite(TestCase):
         rho = [2000, 2000, 2000, 2000]
         mygm = swipp.GroundModel(thk, vps, vss, rho)
         mysuite = swipp.GroundModelSuite(mygm, "test", misfit=2)
-        self.assertListEqual(mysuite.gms[0].tk, thk)
-        self.assertListEqual(mysuite.gms[0].vs, vss)
-        self.assertListEqual(mysuite.gms[0].vp, vps)
-        self.assertListEqual(mysuite.gms[0].rh, rho)
-        self.assertEqual(mysuite.ids[0], "test")
-        self.assertEqual(mysuite.misfits[0], 2)
+        self.assertEqual(mygm, mysuite[0])
+        self.assertEqual("test", mysuite.ids[0])
+        self.assertEqual(2, mysuite.misfits[0])
 
     def test_append(self):
         thk = [1, 3, 5, 7]
@@ -34,53 +32,70 @@ class Test_GroundModelSuite(TestCase):
         rho = [2000, 2000, 2000, 2000]
         mygm = swipp.GroundModel(thk, vps, vss, rho)
 
-        # Two GroundModel
-        mysuite = swipp.GroundModelSuite(mygm, "test", misfit=1)
+        # Two GroundModels
+        mysuite = swipp.GroundModelSuite(mygm, "test1", misfit=1)
         mysuite.append(mygm, "test2", misfit=1.1)
-        for mod_num in range(2):
-            self.assertListEqual(mysuite.gms[mod_num].tk, thk)
-            self.assertListEqual(mysuite.gms[mod_num].vs, vss)
-            self.assertListEqual(mysuite.gms[mod_num].vp, vps)
-            self.assertListEqual(mysuite.gms[mod_num].rh, rho)
+        for gm in mysuite:
+            self.assertEqual(mygm, gm)
+        self.assertListEqual(["test1", "test2"], mysuite.ids)
+        self.assertListEqual([1.0, 1.1], mysuite.misfits)
 
     def test_from_geopsy(self):
-        # # Single Model
-        true_tk = [0.68, 9.69, 0.018, 22.8, 43.9, 576.4, 0]
-        true_vp = [196.7, 295.8, 1600.2, 1600.2, 1600.2, 4232.5, 4232.5]
-        true_vs = [120.3, 120.3, 120., 231.9, 840.9, 840.9, 2095.3]
-        true_rh = [2000.]*7
+        # Single Model
+        tk = [0.68, 9.69, 0.018, 22.8, 43.9, 576.4, 0]
+        vp = [196.7, 295.8, 1600.2, 1600.2, 1600.2, 4232.5, 4232.5]
+        vs = [120.3, 120.3, 120., 231.9, 840.9, 840.9, 2095.3]
+        rh = [2000.]*7
+        expected = swipp.GroundModel(thickness=tk, vp=vp, vs=vs, density=rh)
 
-        test_suite = swipp.GroundModelSuite.from_geopsy(
-            self.full_path+"data/test_gm_mod1.txt")
+        fname = self.full_path+"data/test_gm_mod1.txt"
+        returned = swipp.GroundModelSuite.from_geopsy(fname=fname)[0]
+        self.assertEqual(expected, returned)
 
-        self.assertListEqual(test_suite.gms[0].tk, true_tk)
-        self.assertListEqual(test_suite.gms[0].vs, true_vs)
-        self.assertListEqual(test_suite.gms[0].vp, true_vp)
-        self.assertListEqual(test_suite.gms[0].rh, true_rh)
+        # Two Models
+        tk1 = [0.7, 9.1, 0.1, 21.9, 61.0, 571.8, 0]
+        vp1 = [196.7, 281.4, 1392.1, 1392.1, 1392.1, 4149.1, 4149.1]
+        vs1 = [120.3, 120.3, 120.3, 225.1, 840.9, 840.9, 2202.1]
+        rh1 = [2000.]*7
+        expected1 = swipp.GroundModel(thickness=tk1, vp=vp1, vs=vs1,
+                                      density=rh1)
 
-        # Two Model
-        true_tk1 = [0.7, 9.1, 0.1, 21.9, 61.0, 571.8, 0]
-        true_vp1 = [196.7, 281.4, 1392.1, 1392.1, 1392.1, 4149.1, 4149.1]
-        true_vs1 = [120.3, 120.3, 120.3, 225.1, 840.9, 840.9, 2202.1]
-        true_rh1 = [2000.]*7
+        fname = self.full_path+"data/test_gm_mod2.txt"
+        returned = swipp.GroundModelSuite.from_geopsy(fname=fname)
+        self.assertEqual(expected, returned[0])
+        self.assertEqual(expected1, returned[1])
 
-        test_suite = swipp.GroundModelSuite.from_geopsy(
-            self.full_path+"data/test_gm_mod2.txt")
-        self.assertListEqual(test_suite.gms[0].tk, true_tk)
-        self.assertListEqual(test_suite.gms[0].vs, true_vs)
-        self.assertListEqual(test_suite.gms[0].vp, true_vp)
-        self.assertListEqual(test_suite.gms[0].rh, true_rh)
-        self.assertListEqual(test_suite.gms[1].tk, true_tk1)
-        self.assertListEqual(test_suite.gms[1].vs, true_vs1)
-        self.assertListEqual(test_suite.gms[1].vp, true_vp1)
-        self.assertListEqual(test_suite.gms[1].rh, true_rh1)
-        self.assertListEqual(test_suite.misfits, [0.766485, 0.767484])
-        self.assertListEqual(test_suite.ids, ["149698", "147185"])
+        self.assertListEqual([0.766485, 0.767484], returned.misfits)
+        self.assertListEqual(["149698", "147185"], returned.ids)
 
-        # Full File
-        test_suite = swipp.GroundModelSuite.from_geopsy(
-            self.full_path+"data/test_gm_mod100.txt")
-        # TODO (jpv): Write test for full file.
+        # Randomly check the 10th profile (index=9)
+        fname = self.full_path+"data/test_gm_mod100.txt"
+        suite = swipp.GroundModelSuite.from_geopsy(fname=fname)
+
+        tk = [0.77397930357999966677,
+              9.4057659375340758601,
+              0.10720244308314619275,
+              22.132593746915929955,
+              27.312477738315664055,
+              586.97428362212974662,
+              0]
+        vp = [196.72222021325231367,
+              307.83304440876798935,
+              1492.6139621303491367,
+              1492.6139621303491367,
+              1492.6139621303491367,
+              4149.1243500998343734,
+              4149.1243500998343734]
+        vs = [120.30018967392834384,
+              120.30018967392834384,
+              120.30018967392834384,
+              227.42292146971948341,
+              832.63107566976702856,
+              832.63107566976702856,
+              2116.2608747684203081]
+        rh = [2000]*7
+        expected_9 = swipp.GroundModel(thickness=tk, vp=vp, vs=vs, density=rh)
+        self.assertEqual(expected_9, suite[9])
 
     def test_vs30(self):
         thk = [5, 20, 0]

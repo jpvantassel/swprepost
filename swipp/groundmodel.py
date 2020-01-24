@@ -198,6 +198,14 @@ class GroundModel():
         return cls.mkgm(new_tk, new_vp, new_vs, new_rh)
 
     @property
+    def thickness(self):
+        return self.tk
+
+    @property
+    def density(self):
+        return self.rh
+
+    @property
     def depth(self):
         """Return stair-step version of depth profile."""
         return self.gm2(parameter="depth")
@@ -555,4 +563,16 @@ class GroundModel():
 
     def __repr__(self):
         """Define official representation of an instantiated object."""
-        return f"GroundModel(thickness = {self.tk},\nvp = {self.vp},\nvs = {self.vs},\nrh = {self.rh})\n"
+        return f"GroundModel(thickness={self.tk}, vp={self.vp}, vs={self.vs}, density={self.rh})"
+    
+    def __eq__(self, other):
+        for attr in ["tk", "vp", "vs", "rh"]:
+            my_vals = getattr(self, attr)
+            ur_vals = getattr(other, attr)
+            if len(my_vals) != len(ur_vals):
+                return False
+            else:
+                for my_val, ur_val in zip(my_vals, ur_vals):
+                    if my_val != ur_val:
+                        return False
+        return True

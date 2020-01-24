@@ -12,7 +12,7 @@ logging.basicConfig(level=logging.WARN)
 
 
 class Test_GroundModel(TestCase):
-    
+
     def setUp(self):
         self.full_path = get_full_path(__file__)
 
@@ -48,8 +48,8 @@ class Test_GroundModel(TestCase):
         vs1 = [100, 125]
         rh1 = [2000]*2
         mygm = swipp.GroundModel(thickness=tk1, vp=vp1, vs=vs1, density=rh1)
-        self.assertListEqual([0,5,5,9999.0], mygm.depth)
-        self.assertListEqual([200, 200, 250 ,250], mygm.vp2)
+        self.assertListEqual([0, 5, 5, 9999.0], mygm.depth)
+        self.assertListEqual([200, 200, 250, 250], mygm.vp2)
         self.assertListEqual([100, 100, 125, 125], mygm.vs2)
         self.assertListEqual([2000]*4, mygm.rh2)
 
@@ -83,17 +83,17 @@ class Test_GroundModel(TestCase):
         self.assertListEqual(rho2, rho2a)
 
         # Go value by value
-        tests = [depth2, vp2, vs2, rho2]
-        trues = [depth2_true, vp2_true, vs2_true, rho2_true]
-        for trial, true in zip(tests, trues):
-            for tri, tru in zip(trial, true):
-                self.assertAlmostEqual(tri, tru)
+        returned_vals = [depth2, vp2, vs2, rho2]
+        expected_vals = [depth2_true, vp2_true, vs2_true, rho2_true]
+        for expected, returned in zip(expected_vals, returned_vals):
+            self.assertListAlmostEqual(expected, returned)
 
     def test_calcpr(self):
-        # Check with "good" inputs.
-        trials = swipp.GroundModel.calc_pr(
-            [6000, 5000, 4000, 3000, 2000, 1000, 500, 400, 300, 200],
-            [100, 200, 300, 500, 750, 500, 300, 120, 210, 110])
+        # "Good" inputs.
+        vp = [6000, 5000, 4000, 3000, 2000, 1000, 500, 400, 300, 200]
+        vs = [100, 200, 300, 500, 750, 500, 300, 120, 210, 110]
+        trials = swipp.GroundModel.calc_pr(vp=vp, vs=vs)
+
         trues = [0.499861072520145, 0.499198717948718,
                  0.49717159, 0.485714285714286, 0.418181818181818,
                  0.333333333333333, 0.21875, 0.450549450549451,
@@ -101,7 +101,7 @@ class Test_GroundModel(TestCase):
         for trial, true in zip(trials, trues):
             self.assertAlmostEqual(trial, true)
 
-        # Check raises value error.
+        # "Bad" inputs.
         vps = [150, 150, 150]
         vss = [151, 150, 149]
         for vp, vs in zip([vps], [vss]):
@@ -221,10 +221,12 @@ class Test_GroundModel(TestCase):
         density = [2000.]*len(thick)
         mygm = swipp.GroundModel(thick, vp, vs, density)
         disc_depth, disc_par = mygm.gm2_disc(3, dy=0.25)
-        self.assertListEqual([0., 0.25, 0.5, 0.75, 1., 1.25, 1.5, 1.75, 2., 2.25, 2.5, 2.75, 3.],
-                             disc_depth)
-        self.assertListEqual([100., 100., 100., 100., 100, 200., 200., 200., 200., 300., 300., 300., 300.],
-                             disc_par)
+        expected = [0., 0.25, 0.5, 0.75, 1., 1.25,
+                    1.5, 1.75, 2., 2.25, 2.5, 2.75, 3.]
+        self.assertListEqual(expected, disc_depth)
+        expected = [100., 100., 100., 100., 100, 200.,
+                    200., 200., 200., 300., 300., 300., 300.]
+        self.assertListEqual(expected, disc_par)
 
         # Check pr
         thick = [0.75, 0]
