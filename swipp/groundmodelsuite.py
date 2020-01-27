@@ -104,7 +104,7 @@ class GroundModelSuite():
             vs30.append(gm.vs30)
         return vs30
 
-    def median_simple(self, nbest, parameter='vs'):
+    def median_simple(self, nbest="all", parameter='vs'):
         """Calculate the simplified, layer-by-layer median of a given
         parameter.
 
@@ -122,11 +122,19 @@ class GroundModelSuite():
             thickness of each layer and `[median_parameter]` is a `list`
             of the median parameter of each layer.
         """
+        if str(nbest)=="all":
+            nbest = len(self.gms)
+            gms = self.gms
+        else:
+            gms = self.gms[0:nbest]
+
         thk, par = self.gms[0].simplify(parameter)
         thks = np.zeros((len(thk), nbest))
         pars = np.zeros((len(par), nbest))
 
-        for ncol, gm in enumerate(self.gms[0:nbest]):
+        
+
+        for ncol, gm in enumerate(gms):
             thk, par = gm.simplify(parameter)
             thks[:, ncol] = thk
             pars[:, ncol] = par
@@ -134,13 +142,14 @@ class GroundModelSuite():
         return (np.median(thks, axis=1).tolist(),
                 np.median(pars, axis=1).tolist())
 
-    def median(self, nbest):
+    def median(self, nbest="all"):
         """Calculate the median `GroundModel` of the `GroundModelSuite`.
 
         Args:
-            nbest : int
+            nbest : int, optional
                 Number of the best profiles to consider when calculating
-                the median profile.
+                the median profile, default is "all", meaning all
+                available models will be used.
 
         Returns:
             Initialized `GroundModel` object.
@@ -184,13 +193,14 @@ class GroundModelSuite():
         return GroundModel
 
     @classmethod
-    def from_list(cls, groundmodels, ids, misfits):
+    def from_list(cls, groundmodels, identifiers, misfits):
         """Instantiate `GroundModelSuite` from `list` of `GroundModel`
         objects.
         """
-        obj = cls(groundmodels[0], ids[0], misfits[0])
+        obj = cls(groundmodels[0], identifiers[0], misfits[0])
         if len(groundmodels) > 1:
-            for cgm, cid, cmf in zip(groundmodels[1:], ids[1:], misfits[1:]):
+            for cgm, cid, cmf in zip(groundmodels[1:], identifiers[1:],
+                                     misfits[1:]):
                 obj.append(cgm, cid, cmf)
         return obj
 
