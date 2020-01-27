@@ -274,7 +274,7 @@ class GroundModel():
                     lay += 1
         return gm2
 
-    def gm2_disc(self, dmax, dy=0.5, parameter='vs'):
+    def discretize(self, dmax, dy=0.5, parameter='vs'):
         """Returns a discretized stair-step model.
 
         The stair step model is discretized by depth from the surface to
@@ -305,8 +305,8 @@ class GroundModel():
         disc_depth = np.linspace(0, dmax, int(dmax//dy)+1).tolist()
 
         if parameter == "pr":
-            disc_par = self.calc_pr(self.gm2_disc(dmax, dy, "vp")[1],
-                                    self.gm2_disc(dmax, dy, "vs")[1])
+            disc_par = self.calc_pr(self.discretize(dmax, dy, "vp")[1],
+                                    self.discretize(dmax, dy, "vs")[1])
             return (disc_depth, disc_par)
 
         options = {"vp": self.vp, "vs": self.vs, "rho": self.rh}

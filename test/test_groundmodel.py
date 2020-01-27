@@ -177,13 +177,13 @@ class Test_GroundModel(TestCase):
         self.assertListEqual(data["rho1"].tolist()[0], density)
         os.remove(f"{fname}.mat")
 
-    def test_gm2_disc(self):
+    def test_discretize(self):
         thick = [2., 2., 0.]
         vp = [1500.]*len(thick)
         vs = [100., 200., 300.]
         density = [2000.]*len(thick)
         mygm = swipp.GroundModel(thick, vp, vs, density)
-        disc_depth, disc_par = mygm.gm2_disc(5, dy=1.25)
+        disc_depth, disc_par = mygm.discretize(5, dy=1.25)
         self.assertListEqual([0., 1.25, 2.5, 3.75, 5.], disc_depth)
         self.assertListEqual([100., 100., 200., 200., 300.], disc_par)
 
@@ -192,7 +192,7 @@ class Test_GroundModel(TestCase):
         vs = [100., 200., 300.]
         density = [2000.]*len(thick)
         mygm = swipp.GroundModel(thick, vp, vs, density)
-        disc_depth, disc_par = mygm.gm2_disc(5, dy=1)
+        disc_depth, disc_par = mygm.discretize(5, dy=1)
         self.assertListEqual([0., 1., 2., 3., 4., 5.], disc_depth)
         self.assertListEqual([100., 100., 100., 200., 200., 300.], disc_par)
 
@@ -201,7 +201,7 @@ class Test_GroundModel(TestCase):
         vs = [100., 200., 300.]
         density = [2000.]*len(thick)
         mygm = swipp.GroundModel(thick, vp, vs, density)
-        disc_depth, disc_par = mygm.gm2_disc(5, dy=1)
+        disc_depth, disc_par = mygm.discretize(5, dy=1)
         self.assertListEqual([0., 1., 2., 3., 4., 5.], disc_depth)
         self.assertListEqual([100., 100., 200., 200., 300., 300.], disc_par)
 
@@ -210,7 +210,7 @@ class Test_GroundModel(TestCase):
         vs = [100., 200., 300.]
         density = [2000.]*len(thick)
         mygm = swipp.GroundModel(thick, vp, vs, density)
-        disc_depth, disc_par = mygm.gm2_disc(3, dy=0.5)
+        disc_depth, disc_par = mygm.discretize(3, dy=0.5)
         self.assertListEqual([0., 0.5, 1., 1.5, 2., 2.5, 3.], disc_depth)
         self.assertListEqual([100., 100., 100., 200., 200., 300., 300.],
                              disc_par)
@@ -220,7 +220,7 @@ class Test_GroundModel(TestCase):
         vs = [100., 200., 300.]
         density = [2000.]*len(thick)
         mygm = swipp.GroundModel(thick, vp, vs, density)
-        disc_depth, disc_par = mygm.gm2_disc(3, dy=0.25)
+        disc_depth, disc_par = mygm.discretize(3, dy=0.25)
         expected = [0., 0.25, 0.5, 0.75, 1., 1.25,
                     1.5, 1.75, 2., 2.25, 2.5, 2.75, 3.]
         self.assertListEqual(expected, disc_depth)
@@ -234,7 +234,7 @@ class Test_GroundModel(TestCase):
         vs = [100, 200]
         density = [2000]*2
         mygm = swipp.GroundModel(thick, vp, vs, density)
-        disc_depth, disc_par = mygm.gm2_disc(1.5, dy=0.5, parameter="pr")
+        disc_depth, disc_par = mygm.discretize(1.5, dy=0.5, parameter="pr")
         self.assertListEqual([0., 0.5, 1., 1.5], disc_depth)
         self.assertListEqual([0.3333333333333333]*4, disc_par)
 
