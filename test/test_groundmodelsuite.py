@@ -146,6 +146,53 @@ class Test_GroundModelSuite(TestCase):
         med_gm = swipp.GroundModel(med_tks, med_vps, med_vss, med_rhs)
         self.assertTrue(med_gm == calc_med_gm)
 
+    def test_from_mat(self):
+        tk = np.array([2.2989, 2.2428, 1.8436, 5.3886, 3.2876, 5.7847, 5.6917,
+                       13.293, 3.2605, 16.71, 12.717, 19.439, 27.657, 7.7677,
+                       48.504, 31.019, 28.964, 62.739, 0])
+        vp = np.array([868.47, 1530.2, 1560.9, 1592.3, 1608.2, 1624.3, 1640.5,
+                       1690.2, 1724.2, 1885.7, 2001.8, 2418.3, 2698.1, 2779.8,
+                       2892.7, 3010.1, 3292.2, 3709.7, 3996.6])
+        vs = np.array([148.89, 169.45, 192.36, 239.44, 291.91, 319.25, 327.05,
+                       333.63, 534.27, 584.32, 748.7, 833.95, 847.23, 935.87,
+                       1134.3, 1513.7, 1757.4, 1801.5, 1912.3])
+        rh = np.array([2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000,
+                       2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000,
+                       2300])
+        mod0 = swipp.GroundModel(tk, vp, vs, rh)
+
+        fname = self.full_path + "data/test_gm_dpt_0.mat"
+        suite = swipp.GroundModelSuite.from_mat(fname)
+
+        attrs = ["vs", "vp", "thickness", "density"]
+        for attr in attrs:
+            expected = getattr(mod0, attr)
+            returned = getattr(suite[0], attr)
+            self.assertListAlmostEqual(expected, returned, places=1)
+
+    def test_from_array(self):
+        tks = np.array([[1, 2, 3], [0, 0, 0]])
+        vps = np.array([[100, 200, 300], [200, 400, 600]])
+        vss = np.array([[50, 75, 100], [100, 200, 300]])
+        rhs = np.array([[2000, 2200, 2250], [2100, 2300, 2300]])
+        misfits = np.array([1, 2, 3])
+        ids = np.array(["1", "2", "3"])
+
+        gms = []
+        for col in range(tks.shape[1]):
+            gm = swipp.GroundModel(tks[:, col], vps[:, col],
+                                   vss[:, col], rhs[:, col])
+            gms.append(gm)
+
+        suite = swipp.GroundModelSuite.from_array(tks, vps, vss, rhs,
+                                                  ids, misfits)
+
+        for expected, returned in zip(gms, suite):
+            self.assertEqual(expected, returned)
+
+        self.assertListEqual(misfits.tolist(), suite.misfits)
+        self.assertListEqual(ids.tolist(), suite.ids)
+
     def test_write_to_txt(self):
         tks = [[1, 2, 0], [2, 0], [5, 0], [1, 0]]
         vps = [[300, 400, 500], [300, 600], [600, 1000], [800, 1000]]

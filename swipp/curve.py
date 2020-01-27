@@ -1,4 +1,4 @@
-"""This file contains a base class Curve for handling x, y coordinates."""
+"""This file contains a class `Curve` for handling x, y coordinates."""
 
 import numpy as np
 import scipy.interpolate as sp
@@ -50,9 +50,9 @@ class Curve():
                 coordinates.
             check_fxn : function, optional
                 Function that takes an x, y pair, checks if they are
-                valid. If they are valid the function returns otherwise
-                raises a `ValueError`, default is `None` meaning no
-                function is used to check the x and y values.
+                valid. If they are valid the function returns `None`
+                otherwise raises a `ValueError`, default is `None`
+                meaning no function is used to check the x and y values.
 
                 def checker(x, y):
                     if x < 0 or y < 0:
@@ -64,9 +64,9 @@ class Curve():
 
         Raises:
             IndexError:
-                If x and y do not have the same length.
+                If `x` and `y` do not have the same length.
             ValueError:
-                If `check_fxn` is defined and any x, y pair fails to
+                If `check_fxn` is defined and any `x`, `y` pair fails to
                 meet the defined criteria.
         """
         x, y = self.check_input(x, y, check_fxn)
@@ -75,24 +75,28 @@ class Curve():
 
     @classmethod
     def resample_function(cls, x, y, **kwargs):
-        """Class method serving as a wrapper for interp1d from scipy."""
+        """Class method serving as a wrapper for the `interp1d` function
+        from the `scipy` package."""
         return sp.interp1d(x, y, **kwargs)
 
     def resample(self, xx, inplace=False, res_fxn=None):
         """Resample Curve at select x values.
 
         Args:
-            xx : {ndarray, None}
+            xx : ndarray
                 1D array containing the locations in terms of x, of the
                 desired interpolated y values.
             inplace : bool, optional
                 Indicates whether resampling should be done in-place.
+                
                 If inplace the, attributes x and y are overwritten,
                 otherwise the new values are returned, default is
                 `False` resampling is not done inplace.
             res_fxn : func, optional
                 Custom resampling function, default is `None` indicating
-                the default resampling function is used.
+                the default resampling function is used. Custom
+                resampling functions can be created using the :meth: 
+                `resampling_function <Curve.resample_function>`.
 
         Returns:
             If `inplace=True`:

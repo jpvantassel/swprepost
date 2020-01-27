@@ -1,6 +1,8 @@
 """This file defines the class `GroundModelSuite`."""
 
+import scipy.io as sio
 import numpy as np
+import warnings
 import os
 from swipp import GroundModel, DispersionSuite, regex
 import logging
@@ -114,7 +116,7 @@ class GroundModelSuite():
                 is shear-wave velocity (i.e., 'vs').
 
         Returns:
-            A `tuple` of the form 
+            A `tuple` of the form
             `([median_thickness], [median_parameter])`
             where `[median_thickness]` is a `list` of the median
             thickness of each layer and `[median_parameter]` is a `list`
@@ -146,8 +148,8 @@ class GroundModelSuite():
         Example:
             >>> import swipp
             >>> gm1 = swipp.GroundModel(thickness=[1.0,0], vp=[200,500], vs=[100,250], density=[2000,2000])
-            >>> gm2 = swipp.GroundModel(thickness=[2.5,0], vp=[500,900], vs=[200,300], density=[2000,2000])    
-            >>> gm3 = swipp.GroundModel(thickness=[5.0,0], vp=[400,800], vs=[250,300], density=[2000,2000])    
+            >>> gm2 = swipp.GroundModel(thickness=[2.5,0], vp=[500,900], vs=[200,300], density=[2000,2000])
+            >>> gm3 = swipp.GroundModel(thickness=[5.0,0], vp=[400,800], vs=[250,300], density=[2000,2000])
             >>> mysuite = swipp.GroundModelSuite.from_list([gm1, gm2, gm3], ["gm1", "gm2", "gm3"], [0.0, 0.0, 0.0])
             >>> median = mysuite.median(nbest=3)
             >>> print(median)
@@ -191,6 +193,66 @@ class GroundModelSuite():
             for cgm, cid, cmf in zip(groundmodels[1:], ids[1:], misfits[1:]):
                 obj.append(cgm, cid, cmf)
         return obj
+
+    @classmethod
+    def from_mat(cls, fname, tk="thickness", vs="vs", vp="vp", rh="rho",
+                 misfit="msft", identifier="indices"):
+
+        master_key = {"tk": [tk, "thickness"],
+                      "vs": [vs, "Vs1", "vs1"],
+                      "vp": [vp, "Vp1", "vp1"],
+                      "rh": [rh, "Rho1", "rho1"],
+                      "misfit": [misfit, "misfit"],
+                      "ids": [identifier, "indices"]}
+
+        results = {}
+
+        data = sio.loadmat(fname)
+        for par, keys in master_key.items():
+            for key in keys:
+                val = data.get(key)
+                if val is not None:
+                    results[par] = val
+                    break
+            else:
+                if par == "misfit":
+                    msg = f"Cound not find {par}, ignoring."
+                    warnings.warn(msg)
+                else:
+                    msg = f"Could not find {par} in data, using keys={keys}."
+                    raise KeyError(msg)
+
+        if results.get("misfit") is None:
+            results["misfit"] = np.zeros(results["ids"].shape)
+
+        return cls.from_array(results["tk"], results["vp"],
+                              results["vs"], results["rh"],
+                              results["ids"][0], results["misfit"][0])
+
+    @classmethod
+    def from_array(cls, tks, vps, vss, rhs, ids, misfits):
+
+        cols = tks.shape[1]
+        for other in (vps.shape[1], vss.shape[1], rhs.shape[1],
+                      ids.size, misfits.size):
+            assert(cols == other)
+
+        for col in range(cols):
+            tk = tks[:, col]
+            vp = vps[:, col]
+            vs = vss[:, col]
+            rh = rhs[:, col]
+            _id = ids[col]
+            msf = misfits[col]
+
+            obj = GroundModel(tk, vp, vs, rh)
+
+            if col == 0:
+                suite = cls(obj, _id, msf)
+            else:
+                suite.append(obj, _id, msf)
+
+        return suite
 
     @classmethod
     def from_geopsy(cls, fname, nmodels="all"):
