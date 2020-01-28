@@ -522,32 +522,6 @@ class GroundModel():
 
         return cls._gm()(tks, vps, vss, rhs)
 
-        # first = True
-        # obj = None
-        # regex_one = r"(\d+.?\d*[eE]?[+-]?\d*)"
-        # sp = r"\s"
-        # regex_all = f"^{regex_one}{sp}{regex_one}{sp}{regex_one}{sp}{regex_one}$"
-        # # exp1 = r"^# Layered model (\d+): value=(\d+.?\d*)$"
-
-
-
-        # tks, vps, vss, rhs, seen_data = [], [], [], [], False
-        # for line in lines:
-        #     try:
-        #         tk, vp, vs, rh = regex.gm.findall(line)[0]
-        #         seen_data=True
-        #         tks.append(float(tk))
-        #         vps.append(float(vp))
-        #         vss.append(float(vs))
-        #         rhs.append(float(rh))
-        #     except IndexError:
-        #         if seen_data:
-        #             break
-        #         else:
-        #             continue
-
-        # return cls.mkgm(thk=tks, vps=vps, vss=vss, rho=rhs)
-
     @classmethod
     def from_geopsy(cls, fname):
         """Instantiate a `GroundModel` from a file exported from Geopsy.

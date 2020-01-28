@@ -292,27 +292,6 @@ class GroundModelSuite():
 
         return cls.from_list(gms, identifiers, misfits)
 
-        # line_numbers, identifiers, misfits = [], [], []
-        # for line_number, line in enumerate(lines):
-        #     try:
-        #         identifier, misfit = regex.model.findall(line)[0]
-        #         line_numbers.append(line_number)
-        #         identifiers.append(identifier)
-        #         misfits.append(float(misfit))
-        #         if len(identifiers) == nmodels:
-        #             break
-        #     except IndexError:
-        #         continue
-        #     else:
-        #         lines.append("")
-        # line_numbers.append(line_number+1)
-
-        # gms = []
-        # for start_line, end_line in zip(line_numbers[:-1], line_numbers[1:]):
-        #     gms.append(GroundModel._from_lines(lines[start_line:end_line]))
-
-        # return cls.from_list(gms, identifiers, misfits)
-
     def __getitem__(self, sliced):
         if isinstance(sliced, int):
             return self.gms[sliced]

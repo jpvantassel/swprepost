@@ -21,7 +21,7 @@ class Curve():
         except ValueError:
             msg = f"x and y must be numeric."
             raise TypeError(msg)
-        
+
         if x.size != y.size:
             msg = f"""Abscissa and ordinate must be the same size,
                       currently {x.size} and {y.size}, respectively."""
@@ -43,7 +43,7 @@ class Curve():
 
     def __init__(self, x, y, check_fxn=None):
         """Intialize a curve object from x, y coordinates.
-        
+
         Args:
             x, y : iterable
                 Iterables of the same size definin the curve's x and y
@@ -58,7 +58,7 @@ class Curve():
                     if x < 0 or y < 0:
                         msg = 'x and y must be greater than 0.'
                         raise ValueError(msg)
-        
+
         Returns:
             Instantiated `Curve` object.
 
@@ -88,7 +88,7 @@ class Curve():
                 desired interpolated y values.
             inplace : bool, optional
                 Indicates whether resampling should be done in-place.
-                
+
                 If inplace the, attributes x and y are overwritten,
                 otherwise the new values are returned, default is
                 `False` resampling is not done inplace.
@@ -105,7 +105,10 @@ class Curve():
                 Resampled `x` and `y` as `(xx, yy)`.
         """
         # Perform resample
-        res_fxn = self.resample_function(x, y, kind="cubic") if res_fxn is None else res_fxn
+        if res_fxn is None:
+            res_fxn = self.resample_function(self._x,
+                                            self._y,
+                                            kind="cubic")
         yy = res_fxn(xx)
 
         # Update attributes or return values.
