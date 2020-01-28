@@ -122,7 +122,7 @@ class GroundModelSuite():
             thickness of each layer and `[median_parameter]` is a `list`
             of the median parameter of each layer.
         """
-        if str(nbest)=="all":
+        if str(nbest) == "all":
             nbest = len(self.gms)
             gms = self.gms
         else:
@@ -131,8 +131,6 @@ class GroundModelSuite():
         thk, par = self.gms[0].simplify(parameter)
         thks = np.zeros((len(thk), nbest))
         pars = np.zeros((len(par), nbest))
-
-        
 
         for ncol, gm in enumerate(gms):
             thk, par = gm.simplify(parameter)
@@ -277,28 +275,43 @@ class GroundModelSuite():
             Initialized `GroundModelSuite`.
         """
         with open(fname, "r") as f:
-            lines = f.read().splitlines()
+            lines = f.read()
 
-        line_numbers, identifiers, misfits = [], [], []
-        for line_number, line in enumerate(lines):
-            try:
-                identifier, misfit = regex.model.findall(line)[0]
-                line_numbers.append(line_number)
-                identifiers.append(identifier)
-                misfits.append(float(misfit))
-                if len(identifiers) == nmodels:
-                    break
-            except IndexError:
-                continue
-            else:
-                lines.append("")
-        line_numbers.append(line_number+1)
+        identifiers, misfits, gms = [], [], []
+        model_count = 0
+        for model_info in regex.gm.finditer(lines):
+            identifier, misfit, data = model_info.groups()
 
-        gms = []
-        for start_line, end_line in zip(line_numbers[:-1], line_numbers[1:]):
-            gms.append(GroundModel._from_lines(lines[start_line:end_line]))
+            identifiers.append(identifier)
+            misfits.append(float(misfit))
+            gms.append(cls._gm()._parse_gm(data))
+
+            model_count += 1
+            if model_count == nmodels:
+                break
 
         return cls.from_list(gms, identifiers, misfits)
+
+        # line_numbers, identifiers, misfits = [], [], []
+        # for line_number, line in enumerate(lines):
+        #     try:
+        #         identifier, misfit = regex.model.findall(line)[0]
+        #         line_numbers.append(line_number)
+        #         identifiers.append(identifier)
+        #         misfits.append(float(misfit))
+        #         if len(identifiers) == nmodels:
+        #             break
+        #     except IndexError:
+        #         continue
+        #     else:
+        #         lines.append("")
+        # line_numbers.append(line_number+1)
+
+        # gms = []
+        # for start_line, end_line in zip(line_numbers[:-1], line_numbers[1:]):
+        #     gms.append(GroundModel._from_lines(lines[start_line:end_line]))
+
+        # return cls.from_list(gms, identifiers, misfits)
 
     def __getitem__(self, sliced):
         if isinstance(sliced, int):

@@ -47,7 +47,7 @@ class DispersionCurve(Curve):
     def _parse_dc(cls, dc_data):
         """Parse a `DispersionCurve` from a `str` of data."""
         frequency, slowness = [], []
-        for curve in regex.data.finditer(dc_data):
+        for curve in regex.dc_data.finditer(dc_data):
             f, p = curve.groups()
             f = float(f)
             try:

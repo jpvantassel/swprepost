@@ -502,7 +502,25 @@ class GroundModel():
         return GroundModel(thickness=thk, vp=vps, vs=vss, density=rho)
 
     @classmethod
-    def _from_lines(cls, lines):
+    def _gm(cls):
+        return GroundModel
+
+    @classmethod
+    def _parse_gm(cls, gm_data):
+
+        tks, vps, vss, rhs = [], [], [], []
+        for gm in regex.gm_data.finditer(gm_data):
+            tk, vp, vs, rh = gm.groups()
+
+            tks.append(float(tk))
+            vps.append(float(vp))
+            vss.append(float(vs))
+            rhs.append(float(rh))
+
+            if tk == "0":
+                break
+
+        return cls._gm()(tks, vps, vss, rhs)
 
         # first = True
         # obj = None
@@ -511,22 +529,24 @@ class GroundModel():
         # regex_all = f"^{regex_one}{sp}{regex_one}{sp}{regex_one}{sp}{regex_one}$"
         # # exp1 = r"^# Layered model (\d+): value=(\d+.?\d*)$"
 
-        tks, vps, vss, rhs, seen_data = [], [], [], [], False
-        for line in lines:
-            try:
-                tk, vp, vs, rh = regex.gm.findall(line)[0]
-                seen_data=True
-                tks.append(float(tk))
-                vps.append(float(vp))
-                vss.append(float(vs))
-                rhs.append(float(rh))
-            except IndexError:
-                if seen_data:
-                    break
-                else:
-                    continue
 
-        return cls.mkgm(thk=tks, vps=vps, vss=vss, rho=rhs)
+
+        # tks, vps, vss, rhs, seen_data = [], [], [], [], False
+        # for line in lines:
+        #     try:
+        #         tk, vp, vs, rh = regex.gm.findall(line)[0]
+        #         seen_data=True
+        #         tks.append(float(tk))
+        #         vps.append(float(vp))
+        #         vss.append(float(vs))
+        #         rhs.append(float(rh))
+        #     except IndexError:
+        #         if seen_data:
+        #             break
+        #         else:
+        #             continue
+
+        # return cls.mkgm(thk=tks, vps=vps, vss=vss, rho=rhs)
 
     @classmethod
     def from_geopsy(cls, fname):
@@ -544,8 +564,8 @@ class GroundModel():
             format. See example files for details.
         """
         with open(fname, "r") as f:
-            lines = f.read().splitlines()
-        return cls._from_lines(lines)
+            lines = f.read()
+        return cls._parse_gm(lines)
 
     def __eq__(self, other):
         """Define when two ground models are equivalent."""
