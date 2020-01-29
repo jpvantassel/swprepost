@@ -9,6 +9,7 @@ import warnings
 import logging
 import re
 from swipp import CurveUncertain
+import matplotlib.pyplot as plt
 logging.Logger(name=__name__)
 
 
@@ -434,9 +435,9 @@ class Target(CurveUncertain):
         Returns:
             `None`, writes a file to disk.
         """
-        if version=="2":
+        if version == "2":
             stddevs = self.slostd
-        elif version=="3":
+        elif version == "3":
             stddevs = self.logstd
         else:
             msg = f"version={version} is not implemented, refer to documentation."
@@ -706,7 +707,59 @@ class Target(CurveUncertain):
         return True
 
     def __repr__(self):
-        frq_str = str(np.round(self.frequency,2))
-        vel_str = str(np.round(self.velocity,2))
-        std_str = str(np.round(self.velstd,2))
+        frq_str = str(np.round(self.frequency, 2))
+        vel_str = str(np.round(self.velocity, 2))
+        std_str = str(np.round(self.velstd, 2))
         return f"Target(frequency={frq_str}, velocity={vel_str}, velstd={std_str})"
+
+    def plot(self, x="frequency", y="velocity", yerr="velstd", ax=None, **kwargs):
+        """Plot target
+        TODO (jpv): Write docstring 
+        """
+        ax_wave_none = False
+        if ax is None:
+            ax_was_none = True
+            fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(4, 3), dpi=150)
+
+        # Default color -> Black
+        if kwargs.get("color") is None:
+            kwargs["color"] = "#000000"
+        
+        # Default label -> Exp. DC
+        if kwargs.get("label") is None:
+            kwargs["label"] = "Exp. DC"
+
+        # Default capsize -> 1
+        if kwargs.get("capsize") is None:
+            kwargs["capsize"] = 2
+
+        # Define linestyle -> ""
+        if kwargs.get("linestyle") is None:
+            kwargs["linestyle"] = ""
+
+        ax.errorbar(x=getattr(self, x),
+                    y=getattr(self, y),
+                    yerr=getattr(self, yerr),
+                    **kwargs)
+
+        if x=="frequency":
+            ax.set_xlabel("Frequency, "+r"$f$"+" "+r"$(Hz)$")
+        elif x=="wavelength":
+            ax.set_xlabel("Wavelength, "+r"$\lambda$"+" "+r"$(m)$")
+        else:
+            pass
+
+        ax.set_xscale("log")
+
+        if y=="velocity":
+            ax.set_ylabel("Rayleigh Phase-Velocity, "+r"$V_R$"+" "+r"$(m/s)$")
+        elif y=="slowness":
+            ax.set_ylabel("Slowness, "+r"$p$"+" "+r"$(s/m)$")
+        else:
+            pass
+
+        if ax_wave_none:
+            return (fig, ax)
+        else:
+            return (ax)
+
