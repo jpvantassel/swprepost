@@ -134,15 +134,14 @@ class Parameter():
         """Check wavelength input.
 
         Specifically:
-            1. Wavelengths are `int` or `float`.
+            1. Cast Wavelength to `float`.
             2. Wavelengths are > 0.
             3. Minimum wavelength is less than maximum wavelength.
         """
+        wmin = float(wmin)
+        wmax = float(wmax)
         # Check type and wavelength > 0.
         for val in [wmin, wmax]:
-            if type(val) not in (int, float):
-                msg = f"Wavelength must be of type `int` or `float`. Not `{type(val)}`."
-                raise TypeError(msg)
             if val <= 0:
                 raise ValueError("Wavelength must be > 0.")
 

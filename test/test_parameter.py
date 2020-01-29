@@ -52,7 +52,7 @@ class Test_Parameter(TestCase):
         self.assertTupleEqual((wmin, wmax,),
                               swipp.Parameter.check_wavelengths(wmax, wmin))
         # Raise TypeError
-        for val in ['1', True, (1, 2)]:
+        for val in [(1, 2), [1,2]]:
             self.assertRaises(
                 TypeError, swipp.Parameter.check_wavelengths, wmin, val)
         # Raise ValueError
