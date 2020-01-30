@@ -4,12 +4,12 @@ import scipy.io as sio
 import numpy as np
 import warnings
 import os
-from swipp import GroundModel, DispersionSuite, regex
+from swipp import GroundModel, Suite, DispersionSuite, regex
 import logging
 logging.Logger(name=__name__)
 
 
-class GroundModelSuite():
+class GroundModelSuite(Suite):
     """Class for manipulating suites of `GroundModel` objects.
 
     Attributes:
@@ -301,4 +301,4 @@ class GroundModelSuite():
                                               self.misfits[sliced])
 
     def __repr__(self):
-        return f"GroundModelSuite with {len(self.gms)} models."
+        return f"GroundModelSuite with {len(self.gms)} GroundModels."

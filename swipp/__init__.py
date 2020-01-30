@@ -7,6 +7,7 @@ from .dispersioncurve import *
 from .curveset import *
 from .dispersionset import *
 
+from .suite import *
 from .dispersionsuite import *
 
 from .groundmodel import *

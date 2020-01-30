@@ -1,11 +1,11 @@
 """This file contains the class definintion for `DispersionSuite`."""
 
-from swipp import DispersionSet, regex
+from swipp import DispersionSet, Suite, regex
 import logging
 logging.Logger(name=__name__)
 
 
-class DispersionSuite():
+class DispersionSuite(Suite):
     """Class for handling suites of instantiated `DispersionSet`
     objects.
 
@@ -150,3 +150,6 @@ class DispersionSuite():
 
     def __getitem__(self, slce):
         return self.sets[slce]
+
+    def __repr__(self):
+        return f"DispersionSuite with {len(self.sets)} DispersionSets."
