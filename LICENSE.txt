@@ -1,4 +1,4 @@
-This license applies to SWIPP a Python module for Surface-Wave Inversion Pre-
+This license applies to SWIPP a Python package for Surface-Wave Inversion Pre-
 and Post-processing.
 Copyright (C) 2019 Joseph P. Vantassel (jvantassel@utexas.edu)
 
