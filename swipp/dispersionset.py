@@ -1,4 +1,4 @@
-"""This file contains the definition of a class `DispersionSet`."""
+"""This file contains the class `DispersionSet`."""
 
 import re
 import copy
@@ -13,9 +13,9 @@ class DispersionSet(CurveSet):
     Attributes:
         rayleigh, love : dict
             Container for `DispersionCurve` objects, of the form:
-            {0:disp_curve_obj0, 1:disp_curve_obj1, ... N:disp_curve_objN}
+            {0:disp_curve_obj0, ... N:disp_curve_objN}
             where each key is the mode number and the value is the
-            corresponding instantiated DispersionCurve object.
+            corresponding instantiated `DispersionCurve` object.
     """
 
     @classmethod
@@ -44,11 +44,9 @@ class DispersionSet(CurveSet):
             misfit : float, int
                 `DispersionSet` misfit.
             rayleigh, love : dict
-                Container for `DispersionCurve` objects, of the form:
-                {0:disp_curve_obj0,
-                 1:disp_curve_obj1, 
-                 ... N:disp_curve_objN}
-                where each key is the mode number and the value is the
+                Container for `DispersionCurve` objectso of the form
+                `{0:disp_curve_obj0, ... N:disp_curve_objN}` where each
+                key is the mode number and the value is the
                 corresponding `DispersionCurve` object.
         """
         self.check_input([rayleigh, love], DispersionCurve)
@@ -60,7 +58,7 @@ class DispersionSet(CurveSet):
 
     @classmethod
     def _parse_dcs(cls, dcs_data, nmodes="all"):
-        """Parse a grouping of modes into a dict of `DispersionCurves`"""
+        """Parse a group of modes into a `dict` of `DispersionCurves`"""
         modes = regex.mode.split(dcs_data)
 
         if nmodes == "all":
@@ -101,8 +99,8 @@ class DispersionSet(CurveSet):
 
     @classmethod
     def from_geopsy(cls, fname, nrayleigh="all", nlove="all"):
-        """Create an instance of `DispersionSet` from a text file
-        created by the Geopsy command `gpdc`.
+        """Create a `DispersionSet` object from a text file following
+        the Geopsy format.
 
         Args:
             fname : str

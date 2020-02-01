@@ -23,4 +23,7 @@ class Suite():
         
 
 
+    # TODO (jpv): Allow "all".
+    # TODO (jpv): Comment character in from_csv.
+    # TODO (jpv): From suites is very slow. Might be sort issue?
 

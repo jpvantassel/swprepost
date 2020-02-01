@@ -59,11 +59,14 @@ class GroundModelSuite(Suite):
 
         Args:
             groundmodel : GroundModel
-                refer to :meth: `__init__ <swipp.GroundModelSuite.__init__>`.
+                refer to 
+                :meth: `__init__ <swipp.GroundModelSuite.__init__>`.
             identifier : str
-                refer to :meth: `__init__ <swipp.GroundModelSuite.__init__>`.
+                refer to
+                :meth: `__init__ <swipp.GroundModelSuite.__init__>`.
             misfit : [float, int], optional
-                refer to :meth: `__init__ <swipp.GroundModelSuite.__init__>`.
+                refer to
+                :meth: `__init__ <swipp.GroundModelSuite.__init__>`.
             sort : bool
                 Sort models according to misfit (smallest to largest),
                 default is `True` indicating sort will be performed.
@@ -113,7 +116,7 @@ class GroundModelSuite(Suite):
                 Number of best models to consider.
             parameter : {'depth', 'vs', 'vp', 'rho'}, optional
                 Parameter along which to calculate the median, default
-                is shear-wave velocity (i.e., 'vs').
+                is 'vs' for shear-wave velocity.
 
         Returns:
             A `tuple` of the form
@@ -151,18 +154,6 @@ class GroundModelSuite(Suite):
 
         Returns:
             Initialized `GroundModel` object.
-
-        Example:
-            >>> import swipp
-            >>> gm1 = swipp.GroundModel(thickness=[1.0,0], vp=[200,500], vs=[100,250], density=[2000,2000])
-            >>> gm2 = swipp.GroundModel(thickness=[2.5,0], vp=[500,900], vs=[200,300], density=[2000,2000])
-            >>> gm3 = swipp.GroundModel(thickness=[5.0,0], vp=[400,800], vs=[250,300], density=[2000,2000])
-            >>> mysuite = swipp.GroundModelSuite.from_list([gm1, gm2, gm3], ["gm1", "gm2", "gm3"], [0.0, 0.0, 0.0])
-            >>> median = mysuite.median(nbest=3)
-            >>> print(median)
-            2
-            2.5 400.0 200.0 2000.0
-            0 800.0 300.0 2000.0
         """
         med_vp_tk, med_vp = self.median_simple(nbest=nbest, parameter='vp')
         med_vs_tk, med_vs = self.median_simple(nbest=nbest, parameter='vs')
@@ -204,19 +195,51 @@ class GroundModelSuite(Suite):
 
     @classmethod
     def from_mat(cls, fname, tk="thickness", vs="vs", vp="vp", rh="rho",
-                 misfit="msft", identifier="indices"):
+                 misfit="misfits", identifier="indices"):
+        """Instantiate a `GroundModelSuite` from a `.mat` file.
 
-        master_key = {"tk": [tk, "thickness"],
+        Note: This method is still largely experimental and is not
+        guaranteed to work.
+
+        Args:
+            fname : str
+                Name of file to be read, in general these files should
+                end with th `.mat` extension.
+            tk, vs, vp, rh, misfit, identifer : str, optional
+                Custom variable names, for which the program will search
+                to find the resulting values.
+
+                In addtion to these custom names, which are searched
+                first the program will also see if the values are under
+                other common names:
+
+                thickness : [tk, "thickness"]
+                vs : [vs, "Vs1", "vs1"]
+                vp : [vp, "Vp1", "vp1"]
+                rh : [rh, "Rho1", "rho1", "density1"]
+                misfit : [misfit, "misfit"]
+                ids : [identifier, "indices"]
+
+        Returns:
+            Instantiated `GroundModelSuite` object.
+
+        Raises:
+            KeyError : 
+                If required variables, can not be found in `.mat` file.
+        """
+        # Potential names for each parameter, from high to low priority.
+        search_values = {"tk": [tk, "thickness"],
                       "vs": [vs, "Vs1", "vs1"],
                       "vp": [vp, "Vp1", "vp1"],
-                      "rh": [rh, "Rho1", "rho1"],
+                      "rh": [rh, "Rho1", "rho1", "density1"],
                       "misfit": [misfit, "misfit"],
                       "ids": [identifier, "indices"]}
 
-        results = {}
-
+        # Load's matlab file as `dict`.
         data = sio.loadmat(fname)
-        for par, keys in master_key.items():
+
+        results = {}
+        for par, keys in search_values.items():
             for key in keys:
                 val = data.get(key)
                 if val is not None:
@@ -224,10 +247,10 @@ class GroundModelSuite(Suite):
                     break
             else:
                 if par == "misfit":
-                    msg = f"Cound not find {par}, ignoring."
+                    msg = f"Cound not find {par}, using keys={keys}, ignoring."
                     warnings.warn(msg)
                 else:
-                    msg = f"Could not find {par} in data, using keys={keys}."
+                    msg = f"Could not find {par}, using keys={keys}."
                     raise KeyError(msg)
 
         if results.get("misfit") is None:

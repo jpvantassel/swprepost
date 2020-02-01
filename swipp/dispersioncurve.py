@@ -5,7 +5,7 @@ import numpy as np
 
 
 class DispersionCurve(Curve):
-    """Class to define a dispersion curve.
+    """Class to define a `DispersionCurve` object.
 
     Attributes:
         frequency, velocity : ndarray
@@ -14,7 +14,7 @@ class DispersionCurve(Curve):
     """
 
     def __init__(self, frequency, velocity):
-        """Initialize a `DispersionCurve` object, from dispersion data.
+        """Initialize a `DispersionCurve` object from dispersion data.
 
         Args:
             frequency, velocity : ndarray
@@ -45,7 +45,20 @@ class DispersionCurve(Curve):
 
     @classmethod
     def _parse_dc(cls, dc_data):
-        """Parse a `DispersionCurve` from a `str` of data."""
+        """Parse a single `DispersionCurve` from a `str` of frequency,
+        slowness data. It is assumed that frequencies increase
+        monitonically.
+
+        Example Data:
+            Line 1: # Frequency, Slowness
+            Line 2: 0.1, 0.01
+            Line 3: 0.2, 0.012
+            Line 4: # Frequency, Slowness
+            Line 5: 0.1, 0.011
+            Line 6: 0.2, 0.013
+
+        Only lines 2 and 3 will be parsed.
+        """
         frequency, slowness = [], []
         for curve in regex.dc_data.finditer(dc_data):
             f, p = curve.groups()
@@ -59,13 +72,13 @@ class DispersionCurve(Curve):
             except IndexError:
                 frequency.append(f)
                 slowness.append(float(p))
-
-        return cls(frequency=frequency, velocity=1/np.array(slowness, dtype=np.double))
+        return cls(frequency=frequency, velocity=1/np.array(slowness,
+                                                            dtype=np.double))
 
     @classmethod
     def from_geopsy(cls, fname):
         """Instantiate a `DispersionCurve` from a text file in the
-        geopsy format.
+        Geopsy format.
 
         Args:
             fname : str
@@ -91,4 +104,5 @@ class DispersionCurve(Curve):
         return True
 
     def __repr__(self):
-        return f"DispersionCurve(frequency={self.frequency}, velocity={self.velocity})"
+        return f"DispersionCurve(frequency={self.frequency},\
+velocity={self.velocity})"

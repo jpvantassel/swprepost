@@ -1,4 +1,4 @@
-"""Tests for Curve object class."""
+"""Tests for Curve class."""
 
 from testtools import unittest, TestCase
 import numpy as np
@@ -21,17 +21,23 @@ class Test_Curve(TestCase):
                 raise TypeError
 
         # Check types
-        self.assertRaises(TypeError, swipp.Curve.check_input, bad_types, good, fxn)
-        self.assertRaises(TypeError, swipp.Curve.check_input, good, bad_types, fxn)
+        self.assertRaises(TypeError, swipp.Curve.check_input, bad_types, good,
+                          fxn)
+        self.assertRaises(TypeError, swipp.Curve.check_input, good, bad_types,
+                          fxn)
 
         # Check values
         for bad in bad_lengths:
-            self.assertRaises(IndexError, swipp.Curve.check_input, bad, good, fxn)
-            self.assertRaises(IndexError, swipp.Curve.check_input, good, bad, fxn)
+            self.assertRaises(IndexError, swipp.Curve.check_input, bad, good,
+                              fxn)
+            self.assertRaises(IndexError, swipp.Curve.check_input, good, bad,
+                              fxn)
 
         # Check values
-        self.assertRaises(ValueError, swipp.Curve.check_input, bad_values, good, fxn)
-        self.assertRaises(ValueError, swipp.Curve.check_input, good, bad_values, fxn)
+        self.assertRaises(ValueError, swipp.Curve.check_input, bad_values,
+                          good, fxn)
+        self.assertRaises(ValueError, swipp.Curve.check_input, good,
+                          bad_values, fxn)
 
 
 if __name__ == "__main__":

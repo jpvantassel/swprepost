@@ -1,5 +1,5 @@
-"""This file includes a derived class `CurveUncertian` for `Curve`
-objects with arbitrary uncertainty in x and/or y."""
+"""This file includes a derived class `CurveUncertian` which is a
+`Curve` objects with arbitrary uncertainty in x and/or y."""
 
 import numpy as np
 from swipp import Curve
@@ -8,7 +8,7 @@ from swipp import Curve
 class CurveUncertain(Curve):
     """Curve object with aribtrary uncertainty in terms of x and y.
 
-    Attribtues:
+    Attributes:
         _isxerr, _isyerr : bool
             Flags to indicate if x and y error has been provided.
         _xerr, _yerr : ndarray
@@ -17,7 +17,7 @@ class CurveUncertain(Curve):
 
 
     def __init__(self, x, y, yerr=None, xerr=None):
-        """Initialize a new CurveUncertain object.
+        """Initialize a new `CurveUncertain` object.
 
         Args:
             x, y : iterable
@@ -32,10 +32,13 @@ class CurveUncertain(Curve):
 
         Raises:
             IndexError:
-                If size of x, y and yerr or xerr are inconsistent.
+                If size of x, y, yerr (if provided) and xerr (if
+                provided) are inconsistent.
         """
+        # Pass x, y to `Curve` constuctor.
         super().__init__(x, y)
 
+        # Handle x-error and y-error.
         for attr, attr_name, attr_bool in zip([yerr, xerr],
                                               ["_yerr", "_xerr"],
                                               ["_isyerr", "_isxerr"]):
@@ -46,7 +49,7 @@ class CurveUncertain(Curve):
                 setattr(self, attr_name, np.array(attr))
 
                 if self._x.size != getattr(self, attr_name).size:
-                    msg = "The size of the curve's attributes must be consistent"
+                    msg = "Size of the curve's attributes must be consistent."
                     raise IndexError(msg)
 
     def resample(self, xx, inplace=False,
@@ -97,12 +100,13 @@ class CurveUncertain(Curve):
         if self._isxerr:
             xerr = res_fxn_xerr(xx)
 
-        # Update attributes or return values.
+        # Update attributes (if inplace=True).
         if inplace:
             if self._isyerr:
                 self._yerr = yerr
             if self._isxerr:
                 self._xerr = xerr
+        # Or return values (if inplace=False)
         else:
             if self._isyerr and self._isxerr:
                 return (xx, yy, yerr, xerr)

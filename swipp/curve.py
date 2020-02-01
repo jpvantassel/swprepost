@@ -5,16 +5,22 @@ import scipy.interpolate as sp
 
 
 class Curve():
-    """Base class for handling sets x, y coordinates.
+    """Base class for handling sets of x, y coordinates.
 
     Attributes:
-        _x, _y = ndarray
+        _x, _y : ndarray
             1D array of x, y coordinates defining the curve. These
             should, in general, not be accessed directly.
     """
 
     @staticmethod
     def check_types(x, y):
+        """Check type of x and y
+
+        Specifically:
+            1. Cast x and y to `ndarray` of type `double`.
+            2. Check x and y have the same length.
+        """
         try:
             x = np.array(x, dtype=np.double)
             y = np.array(y, dtype=np.double)
@@ -30,6 +36,19 @@ class Curve():
 
     @staticmethod
     def check_values(x, y, check_fxn):
+        """Use custon checking function to check the values of x and y.
+        
+        Args:
+            x, y : iterable
+                x and y value of curve respectively.
+            check_fxn : function
+                Function that takes an x, y pair, checks if they are
+                valid. If they are valid the function returns `None`
+                otherwise raises a `ValueError`.
+
+        Returns:
+            `None` if `x` and `y` pass; `ValueError` otherwise.
+        """
         if check_fxn is not None:
             for _x, _y in zip(x, y):
                 check_fxn(_x, _y)
@@ -46,18 +65,15 @@ class Curve():
 
         Args:
             x, y : iterable
-                Iterables of the same size definin the curve's x and y
+                Iterables of the same size defining the curve's x and y
                 coordinates.
             check_fxn : function, optional
                 Function that takes an x, y pair, checks if they are
-                valid. If they are valid the function returns `None`
+                valid.
+                
+                If they are valid the function returns `None`
                 otherwise raises a `ValueError`, default is `None`
                 meaning no function is used to check the x and y values.
-
-                def checker(x, y):
-                    if x < 0 or y < 0:
-                        msg = 'x and y must be greater than 0.'
-                        raise ValueError(msg)
 
         Returns:
             Instantiated `Curve` object.
@@ -89,9 +105,9 @@ class Curve():
             inplace : bool, optional
                 Indicates whether resampling should be done in-place.
 
-                If inplace the, attributes x and y are overwritten,
-                otherwise the new values are returned, default is
-                `False` resampling is not done inplace.
+                If inplace the, attributes `_x` and `_y` are
+                overwritten. Otherwise the new values are returned,
+                default is `False` resampling is not done inplace.
             res_fxn : func, optional
                 Custom resampling function, default is `None` indicating
                 the default resampling function is used. Custom

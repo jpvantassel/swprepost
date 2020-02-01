@@ -1,7 +1,6 @@
 """This file contains the class definiton for `GroundModel`."""
 
 import scipy.io as sio
-import copy
 import warnings
 import logging
 import subprocess
@@ -16,21 +15,20 @@ class GroundModel():
     """Class for creating and manipulating `GroundModel` objects.
 
     Attributes:
-        tk:
-        vp:
-        vs:
-        rh:
+        tk, vp, vs, rh : list
+            Thickness, compression-wave velocity (Vp), shear-wave
+            velcocity (Vs), and mass density defining each layer of the
+            ground model, respectively.
     """
-    # TODO (jpv): Complete documentation.
-    
+
     @staticmethod
     def check_input_type(values, names):
         """Check `values` are of the appropriate type.
 
         Specifically:
-            1. `values` are an interable of `list`. If necessary convert 
-            interable of `ndarray` or `tuple` to interable of `list`.
-            2. Entries of the inner `list` are of type `int` or `float`.
+            1. `values` is an interable.
+            2. Cast each value to a `list`.
+            3. Casst each value of value to `float`.
 
         Args:
             values : list
@@ -43,20 +41,11 @@ class GroundModel():
                 If `values` does not pass the aforementioned criteria.
         """
         for cid, (value, name) in enumerate(zip(values, names)):
-            if type(value) not in [list, tuple, np.ndarray]:
-                msg = f"{name} must be of type `list`, not {type(value)}."
+            try:
+                values[cid] = [float(val) for val in value]
+            except:
+                msg = f"{name} must be castable to float."
                 raise TypeError(msg)
-            if isinstance(value, tuple):
-                values[cid] = list(value)
-            if isinstance(value, np.ndarray):
-                values[cid] = value.tolist()
-
-        for value, name in zip(values, names):
-            for val in value:
-                if type(val) not in [int, float]:
-                    msg = f"{name} must be a `list` of `int` or `float`, not {type(val)}."
-                    raise TypeError(msg)
-
         return values
 
     @staticmethod
@@ -92,22 +81,22 @@ class GroundModel():
                 raise ValueError(msg)
 
     def __init__(self, thickness, vp, vs, density):
-        """Initialize a ground model object
+        """Initialize a ground model object.
 
         Args:
-            thickness : list
+            thickness : iterable
                 Container of `float` or `int` denoting layer thickness
                 (one per layer) in meters starting from the ground
                 surface.
-            vp, vs : list
+            vp, vs : iterable
                 Container of `float` or `int` denoting the P- and S-wave
                 velocity of each layer in m/s.
-            density : list 
+            density : iterable 
                 Container of `float` or `int` denoting the mass density
                 of each layer in kg/m3.
 
         Returns:
-            Instantiated GroundModel object
+            Instantiated `GroundModel` object.
 
         Raises:
             Various exceptions, see
@@ -115,19 +104,20 @@ class GroundModel():
             :meth: `check_input_value <GroundModel.check_input_value`
             for details.
         """
-        thickness, vp, vs, density = self.check_input_type([thickness, vp, vs, density],
-                                                           ["thickness", "vp", "vs", "density"])
-        self.check_input_value([thickness, vp, vs, density],
+        tk, vp, vs, rh = self.check_input_type([thickness, vp, vs, density],
+                                               ["thickness", "vp",
+                                                "vs", "density"])
+        self.check_input_value([tk, vp, vs, rh],
                                ["thickness", "vp", "vs", "density"])
-        self.nlay = len(thickness)
-        self.tk = copy.deepcopy(thickness)
-        self.vp = copy.deepcopy(vp)
-        self.vs = copy.deepcopy(vs)
-        self.rh = copy.deepcopy(density)
+        self.nlay = len(tk)
+        self.tk = tk
+        self.vp = vp
+        self.vs = vs
+        self.rh = rh
 
     @staticmethod
     def calc_pr(vp, vs):
-        """Calculate Poisson's ratio from list of `vp` and `vs`.
+        """Calculate Poisson's ratio from iterable of `vp` and `vs`.
 
         Args:
             vp, vs : iterable
@@ -138,7 +128,8 @@ class GroundModel():
 
         Raises:
             ValueError: 
-                If vs>vp, or Poisson's ratio is negative.
+                If vs>vp, or Poisson's ratio is negative
+                (i.e., vp/vs too close to 1).
         """
         if type(vp) in [int, float]:
             warnings.warn("`vp` should be an iterable type.")
@@ -161,12 +152,12 @@ class GroundModel():
         """Instantiate `GroundModel` from simple profiles.
 
         Args:
-            vp_tk, vs_tk, rh_tk : list
-                Container of `int` or `float` denoting the thicknesses
-                of each parameter, one per layer.
-            vp, vs, rh : list
-                Container of `int` or `float` for the value of each
-                parameter. 
+            vp_tk, vs_tk, rh_tk : iterable
+                Iterable denoting the thicknesses of each parameter, one
+                per layer.
+            vp, vs, rh : iterable
+                Iterable denoting the value of Vp, Vs, and mass density
+                respectively.
 
         Returns:
             Instantiated `GroundModel` object.
@@ -186,7 +177,7 @@ class GroundModel():
                     return
                 # Otherwise append current par value
                 new_par.append(par[c_lay])
-                # When depth is greater than sum of thickness move to next layer.
+                # When depth is greater than sum of thickness move to next.
                 if new_depths[cid+1] >= sum(tk[:c_lay+1]):
                     c_lay += 1
 
@@ -224,7 +215,7 @@ class GroundModel():
     def rh2(self):
         """Return stair-step version of density profile."""
         return self.gm2(parameter="rho")
-    
+
     @property
     def pr2(self):
         """Return stair-step version of Poisson's ratio profile."""
@@ -235,10 +226,10 @@ class GroundModel():
 
         Args:
             parameter : {'depth', 'vp', 'vs', 'rho', 'pr'}
-                Desired parameter.
+                Desired parameter to transform to stair-step profile.
 
         Returns:
-            List of defining the specified parameter. 
+            `List` defining the specified parameter. 
 
         Raises:
             KeyError if `parameter` is not one of those specified.
@@ -275,14 +266,15 @@ class GroundModel():
         return gm2
 
     def discretize(self, dmax, dy=0.5, parameter='vs'):
-        """Returns a discretized stair-step model.
+        """Discretize a parameter of the `GroundModel`.
 
-        The stair step model is discretized by depth from the surface to
-        dmax by dy such that depth will be a list of the forn
-        [0:dy:dmax]. When the discretization encounters a stair tred
-        (i.e., where two velocities are specified at a single depth) the
-        velocity of the upper layer is assigned. Do not use these
-        discretized models for plotting as they may be misleading.
+        The `GroundModel` is discretized in terms of depth from the
+        surface to `dmax` by `dy` such that depth will be a `list` of
+        the forn `[0:dy:dmax]`. When the discretization encounters a
+        parameter boundary the velocity of the upper layer is assigned.
+
+        Do not use these discretized models for plotting unless `dy` is
+        very small, as they may be misleading.
 
         Args:
             dmax : float
@@ -300,7 +292,7 @@ class GroundModel():
 
         Raises:
             KeyError:
-                If `param` is not one of those options specified.
+                If `parameter` is not one of those options specified.
         """
         disc_depth = np.linspace(0, dmax, int(dmax//dy)+1).tolist()
 
@@ -313,9 +305,9 @@ class GroundModel():
         try:
             par_to_disc = options[parameter]
         except KeyError:
-            msg = f"Bad `parameter`={parameter}, try 'vp', 'vs', 'rho', or 'pr'."
+            msg = f"Bad `parameter`={parameter}, use 'vp', 'vs', 'rho', or 'pr'."
             raise KeyError(msg)
-        
+
         # For each layer
         disc_par = [par_to_disc[0]]
         residual = 0
@@ -337,7 +329,7 @@ class GroundModel():
         # TODO (jpv): Properly account for the fact that the entire profile
         # may not be discretized (i.e., for loop should not extend to self.tk[:-1])
         disc_par = disc_par[:len(disc_depth)]
-        
+
         return (disc_depth, disc_par)
 
     def simplify(self, param='vs'):
@@ -371,7 +363,7 @@ class GroundModel():
         30m (Vs30).
 
         Returns:
-            Vs30 of ground model as float.
+            Vs30 of `GroundModel`.
         """
         depth = 0
         travel_time = 0
@@ -386,37 +378,31 @@ class GroundModel():
                 travel_time += thickness/vs
         return 30/travel_time
 
-    def write_to_mat(self, fname):
-        """Save ground model information to .mat format.
+    def write_to_mat(self, fname_prefix):
+        """Save `GroundModel` information to `.mat` format.
 
         Args:
-            fname: Name of file (excluding the .mat extension) where the
-                file should be saved. A relative or full path may be
-                specified if desired.
+            fname_prefix: Name of file (excluding the `.mat` extension)
+                where the file should be saved, may be a relative or the
+                full path.
 
         Returns:
-            This methods returns nothing, but write file with name fname
-            to disk.
-
-        Raises:
-            This method raises no exceptions.
+            `None`, instead write file to disk.
         """
-        if fname.endswith(".mat"):
-            fname = fname[:-4]
-        sio.savemat(fname+".mat", {"thickness": self.tk,
-                                   "vp1": self.vp,
-                                   "vs1": self.vs,
-                                   "rho1": self.rh,
-                                   "depth": self.depth,
-                                   "vp2": self.vp2,
-                                   "vs2": self.vs2,
-                                   "rho2": self.rh2,
-                                   })
+        sio.savemat(fname_prefix+".mat", {"thickness": self.tk,
+                                          "vp1": self.vp,
+                                          "vs1": self.vs,
+                                          "rho1": self.rh,
+                                          "depth": self.depth,
+                                          "vp2": self.vp2,
+                                          "vs2": self.vs2,
+                                          "rho2": self.rh2,
+                                          })
 
     @staticmethod
     def depth_to_thick(depths):
-        """`List` of thicknesses from a `list` of depths (at top of each
-        layer)."""
+        """Return `list` of thicknesses from `list` of depths defined
+        at top of each layer."""
         if depths[0] != 0:
             msg = "`depths` are defined from the top of each layer."
             raise ValueError(msg)
@@ -438,7 +424,7 @@ class GroundModel():
 
     @staticmethod
     def thick_to_depth(thicknesses):
-        """Return `list` of depths (at the top of each layer)."""
+        """Return `list` of depths defined at the top of each layer."""
         depths = [0]
         for clayer in range(1, len(thicknesses)):
             depths.append(sum(thicknesses[:clayer]))
@@ -451,43 +437,40 @@ class GroundModel():
             lines += f"{tk} {vp} {vs} {rh}\n"
         return lines
 
-    def write_model(self, fileobj, model_num=1, misfit=0.0000):
-        """Write `GroundModel` to opened fileobj.
-        
+    def write_model(self, fobj, model_num=1, misfit=0.0000):
+        """Write `GroundModel` to open file object following `Geopsy`
+        format.
+
         Args:
             fileobj : _io.TextIOWrapper
-                Name of file, may contain a relative or the full path.
+                Name of file, may be a relative or the full path.
             model_num : int, optional
-                Model number, required to be consistent with Geopsy
-                naming convention when exporting inversion results,
-                default is 1.
+                Model number, required to be consistent with `Geopsy`
+                format, default is 1.
             misfit : float, optional
-                Misfit, required to be consistent with Geopsy
-                naming convention when exporting inversion results,
-                default is 0.0000.
-        
+                Misfit, required to be consistent with `Geopsy`
+                format, default is 0.0000.
+
         Returns:
             `None`, writes file to disk.
         """
-        fileobj.write(f"# Layered model {model_num}: value={misfit}\n")
+        fobj.write(f"# Layered model {model_num}: value={misfit}\n")
         for line in self.txt_repr:
-            fileobj.write(line)
+            fobj.write(line)
 
     def write_to_txt(self, fname, model_num=1, misfit=0.0000):
-        """Write `GroundModel` to file that follows the Geospy format.
-        
+        """Write `GroundModel` to file that follows the `Geospy` format.
+
         Args:
             fname : str
                 Name of file, may contain a relative or the full path.
             model_num : int, optional
-                Model number, required to be consistent with Geopsy
-                naming convention when exporting inversion results,
-                default is 1.
+                Model number, required to be consistent with `Geopsy`
+                format, default is 1.
             misfit : float, optional
-                Misfit, required to be consistent with Geopsy
-                naming convention when exporting inversion results,
-                default is 0.0000.
-        
+                Misfit, required to be consistent with `Geopsy`
+                format, default is 0.0000.
+
         Returns:
             `None`, writes file to disk.
         """
@@ -498,7 +481,6 @@ class GroundModel():
 
     @staticmethod
     def mkgm(thk, vps, vss, rho):
-        # print("swipp GroundModel")
         return GroundModel(thickness=thk, vp=vps, vs=vss, density=rho)
 
     @classmethod
@@ -524,18 +506,19 @@ class GroundModel():
 
     @classmethod
     def from_geopsy(cls, fname):
-        """Instantiate a `GroundModel` from a file exported from Geopsy.
+        """Instantiate a `GroundModel` from a file following the
+        `Geopsy` format.
 
         Args:
             fname : fname
                 File name, may contain a relative or the full path.
 
         Returns:
-            Initialized GroundModel object.
+            Initialized `GroundModel` object.
 
         Raises:
-            Various errors if ground model file is not of the correct 
-            format. See example files for details.
+            Various errors if file does not follow the `Geopsy` format.
+            See example files for details.
         """
         with open(fname, "r") as f:
             lines = f.read()
@@ -552,13 +535,14 @@ class GroundModel():
             return True
 
     def __str__(self):
-        """Define un-official representation of an instantiated object."""
+        """Define un-official string representation of the object."""
         return self.txt_repr
 
     def __repr__(self):
         """Define official representation of an instantiated object."""
-        return f"GroundModel(thickness={self.tk}, vp={self.vp}, vs={self.vs}, density={self.rh})"
-    
+        return f"GroundModel(thickness={self.tk}, vp={self.vp}, vs={self.vs},\
+density={self.rh})"
+
     def __eq__(self, other):
         for attr in ["tk", "vp", "vs", "rh"]:
             my_vals = getattr(self, attr)

@@ -1,4 +1,4 @@
-"""This file contains the class definintion for `DispersionSuite`."""
+"""This file contains the class `DispersionSuite`."""
 
 from swipp import DispersionSet, Suite, regex
 import logging
@@ -21,7 +21,7 @@ class DispersionSuite(Suite):
             1. `curveset` is of type `set_type`.
         """
         if not isinstance(curveset, set_type):
-            msg = f"Must be an instance of {type(set_type)}, not {type(curveset)}."
+            msg = f"Must be instance of {type(set_type)}, not {type(curveset)}."
             raise TypeError(msg)
 
     def __init__(self, dispersionset):
@@ -60,6 +60,7 @@ class DispersionSuite(Suite):
 
     @property
     def ids(self):
+        """Return the ids correspinding to `sets`."""
         ids = []
         for cset in self.sets:
             ids.append(cset.identifier)
@@ -67,20 +68,21 @@ class DispersionSuite(Suite):
 
     @property
     def misfits(self):
+        """Return the misfits correspinding to `sets`."""
         msft = []
         for cset in self.sets:
             msft.append(cset.misfit)
         return msft
 
     @classmethod
-    def from_geopsy(cls, fname, ndc="all", nrayleigh="all", nlove="all"):
-        """Create `DispersionSuite` from a text file created by the 
-        Geopsy module `gpdc`.
+    def from_geopsy(cls, fname, nsets="all", nrayleigh="all", nlove="all"):
+        """Create `DispersionSuite` from a text file following the
+        Geopsy format.
 
         Args:
             fname : str
                 Name of file to be read, may be a relative or full path.
-            ndc : int, optional
+            nsets : int, optional
                 Number of sets to extract, default is "all" so all 
                 available sets will be extracted.
             nrayleigh, nlove : int, optional
@@ -117,13 +119,12 @@ class DispersionSuite(Suite):
             previous_id = identifier
             previous_misfit = misfit
 
-            if model_count + 1 == ndc:
+            if model_count + 1 == nsets:
                 break
 
         dc_sets.append(cls._dcset()(previous_id,
                                     float(previous_misfit),
                                     rayleigh=rayleigh, love=love))
-
         return cls.from_list(dc_sets)
 
     @classmethod

@@ -1,4 +1,7 @@
-"""This file contains a class `CurveSet`."""
+"""This file contains the class `CurveSet`."""
+
+
+#TODO (jpv): What is a curveset
 
 class CurveSet():
     """Class for handling sets of `Curve` objects with some common
