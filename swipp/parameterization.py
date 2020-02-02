@@ -17,8 +17,8 @@ class Parameterization():
     parameterization files for use in the open-source software Dinver.
     While parameterizations of various kinds can be built quickly using
     this tool, it does have limited functionality compared to the full
-    user interface. It is recommended that the user, use this tool to 
-    batch create general parameterizations, then fine tune them if
+    user interface. It is recommended that the user use this tool to 
+    batch create general parameterizations then fine tune them if
     necessary using the Dinver user interface.
 
     Attributes:
@@ -68,9 +68,9 @@ class Parameterization():
         """Intilize an instance of the Parameterization class from
         a minimum and maximum value.
 
-        Note: This method compromises readability for pure charachter
+        Note: This method compromises readability for pure character
         efficiency (which is almost always a bad idea!), however some
-        users may find this method useful for quick calculations.
+        users may find this method useful.
 
         Args:
             vp, pr, vs, rh : list
@@ -165,7 +165,7 @@ class Parameterization():
                    input_arguements["vs"], input_arguements["rh"])
 
     def to_param(self, fname_prefix, version="3", full_version=None):
-        """Write paramterization to .param file that can be imported
+        """Write paramterization to `.param` file that can be imported
         into Dinver.
 
         Args:
@@ -181,12 +181,12 @@ class Parameterization():
                 to avoid ambiguity.
 
         Returns:
-            `None`, writes .param file to disk.
+            `None`, writes `.param` file to disk.
 
         Raises:
             KeyError: 
-                If `version` does not match any listed in the
-                documenation.
+                If `version` does not match those listed in the
+                documentation.
         """
         available_versions = {'2': '2', '3': '3'}
         version = available_versions[version]

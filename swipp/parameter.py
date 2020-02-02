@@ -1,4 +1,4 @@
-"""This file includes the defnition of the `Parameter` class."""
+"""This file defines the `Parameter` class."""
 
 import warnings
 import matplotlib.pyplot as plt
@@ -18,7 +18,7 @@ class Parameter():
             'LR'  = Layering Ratio
             'CT'  = Custom Thickness
             'CD'  = Custom Depth
-        par_value,  par_add_value : int or float
+        par_value, par_add_value : int or float
             Numerical values to provide context about the
             type of layering selected. `par_add_value` only used for
             three letter parameter types (i.e., 'FTL').
@@ -74,13 +74,13 @@ class Parameter():
         """Initialize a `Parameter` object.
 
         Args:
-            lay_min, lay_max : list
+            lay_min, lay_max : iterable
                 Minimum and maximum thickness or depth of each layer,
                 respectively.
-            par_min, par_max : list
+            par_min, par_max : iterable
                 Minimum and maximum potential value of the parameter,
                 one `float` per layer.
-            par_rev : list
+            par_rev : iterable
                 Indicate whether to allow parameter reversals, one 
                 `bool` per layer.             
             lay_type : {'thickness', 'depth'}, optional
@@ -117,9 +117,12 @@ class Parameter():
         Returns:
             Instantiated `Parameter` object.
         """
-        if type(value) not in [int, float]:
-            msg = f"`value` must be an `int` or `float`, not {type(value)}."
+        try:
+            value = float(value)
+        except:
+            msg = f"`value` must be abel to be cast to `float`."
             raise TypeError(msg)
+
         if value <= 0:
             raise ValueError("`value` must be postive.")
 
@@ -140,6 +143,7 @@ class Parameter():
         """
         wmin = float(wmin)
         wmax = float(wmax)
+
         # Check type and wavelength > 0.
         for val in [wmin, wmax]:
             if val <= 0:
@@ -432,8 +436,8 @@ class Parameter():
 
         Note that the Layering Ratio approach implemented here has been
         modified slightly to ensure the maximum depth of the last layer
-        does not exceed dmax, as guidance on this particular issue is
-        not provided explicitly in Cox and Teague (2016). 
+        does not exceed dmax. Suggestions for solving this issue are
+        hinted at in Cox and Teague (2016), but not provided explicitly.
 
         Args:
             wmin, wmax : float

@@ -68,7 +68,7 @@ class Test_Parameter(TestCase):
 
     def test_from_fx(self):
         # Raise TypeError
-        for val in ["1", True, [1], (1,)]:
+        for val in [[1], (1,)]:
             self.assertRaises(TypeError, swipp.Parameter.from_fx, val)
         # Raise ValueError
         for val in [-1, 0]:

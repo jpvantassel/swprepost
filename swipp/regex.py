@@ -1,3 +1,5 @@
+"""This file includes regular expression used for parsing text."""
+
 import re
 
 number = r"\d+.?\d*[eE]?[+-]?\d*"

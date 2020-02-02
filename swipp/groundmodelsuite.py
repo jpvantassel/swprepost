@@ -209,8 +209,8 @@ class GroundModelSuite(Suite):
                 Custom variable names, for which the program will search
                 to find the resulting values.
 
-                In addtion to these custom names, which are searched
-                first the program will also see if the values are under
+                In addtion to these custom names (which are searched
+                first) the program will also fall back and search under
                 other common names:
 
                 thickness : [tk, "thickness"]
@@ -262,6 +262,24 @@ class GroundModelSuite(Suite):
 
     @classmethod
     def from_array(cls, tks, vps, vss, rhs, ids, misfits):
+        """Instantiate `GroundModelSuite` from an array of values.
+
+        Args:
+            tks, vps, vss, rhs : ndarray
+                2D array representation of the ground models composing
+                the suite. Each column represents a particular
+                groundmodel and each row a layer in that ground model.
+
+            ids, misfits : ndarray
+                1D array where each entry corresponds to a ground model.
+
+        Returns:
+            Instantiated `GroundModelSuite`.
+    
+        Raises:
+            AssertionError:
+                If the size of the arrays are inconsistent.
+        """
 
         cols = tks.shape[1]
         for other in (vps.shape[1], vss.shape[1], rhs.shape[1],
@@ -276,7 +294,7 @@ class GroundModelSuite(Suite):
             _id = ids[col]
             msf = misfits[col]
 
-            obj = GroundModel(tk, vp, vs, rh)
+            obj = cls._gm()(tk, vp, vs, rh)
 
             if col == 0:
                 suite = cls(obj, _id, msf)
@@ -287,8 +305,8 @@ class GroundModelSuite(Suite):
 
     @classmethod
     def from_geopsy(cls, fname, nmodels="all"):
-        """Instantiate a `GroundModelSuite` from a file exported from
-        Geopsy.
+        """Instantiate a `GroundModelSuite` from a file following the
+        `Geopsy` format.
 
         Args:
             fname : str

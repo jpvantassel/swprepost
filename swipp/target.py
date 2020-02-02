@@ -1,5 +1,4 @@
-"""This file includes a class for handling targets for surface wave
-inversion."""
+"""This file defines the `Target` class."""
 
 import tarfile as tar
 import os
@@ -17,20 +16,13 @@ class Target(CurveUncertain):
     """Class for manipulating inversion target information.
 
     `Target` is a class for loading, manipulating, and writting
-    target information in preparation for surface-wave inversion. The
-    class contains a number of methods for instantiating a `Target`
-    object.
+    target information in preparation for surface-wave inversion.
 
     Attributes:
-        frequency : ndarray
-            Vector of frequency values in the experimental dispersion
+        frequency, velocity, velstd : iterable
+            Vector of frequency, velocity, and velocity standard
+            deviation values in the experimental dispersion
             curve (one per point).
-        velocity : ndarray
-            Vector of velocity values in the experimental dispersion
-            curve (one per point).
-        velstd : ndarray
-            Vector of standard deviation values in the experimental
-            dispersion curve (one per point).
     """
 
     def __init__(self, frequency, velocity, velstd=0.05):
@@ -41,19 +33,17 @@ class Target(CurveUncertain):
         (`velstd`).
 
         Args:
-            frequency : ndarray
-                frequency values (one per point) in the experimental
-                dispersion curve.
-            velocity : ndarray
-                velocity values (one per point) in the experimental
-                dispersion curve.
-            velstd : None, float, ndarray, optional
-                velocity standard deviation in the experimental
+            frequency, velocity : iterable
+                Vector of frequency and velocity values respectively
+                in the experimental dispersion
+                curve (one per point).
+            velstd : None, float, iterable, optional
+                Velocity standard deviation of the experimental
                 dispersion curve.
                 If `None`, no standard deviation is defined.
                 If `float`, a constant coefficient of variation (COV) is
                 applied, the default is 0.05.
-                If `ndarray`, standard deviation is defined point by
+                If `iterable`, standard deviation is defined point by
                 point.
 
         Returns:
@@ -62,7 +52,7 @@ class Target(CurveUncertain):
         Raises:
             TypeError:
                 If `frequency`, `velocity`, and `velstd` are not
-                convertable to ndarrays.
+                `iterable`.
             ValueError:
                 If `velstd` is provided in the form of COV and the value
                 is less than zero.
@@ -127,7 +117,7 @@ class Target(CurveUncertain):
 
     @property
     def cov(self):
-        """Returns the coefficent of variation (COV) of each data point."""
+        """Returns the coefficent of variation (COV)."""
         return self.velstd/self.velocity
 
     @property
@@ -151,7 +141,7 @@ class Target(CurveUncertain):
         return 0.5*(((p+pstd)/p) + (p/(p-pstd)))
 
     @classmethod
-    def from_csv(cls, fname, commentcharachter="#"):
+    def from_csv(cls, fname, commentcharacter="#"):
         """Construct instance of Target class from csv file.
 
         Read a comma seperated values (csv) file with header line(s) to
@@ -163,12 +153,12 @@ class Target(CurveUncertain):
                 The file should have at a minimum a column for frequency
                 in Hz and velocity in m/s. Velocity standard devaiton in
                 m/s may also be provided.
-            commentcharachter : str, optional
-                Charachter at the beginning of a line denoting a
+            commentcharacter : str, optional
+                Character at the beginning of a line denoting a
                 comment, default value is '#'.
 
         Returns:
-            An initialized instance of the Target class.
+            Initialized `Target` object.
 
         Raises:
             ValueError:
@@ -181,7 +171,7 @@ class Target(CurveUncertain):
         frequency, velocity, velstd = [], [], []
         for line in lines:
             # Skip commented lines
-            if line[0] == commentcharachter:
+            if line[0] == commentcharacter:
                 continue
             # If three entries -> velstd is provided extract all three
             elif line.count(",") == 2:
@@ -295,7 +285,7 @@ class Target(CurveUncertain):
                 upon the expected Poisson's ratio, default is 1.1.
 
         Returns:
-            `ndarray` of pseudo-depth.
+            `ndarray` of pseudo-vs.
         """
         if (velocity_factor > 1.2) | (velocity_factor < 1):
             msg = "`velocity_factor` is outside the typical range. See documenation."
@@ -348,7 +338,7 @@ class Target(CurveUncertain):
                 Domain along which to perform the resampling.
             inplace : bool
                 Indicating whether the resampling should be done in
-                place or if a new Target object should be returned.
+                place or if a new `Target` object should be returned.
 
         Returns:
             If `inplace=True`:
@@ -418,19 +408,18 @@ class Target(CurveUncertain):
                                 domain="wavelength", inplace=False)
             return float(obj.velocity)
         else:
-            warnings.warn("A wavelength of 40m is out of range")
+            warnings.warn("A wavelength of 40m is out of range.")
             return None
 
     def to_txt_dinver(self, fname, version="3"):
-        """Write `Target` to text format readily accepted by dinver's
+        """Write `Target` to text format readily accepted by `Dinver's`
         pre-processor.
 
         Args:
             fname : str
                 Name of output file, may a relative or full path.
             version : {'3', '2'}, optional
-                Major version of Geopsy, default is version
-                3.
+                Major version of Geopsy, default is version 3.
 
         Returns:
             `None`, writes a file to disk.
@@ -464,17 +453,17 @@ class Target(CurveUncertain):
 
     def to_target(self, fname_prefix, version="3"):
         """Write `Target` to `.target` file format that can be imported
-        into dinver.
+        into `Dinver`.
 
         Args:
             fname_prefix : str
                 Name of target file without the .target suffix, a
                 relative or full path may be provided.
             version : {'3', '2'}, optional
-                Major version of Geopsy, default is version
-                3.
+                Major version of Geopsy, default is version 3.
+
         Returns:
-            `None`, writes target file to disk.
+            `None`, writes file to disk.
 
         Raises:
             NotImplementedError
@@ -489,7 +478,6 @@ class Target(CurveUncertain):
         self.__ell_mean = 0
         self.__ell_std = 0
 
-        # TODO (jpv): Recode this writter to use json or xml libarary.
         contents = ["<Dinver>",
                     "  <pluginTag>DispersionCurve</pluginTag>",
                     "  <pluginTitle>Surface Wave Inversion</pluginTitle>"]
@@ -713,10 +701,31 @@ class Target(CurveUncertain):
         return f"Target(frequency={frq_str}, velocity={vel_str}, velstd={std_str})"
 
     def plot(self, x="frequency", y="velocity", yerr="velstd", ax=None, **kwargs):
-        """Plot target
-        TODO (jpv): Write docstring 
+        """Plot `Target` information.
+
+        Args:
+            x : {'frequency', 'wavelength'}, optional
+                Select what should be plotted along the x-axis, default
+                is 'frequency'.
+            y : {'velocity', 'slowness'}, optional
+                Select what should be plotted along the y-axis, default
+                is 'velocity'.
+            yerr : {'velstd', 'slostd'}, optional
+                Select what should be plotted as the y-error, default
+                is 'velstd'.
+            ax : Axis
+                Provide an axis on which to plot, default is `None`
+                meaning an axis will be created "on-the-fly".
+            kwargs : dict
+                Additional keyword arguments for plot.
+        
+        Returns:
+            If 'ax=None':
+                Tuple of the form (fig, ax)
+            else:
+                Updated axes object.
         """
-        ax_wave_none = False
+        ax_was_none = False
         if ax is None:
             ax_was_none = True
             fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(4, 3), dpi=150)
@@ -758,7 +767,7 @@ class Target(CurveUncertain):
         else:
             pass
 
-        if ax_wave_none:
+        if ax_was_none:
             return (fig, ax)
         else:
             return (ax)
