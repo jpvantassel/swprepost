@@ -404,7 +404,10 @@ class Target(CurveUncertain):
             msg = f"`res_type`={res_type}, has not been implemented."
             raise NotImplementedError(msg)
     
-        return self._resample(xx, domain=domain, inplace=inplace)
+        if inplace:
+            self._resample(xx, domain=domain, inplace=inplace)
+        else:
+            return self._resample(xx, domain=domain, inplace=inplace)
 
     @property
     def vr40(self):
