@@ -182,11 +182,15 @@ class GroundModelSuite(Suite):
         return GroundModel
 
     @classmethod
+    def _gm_suite(cls):
+        return GroundModelSuite
+
+    @classmethod
     def from_list(cls, groundmodels, identifiers, misfits):
         """Instantiate `GroundModelSuite` from `list` of `GroundModel`
         objects.
         """
-        obj = cls(groundmodels[0], identifiers[0], misfits[0])
+        obj = cls._gm_suite()(groundmodels[0], identifiers[0], misfits[0])
         if len(groundmodels) > 1:
             for cgm, cid, cmf in zip(groundmodels[1:], identifiers[1:],
                                      misfits[1:]):
@@ -297,7 +301,7 @@ class GroundModelSuite(Suite):
             obj = cls._gm()(tk, vp, vs, rh)
 
             if col == 0:
-                suite = cls(obj, _id, msf)
+                suite = cls._gm_suite()(obj, _id, msf)
             else:
                 suite.append(obj, _id, msf)
 
@@ -337,9 +341,9 @@ class GroundModelSuite(Suite):
         if isinstance(sliced, int):
             return self.gms[sliced]
         if isinstance(sliced, slice):
-            return GroundModelSuite.from_list(self.gms[sliced],
-                                              self.ids[sliced],
-                                              self.misfits[sliced])
+            return self._gm_suite().from_list(self.gms[sliced],
+                                            self.ids[sliced],
+                                            self.misfits[sliced])
 
     def __repr__(self):
         return f"GroundModelSuite with {len(self.gms)} GroundModels."
