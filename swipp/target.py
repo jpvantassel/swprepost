@@ -319,6 +319,36 @@ class Target(CurveUncertain):
         self.velocity = self.velocity[keep_ids]
         self.velstd = self.velstd[keep_ids]
 
+    def _resample(self, xx, domain="wavelength", inplace=False):
+        if domain == "frequency":
+            x = self.frequency
+        elif domain == "wavelength":
+            x = self.wavelength
+        else:
+            msg = f"`domain`={domain}, has not been implemented."
+            raise NotImplementedError(msg)
+
+        # Define custom resampling functions
+        res_fxn = self.resample_function(x, self.velocity, kind="cubic")
+        res_fxn_yerr = self.resample_function(x, self.velstd, kind="cubic")
+
+        results = super().resample(xx=xx, inplace=False, res_fxn=res_fxn,
+                            res_fxn_yerr=res_fxn_yerr)
+        xx, new_vel, new_velstd, = results
+
+        if domain == "frequency":
+            new_frq = xx
+        else:
+            new_frq = new_vel/xx
+
+        # Update attributes or return new object.
+        if inplace:
+            self.frequency = new_frq
+            self.velocity = new_vel
+            self.velstd = new_velstd
+        else:
+            return Target(new_frq, new_vel, new_velstd)
+
     def resample(self, pmin, pmax, pn, res_type="log", domain="wavelength", inplace=False):
         """Resample dispersion curve.
 
@@ -339,6 +369,11 @@ class Target(CurveUncertain):
             inplace : bool
                 Indicating whether the resampling should be done in
                 place or if a new `Target` object should be returned.
+            xx : ndarray, optional
+                Array of new values in the chosen domain, can be used
+                for any general form of resampling, default is `None`
+                indicating xx vector will be calculated from the
+                arguements `pmin`, `pmax`, `pn`, and `res_type`.
 
         Returns:
             If `inplace=True`:
@@ -368,36 +403,8 @@ class Target(CurveUncertain):
         else:
             msg = f"`res_type`={res_type}, has not been implemented."
             raise NotImplementedError(msg)
-
-        # Define x
-        if domain == "frequency":
-            x = self.frequency
-        elif domain == "wavelength":
-            x = self.wavelength
-        else:
-            msg = f"`domain`={domain}, has not been implemented."
-            raise NotImplementedError(msg)
-
-        # Define custom resampling functions
-        res_fxn = self.resample_function(x, self.velocity, kind="cubic")
-        res_fxn_yerr = self.resample_function(x, self.velstd, kind="cubic")
-
-        results = super().resample(xx=xx, inplace=False, res_fxn=res_fxn,
-                                   res_fxn_yerr=res_fxn_yerr)
-        xx, new_vel, new_velstd, = results
-
-        if domain == "frequency":
-            new_frq = xx
-        else:
-            new_frq = new_vel/xx
-
-        # Update attributes or return new object.
-        if inplace:
-            self.frequency = new_frq
-            self.velocity = new_vel
-            self.velstd = new_velstd
-        else:
-            return Target(new_frq, new_vel, new_velstd)
+    
+        return self._resample(xx, domain=domain, inplace=inplace)
 
     @property
     def vr40(self):
