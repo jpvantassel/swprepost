@@ -6,6 +6,7 @@ dist
 build
 doc
 scratch
+html
 
 # File Types
 *.xlsx

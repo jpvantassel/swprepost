@@ -18,44 +18,41 @@ class Target(CurveUncertain):
     `Target` is a class for loading, manipulating, and writting
     target information in preparation for surface-wave inversion.
 
-    Attributes:
-        frequency, velocity, velstd : iterable
-            Vector of frequency, velocity, and velocity standard
-            deviation values in the experimental dispersion
-            curve (one per point).
+    Attributes
+    ----------
+    frequency, velocity, velstd : array-like
+        Vectors of frequency, velocity, and velocity standard
+        deviation values in the experimental dispersion
+        curve (one per point).
     """
 
     def __init__(self, frequency, velocity, velstd=0.05):
         """Instantiate a Target object.
 
-        Create a Target object from `ndarrays` of `frequency`,
-        `velocity`, and optionally velocity standard deviation
-        (`velstd`).
+        Parameters
+        ----------
+        frequency, velocity : array-like
+            Vector of frequency and velocity values respectively
+            in the experimental dispersion curve (one per point).
+        velstd : None, float, iterable, optional
+            Velocity standard deviation of the experimental
+            dispersion curve. If `None`, no standard deviation is
+            defined. If `float`, a constant coefficient of variation 
+            (COV) is applied, the default is 0.05. If `iterable`,
+            standard deviation is defined point by point.
 
-        Args:
-            frequency, velocity : iterable
-                Vector of frequency and velocity values respectively
-                in the experimental dispersion
-                curve (one per point).
-            velstd : None, float, iterable, optional
-                Velocity standard deviation of the experimental
-                dispersion curve.
-                If `None`, no standard deviation is defined.
-                If `float`, a constant coefficient of variation (COV) is
-                applied, the default is 0.05.
-                If `iterable`, standard deviation is defined point by
-                point.
-
-        Returns:
+        Returns
+        -------
+        `Target`
             Instantiated `Target` object.
 
-        Raises:
-            TypeError:
-                If `frequency`, `velocity`, and `velstd` are not
-                `iterable`.
-            ValueError:
-                If `velstd` is provided in the form of COV and the value
-                is less than zero.
+        Raises
+        ------
+        TypeError
+            If `frequency`, `velocity`, and `velstd` are not
+            `array-like`.
+        ValueError
+            If `velstd` is `float` and the value is less than zero.
         """
         # Convert velstd input to vector, if necessary.
         frequency = np.array(frequency)
@@ -72,7 +69,7 @@ class Target(CurveUncertain):
     def _sort_data(self):
         """Sort Target attributes from smallest to largest."""
         if (self._y.size != self._x.size) and (self._y.size != self._yerr.size):
-            msg = "`frequency`, `velocity`, and `velstd` must have the same size."
+            msg = "`frequency`, `velocity`, and `velstd` must be the same size."
             raise ValueError(msg)
 
         sort_ids = np.argsort(self._x)
@@ -82,47 +79,38 @@ class Target(CurveUncertain):
 
     @property
     def frequency(self):
-        """Get frequency."""
         return self._x
 
     @frequency.setter
     def frequency(self, value):
-        """Set frequency."""
         self._x = value
 
     @property
     def velocity(self):
-        """Get velocity"""
         return self._y
 
     @velocity.setter
     def velocity(self, value):
-        """Set velocity."""
         self._y = value
 
     @property
     def wavelength(self):
-        """Get wavelength."""
         return self.velocity/self.frequency
 
     @property
     def velstd(self):
-        """Get velocity standard deviation."""
         return self._yerr
 
     @velstd.setter
     def velstd(self, value):
-        """Set velocity standard deviation."""
         self._yerr = value
 
     @property
     def cov(self):
-        """Returns the coefficent of variation (COV)."""
         return self.velstd/self.velocity
 
     @property
     def slowness(self):
-        """Returns the mean slowness of each data point."""
         return 1/self.velocity
 
     @property
@@ -142,28 +130,32 @@ class Target(CurveUncertain):
 
     @classmethod
     def from_csv(cls, fname, commentcharacter="#"):
-        """Construct instance of Target class from csv file.
+        """Construct instance of `Target` class from csv file.
 
         Read a comma seperated values (csv) file with header line(s) to
         construct a target object.
 
-        Args:
-            filename : str
-                Name or path to file containing surface-wave dispersion.
-                The file should have at a minimum a column for frequency
-                in Hz and velocity in m/s. Velocity standard devaiton in
-                m/s may also be provided.
-            commentcharacter : str, optional
-                Character at the beginning of a line denoting a
-                comment, default value is '#'.
+        Parameters
+        ----------
+        filename : str
+            Name or path to file containing surface-wave dispersion.
+            The file should have at a minimum a column for frequency
+            in Hz and velocity in m/s. Velocity standard devaiton in
+            m/s may also be provided.
+        commentcharacter : str, optional
+            Character at the beginning of a line denoting a
+            comment, default value is '#'.
 
-        Returns:
+        Returns
+        -------
+        Target
             Initialized `Target` object.
 
-        Raises:
-            ValueError:
-                If the format of the input file does not match that
-                detailed above.
+        Raises
+        ------
+        ValueError
+            If the format of the input file does not match that
+            detailed above.
         """
         with open(fname, "r") as f:
             lines = f.read().splitlines()
@@ -199,14 +191,18 @@ class Target(CurveUncertain):
         method will overwrite them. If this is not desired refer to
         :meth: `setmincov`.
 
-        Args:
-            cov : float
-                Coefficient of variation to be used to replace `velstd`.
+        Parameters
+        ----------
+        cov : float
+            Coefficient of variation to be used to replace `velstd`.
 
-        Returns:
-            `None`, updates attribute `velstd`.
+        Returns
+        -------
+        None
+            Updates attribute `velstd`.
 
-        Raises:
+        Raises
+        ------
             ValueError:
                 If `cov` < 0.
         """
@@ -225,16 +221,20 @@ class Target(CurveUncertain):
         If no measure of uncertainty has been provided, use :meth:
         `setcov`.
 
-        Args:
-            cov : float
-                Minimum allowable COV.
+        Parameters
+        ----------
+        cov : float
+            Minimum allowable COV.
 
-        Returns:
-            `None`, may update attribute `velstd`.
+        Returns
+        -------
+        None
+            May update attribute `velstd`.
 
-        Raises:
-            ValueError:
-                If `cov` < 0.
+        Raises
+        ------
+        ValueError
+            If `cov` < 0.
         """
         if cov < 0:
             raise ValueError("`cov` must be greater than zero.")
@@ -255,17 +255,20 @@ class Target(CurveUncertain):
         approprate boundaries for parameter limits in the inverison
         stage.
 
-        Args:
-            depth_factor : float
-                Factor by which the mean wavelegnth is divided to
-                produce an estimate of depth. Typical between 2 and 3,
-                default 2.5.
+        Parameters
+        ----------
+        depth_factor : float
+            Factor by which the mean wavelegnth is divided to
+            produce an estimate of depth. Typical between 2 and 3,
+            default 2.5.
 
-        Returns:
-            `ndarray` of pseudo-depth.
+        Returns
+        -------
+        ndarray
+            Of pseudo-depth.
         """
         if (depth_factor > 3) | (depth_factor < 2):
-            msg = "`depth_factor` is outside the typical range. See documenation."
+            msg = "`depth_factor` is outside the typical range. See docs."
             warnings.warn(msg)
         return self.wavelength/depth_factor
 
@@ -277,15 +280,18 @@ class Target(CurveUncertain):
         approprate boundaries for parameter limits in the inverison
         stage.
 
-        Args:
-            velocity_factor : float
-                Factor by which the mean Rayleigh wave velocity is
-                multiplied to produce an estimate of shear-wave
-                velocity. Typically between 1 and 1.2, and is dependent
-                upon the expected Poisson's ratio, default is 1.1.
+        Parameters
+        ----------
+        velocity_factor : float
+            Factor by which the mean Rayleigh wave velocity is
+            multiplied to produce an estimate of shear-wave
+            velocity. Typically between 1 and 1.2, and is dependent
+            upon the expected Poisson's ratio, default is 1.1.
 
-        Returns:
-            `ndarray` of pseudo-vs.
+        Returns
+        -------
+        ndarray
+            Of pseudo-vs.
         """
         if (velocity_factor > 1.2) | (velocity_factor < 1):
             msg = "`velocity_factor` is outside the typical range. See documenation."
@@ -295,16 +301,19 @@ class Target(CurveUncertain):
     def cut(self, pmin, pmax, domain="frequency"):
         """Remove data outside of the specified range.
 
-        Args:
-            pmin, pmax : float
-                New minimum and maximum parameter value in the specified
-                domain, respectively.
+        Parameters
+        ----------
+        pmin, pmax : float
+            New minimum and maximum parameter value in the specified
+            domain, respectively.
 
-            domain : {'frequency', 'wavelength'}, optional
-                Domain along which to perform the cut.
+        domain : {'frequency', 'wavelength'}, optional
+            Domain along which to perform the cut.
 
-        Returns:
-            `None`, may update attributes `frequency`, `velocity`, and
+        Returns
+        -------
+        None
+            May update attributes `frequency`, `velocity`, and
             `velstd`.
         """
         if domain == "wavelength":
@@ -333,7 +342,7 @@ class Target(CurveUncertain):
         res_fxn_yerr = self.resample_function(x, self.velstd, kind="cubic")
 
         results = super().resample(xx=xx, inplace=False, res_fxn=res_fxn,
-                            res_fxn_yerr=res_fxn_yerr)
+                                   res_fxn_yerr=res_fxn_yerr)
         xx, new_vel, new_velstd, = results
 
         if domain == "frequency":
@@ -355,37 +364,39 @@ class Target(CurveUncertain):
         Resample dispersion curve over a specific range, using log or
         linear sampling in the frequency or wavelength domain.
 
-        Args:
-            pmin, pmax : float
-                Minimum and maximum parameter value in the resampled
-                dispersion data.
-            pn : int
-                Number of points in the resampled dispersion data.
-            res_type : {'log', 'linear'}, optional
-                Resample using either logarithmic or linear sampling,
-                default is logarithmic.
-            domain : {'frequency', 'wavelength'}, optional
-                Domain along which to perform the resampling.
-            inplace : bool
-                Indicating whether the resampling should be done in
-                place or if a new `Target` object should be returned.
-            xx : ndarray, optional
-                Array of new values in the chosen domain, can be used
-                for any general form of resampling, default is `None`
-                indicating xx vector will be calculated from the
-                arguements `pmin`, `pmax`, `pn`, and `res_type`.
+        Parameters
+        ----------
+        pmin, pmax : float
+            Minimum and maximum parameter value in the resampled
+            dispersion data.
+        pn : int
+            Number of points in the resampled dispersion data.
+        res_type : {'log', 'linear'}, optional
+            Resample using either logarithmic or linear sampling,
+            default is logarithmic.
+        domain : {'frequency', 'wavelength'}, optional
+            Domain along which to perform the resampling.
+        inplace : bool
+            Indicating whether the resampling should be done in
+            place or if a new `Target` object should be returned.
+        xx : ndarray, optional
+            Array of new values in the chosen domain, can be used
+            for any general form of resampling, default is `None`
+            indicating xx vector will be calculated from the
+            arguements `pmin`, `pmax`, `pn`, and `res_type`.
 
-        Returns:
-            If `inplace=True`:
-                `None`, may update attributes `frequency`, `velocity`,
-                and `velstd`.
-            If `inplace=False`:
-                A new instantiated `Target` object is returned.
+        Returns
+        -------
+        None or Target
+            If `inplace=True` returns `None`, and may update attributes
+            `frequency`, `velocity`, and `velstd`. If `inplace=False`
+            a new `Target` object is returned.
 
-        Raises:
-            NotImplementedError:
-                If `res_type` and/or `domain` are not amoung the options
-                specified.
+        Raises
+        ------
+        NotImplementedError
+            If `res_type` and/or `domain` are not amoung the options
+            specified.
         """
         # Check input.
         if pmax < pmin:
@@ -403,7 +414,7 @@ class Target(CurveUncertain):
         else:
             msg = f"`res_type`={res_type}, has not been implemented."
             raise NotImplementedError(msg)
-    
+
         if inplace:
             self._resample(xx, domain=domain, inplace=inplace)
         else:
@@ -425,14 +436,17 @@ class Target(CurveUncertain):
         """Write `Target` to text format readily accepted by `Dinver's`
         pre-processor.
 
-        Args:
-            fname : str
-                Name of output file, may a relative or full path.
-            version : {'3', '2'}, optional
-                Major version of Geopsy, default is version 3.
+        Parameters
+        ----------
+        fname : str
+            Name of output file, may a relative or full path.
+        version : {'3', '2'}, optional
+            Major version of Geopsy, default is version 3.
 
-        Returns:
-            `None`, writes a file to disk.
+        Returns
+        -------
+        None
+            Writes file to disk.
         """
         if version == "2":
             stddevs = self.slostd
@@ -449,12 +463,15 @@ class Target(CurveUncertain):
     def to_txt_swipp(self, fname):
         """Write `Target` to text format readily accepted by swipp.
 
-        Args:
-            fname : str
-                Name of output file, may a relative or full path.
+        Parameters
+        ----------
+        fname : str
+            Name of output file, may a relative or full path.
 
-        Returns:
-            `None`, writes a file to disk.
+        Returns
+        -------
+        None 
+            Writes file to disk.
         """
         with open(fname, "w") as f:
             f.write("#Frequency,Velocity,Velstd\n")
@@ -465,19 +482,23 @@ class Target(CurveUncertain):
         """Write `Target` to `.target` file format that can be imported
         into `Dinver`.
 
-        Args:
-            fname_prefix : str
-                Name of target file without the .target suffix, a
-                relative or full path may be provided.
-            version : {'3', '2'}, optional
-                Major version of Geopsy, default is version 3.
+        Parameters
+        ----------
+        fname_prefix : str
+            Name of target file without the .target suffix, a
+            relative or full path may be provided.
+        version : {'3', '2'}, optional
+            Major version of Geopsy, default is version 3.
 
-        Returns:
-            `None`, writes file to disk.
+        Returns
+        -------
+        None
+            Writes file to disk.
 
-        Raises:
-            NotImplementedError
-                If `version` does not match the options provided.
+        Raises
+        ------
+        NotImplementedError
+            If `version` does not match the options provided.
         """
 
         self._sort_data()
@@ -640,7 +661,7 @@ class Target(CurveUncertain):
     def from_target(cls, target_prefix, version="3"):
         """Create Target object from target file.
 
-        Args:
+        Parameters----------
             target_prefix : str
                 Name of target file to be opened without the '.target'
                 suffix, may include the relative or full path.
@@ -648,7 +669,7 @@ class Target(CurveUncertain):
                 Major version of Geopsy used to write the target file,
                 default is '3'.
 
-        Returns:
+        Returns-------
             Instantiated `Target` object.
         """
         with tar.open(target_prefix+".target", "r:gz") as a:
@@ -713,7 +734,7 @@ class Target(CurveUncertain):
     def plot(self, x="frequency", y="velocity", yerr="velstd", ax=None, **kwargs):
         """Plot `Target` information.
 
-        Args:
+        Parameters----------
             x : {'frequency', 'wavelength'}, optional
                 Select what should be plotted along the x-axis, default
                 is 'frequency'.
@@ -728,8 +749,8 @@ class Target(CurveUncertain):
                 meaning an axis will be created "on-the-fly".
             kwargs : dict
                 Additional keyword arguments for plot.
-        
-        Returns:
+
+        Returns-------
             If 'ax=None':
                 Tuple of the form (fig, ax)
             else:
@@ -743,7 +764,7 @@ class Target(CurveUncertain):
         # Default color -> Black
         if kwargs.get("color") is None:
             kwargs["color"] = "#000000"
-        
+
         # Default label -> Exp. DC
         if kwargs.get("label") is None:
             kwargs["label"] = "Exp. DC"
@@ -761,18 +782,18 @@ class Target(CurveUncertain):
                     yerr=getattr(self, yerr),
                     **kwargs)
 
-        if x=="frequency":
+        if x == "frequency":
             ax.set_xlabel("Frequency, "+r"$f$"+" "+r"$(Hz)$")
-        elif x=="wavelength":
+        elif x == "wavelength":
             ax.set_xlabel("Wavelength, "+r"$\lambda$"+" "+r"$(m)$")
         else:
             pass
 
         ax.set_xscale("log")
 
-        if y=="velocity":
+        if y == "velocity":
             ax.set_ylabel("Rayleigh Phase-Velocity, "+r"$V_R$"+" "+r"$(m/s)$")
-        elif y=="slowness":
+        elif y == "slowness":
             ax.set_ylabel("Slowness, "+r"$p$"+" "+r"$(s/m)$")
         else:
             pass
@@ -781,4 +802,3 @@ class Target(CurveUncertain):
             return (fig, ax)
         else:
             return (ax)
-

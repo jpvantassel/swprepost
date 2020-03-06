@@ -6,8 +6,6 @@
 class CurveSet():
     """Class for handling sets of `Curve` objects with some common
     source or purpose.
-
-    Attributes:
     """
 
     @classmethod

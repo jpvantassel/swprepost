@@ -10,12 +10,13 @@ class DispersionSet(CurveSet):
     :meth: `DispersionCurve <swipp.DispersionCurve>`
     objects, which all belong to a common velocity model.
 
-    Attributes:
-        rayleigh, love : dict
-            Container for `DispersionCurve` objects, of the form:
-            {0:disp_curve_obj0, ... N:disp_curve_objN}
-            where each key is the mode number and the value is the
-            corresponding instantiated `DispersionCurve` object.
+    Attributes
+    ----------
+    rayleigh, love : dict
+        Container for `DispersionCurve` objects, of the form:
+        {0:disp_curve_obj0, ... N:disp_curve_objN}
+        where each key is the mode number and the value is the
+        corresponding instantiated `DispersionCurve` object.
     """
 
     @classmethod
@@ -38,16 +39,17 @@ class DispersionSet(CurveSet):
         """Initialize a `DispersionSet` object from a `dict` of 
         instantiated `DispersionCurve` objects.
 
-        Args:
-            identifier : str
-                Unique identifier of the `DispersionSet`.
-            misfit : float, int
-                `DispersionSet` misfit.
-            rayleigh, love : dict
-                Container for `DispersionCurve` objectso of the form
-                `{0:disp_curve_obj0, ... N:disp_curve_objN}` where each
-                key is the mode number and the value is the
-                corresponding `DispersionCurve` object.
+        Parameters
+        ----------
+        identifier : str
+            Unique identifier of the `DispersionSet`.
+        misfit : float, int
+            `DispersionSet` misfit.
+        rayleigh, love : dict
+            Container for `DispersionCurve` objectso of the form
+            `{0:disp_curve_obj0, ... N:disp_curve_objN}` where each
+            key is the mode number and the value is the
+            corresponding `DispersionCurve` object.
         """
         self.check_input([rayleigh, love], DispersionCurve)
         self.check_input_local(identifier, misfit)
@@ -102,14 +104,17 @@ class DispersionSet(CurveSet):
         """Create a `DispersionSet` object from a text file following
         the Geopsy format.
 
-        Args:
-            fname : str
-                Name of file to be read, may be a relative or full path.
-            nrayleigh, nlove : int, optional
-                Number of Rayleigh and Love modes respectively, default
-                is `None` so all available modes will be extracted.
+        Parameters
+        ----------
+        fname : str
+            Name of file to be read, may be a relative or full path.
+        nrayleigh, nlove : int, optional
+            Number of Rayleigh and Love modes respectively, default
+            is `None` so all available modes will be extracted.
 
-        Returns:
+        Returns
+        -------
+        DispersionSet
             Instantiated `DispersionSet` object.
         """
         with open(fname, "r") as f:

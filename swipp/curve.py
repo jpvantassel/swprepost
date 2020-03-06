@@ -7,10 +7,13 @@ import scipy.interpolate as sp
 class Curve():
     """Base class for handling sets of x, y coordinates.
 
-    Attributes:
-        _x, _y : ndarray
-            1D array of x, y coordinates defining the curve. These
-            should, in general, not be accessed directly.
+    Attributes
+    ----------
+    _x : ndarray
+        1D array of x coordinates defining the curve. These
+        should, in general, not be accessed directly.
+    _y : ndarray
+        Same as `_x`
     """
 
     @staticmethod
@@ -36,18 +39,27 @@ class Curve():
 
     @staticmethod
     def check_values(x, y, check_fxn):
-        """Use custon checking function to check the values of x and y.
+        """Use custom checking function to check the values of `x` and
+        `y`.
         
-        Args:
-            x, y : iterable
-                x and y value of curve respectively.
-            check_fxn : function
-                Function that takes an x, y pair, checks if they are
-                valid. If they are valid the function returns `None`
-                otherwise raises a `ValueError`.
+        Parameters
+        ----------
+        x, y : iterable
+            x and y value of curve respectively.
+        check_fxn : function
+            Function that takes an x, y pair, checks if they are
+            valid. If they are valid the function returns `None`
+            otherwise raises a `ValueError`.
 
-        Returns:
-            `None` if `x` and `y` pass; `ValueError` otherwise.
+        Returns
+        -------
+        None
+            If `x` and `y` pass
+
+        Raises
+        ------    
+        ValueError
+            If `x` and `y` fail.
         """
         if check_fxn is not None:
             for _x, _y in zip(x, y):
@@ -63,27 +75,31 @@ class Curve():
     def __init__(self, x, y, check_fxn=None):
         """Intialize a curve object from x, y coordinates.
 
-        Args:
-            x, y : iterable
-                Iterables of the same size defining the curve's x and y
-                coordinates.
-            check_fxn : function, optional
-                Function that takes an x, y pair, checks if they are
-                valid.
-                
-                If they are valid the function returns `None`
-                otherwise raises a `ValueError`, default is `None`
-                meaning no function is used to check the x and y values.
+        Parameters
+        ----------
+        x, y : iterable
+            Iterables of the same size defining the curve's x and y
+            coordinates.
+        check_fxn : function, optional
+            Function that takes an x, y pair, checks if they are
+            valid.
+            
+            If they are valid the function returns `None`
+            otherwise raises a `ValueError`, default is `None`
+            meaning no function is used to check the x and y values.
 
-        Returns:
+        Returns
+        -------
+        Curve
             Instantiated `Curve` object.
 
-        Raises:
-            IndexError:
-                If `x` and `y` do not have the same length.
-            ValueError:
-                If `check_fxn` is defined and any `x`, `y` pair fails to
-                meet the defined criteria.
+        Raises
+        ------
+        IndexError
+            If `x` and `y` do not have the same length.
+        ValueError
+            If `check_fxn` is defined and any `x`, `y` pair fails to
+            meet the defined criteria.
         """
         x, y = self.check_input(x, y, check_fxn)
         self._x = x
@@ -91,34 +107,33 @@ class Curve():
 
     @classmethod
     def resample_function(cls, x, y, **kwargs):
-        """Class method serving as a wrapper for the `interp1d` function
-        from the `scipy` package."""
+        """Wrapper for `interp1d` from `scipy`."""
         return sp.interp1d(x, y, **kwargs)
 
     def resample(self, xx, inplace=False, res_fxn=None):
         """Resample Curve at select x values.
 
-        Args:
-            xx : ndarray
-                1D array containing the locations in terms of x, of the
-                desired interpolated y values.
-            inplace : bool, optional
-                Indicates whether resampling should be done in-place.
+        Parameters
+        ----------
+        xx : ndarray
+            1D array containing the locations in terms of x, of the
+            desired interpolated y values.
+        inplace : bool, optional
+            Indicates whether resampling should be done in-place.
+            If inplace the, attributes `_x` and `_y` are
+            overwritten. Otherwise the new values are returned,
+            default is `False` resampling is not done inplace.
+        res_fxn : function, optional
+            Custom resampling function, default is `None` indicating
+            the default resampling function is used. Custom
+            resampling functions can be created using the :meth: 
+            `resampling_function <Curve.resample_function>`.
 
-                If inplace the, attributes `_x` and `_y` are
-                overwritten. Otherwise the new values are returned,
-                default is `False` resampling is not done inplace.
-            res_fxn : func, optional
-                Custom resampling function, default is `None` indicating
-                the default resampling function is used. Custom
-                resampling functions can be created using the :meth: 
-                `resampling_function <Curve.resample_function>`.
-
-        Returns:
-            If `inplace=True`:
-                `None`, instead update attributes `_x` and `_y`.
-            If `inplace=False`:
-                Resampled `x` and `y` as `(xx, yy)`.
+        Returns
+        -------
+        None or (xx, yy)
+            `None`, if `inplace=True`; `_x` and `_y` will be updated.
+            `(xx,yy)` if `inplace=False`.
         """
         # Perform resample
         if res_fxn is None:

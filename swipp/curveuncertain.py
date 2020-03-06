@@ -8,32 +8,37 @@ from swipp import Curve
 class CurveUncertain(Curve):
     """Curve object with aribtrary uncertainty in terms of x and y.
 
-    Attributes:
-        _isxerr, _isyerr : bool
-            Flags to indicate if x and y error has been provided.
-        _xerr, _yerr : ndarray
-            Vector defining the error in x and y respectively.
+    Attributes
+    ----------
+    _isxerr, _isyerr : bool
+        Flags to indicate if x and y error has been provided.
+    _xerr, _yerr : ndarray
+        Vector defining the error in x and y respectively.
     """
 
 
     def __init__(self, x, y, yerr=None, xerr=None):
         """Initialize a new `CurveUncertain` object.
 
-        Args:
-            x, y : iterable
-                x and y coordinate which define the curves central
-                trend.
-            yerr, xerr : iterable, optional
-                Relative error in the y- and x-direction respectively,
-                default is `None` indicating no error is defined.
+        Parameters
+        ----------
+        x, y : iterable
+            x and y coordinate which define the curves central
+            trend.
+        yerr, xerr : iterable, optional
+            Relative error in the y- and x-direction respectively,
+            default is `None` indicating no error is defined.
             
-        Returns:
+        Returns
+        -------
+        CurveUncertain
             Initialized `CurveUncertain` object.
 
-        Raises:
-            IndexError:
-                If size of x, y, yerr (if provided) and xerr (if
-                provided) are inconsistent.
+        Raises
+        ------
+        IndexError
+            If size of x, y, yerr (if provided) and xerr (if
+            provided) are inconsistent.
         """
         # Pass x, y to `Curve` constuctor.
         super().__init__(x, y)
@@ -56,26 +61,28 @@ class CurveUncertain(Curve):
                  res_fxn=None, res_fxn_xerr=None, res_fxn_yerr=None):
         """Resample curve and its associated uncertainty.
 
-        Args:
-            xx : ndarray
-                Desired x values after resampling.
-            inplace : bool, optional
-                Indicates whether resampling is performed inplace and
-                the objects attributes are updated or if calculated 
-                values are returned.
-            res_fxn, res_fxn_xerr, res_fxn_yerr : function, optional
-                Functions to define the resampling of the central
-                x and y values, xerr and yerr respectively, default is
-                `None` indicating default resampling function is used.
+        Parameters
+        ----------
+        xx : ndarray
+            Desired x values after resampling.
+        inplace : bool, optional
+            Indicates whether resampling is performed inplace and
+            the objects attributes are updated or if calculated 
+            values are returned.
+        res_fxn, res_fxn_xerr, res_fxn_yerr : function, optional
+            Functions to define the resampling of the central
+            x and y values, xerr and yerr respectively, default is
+            `None` indicating default resampling function is used.
 
-        Returns:          
-            If `inplace=True`:
-                `None`, update attributes `_x`, `_y`, `_xerr`, and
-                `_yerr` if they exist.
-            If `inplace=False`:
-                `Tuple` of the form `(xx, yy, yyerr, xxerr)`. If `xerr`
-                and/or `yerr` are not defined they are not resampled and
-                ommited from the return statement.
+        Returns
+        -------          
+        None or Tupe
+            If `inplace=True`, returns `None`, instead update
+            attributes `_x`, `_y`, `_xerr`, and `_yerr` if they exist.
+            If `inplace=False`, returns `Tuple` of the form
+            `(xx, yy, yyerr, xxerr)`. If `xerr` and/or `yerr` are not
+            defined they are not resampled and ommited from the return
+            statement.
         """
         # Create resample functions before resampling mean curve
         if self._isyerr and res_fxn_yerr is None:

@@ -8,16 +8,18 @@ class Suite():
     def misfit_range(self, nmodels="all"):
         """Return range of misfits for nmodels.
         
-        Args:
-            nmodels : {int, "all"}, optional
-                Number of models to consider, default is 'all' so all
-                avaiable models will be considered.
+        Parameters
+        ----------
+        nmodels : {int, "all"}, optional
+            Number of models to consider, default is 'all' so all
+            avaiable models will be considered.
 
-        Returns:
-            If nmodels==1:
-                `float` corresponding to the single best misfit.
-            else:
-                Tuple of the form (min_msft, max_msft).
+        Returns
+        -------
+        float, tuple
+            If `nmodels==1`, returns `float` corresponding to the single
+            best misfit, otherwise returns `tupele` of the form 
+            (min_msft, max_msft).
         """
         if nmodels == "all":
             return (self.misfits[0], self.misfits[-1])

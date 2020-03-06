@@ -7,21 +7,25 @@ import numpy as np
 class DispersionCurve(Curve):
     """Class to define a `DispersionCurve` object.
 
-    Attributes:
-        frequency, velocity : ndarray
-            Vector of the dispersion curve's frequency and velocity
-            values, respectively.
+    Attributes
+    ----------
+    frequency, velocity : ndarray
+        Vector of the dispersion curve's frequency and velocity
+        values, respectively.
     """
 
     def __init__(self, frequency, velocity):
         """Initialize a `DispersionCurve` object from dispersion data.
 
-        Args:
-            frequency, velocity : ndarray
-                Vector of the dispersion curve's frequency and velocity
-                values, respectively.
+        Parameters
+        ----------
+        frequency, velocity : ndarray
+            Vector of the dispersion curve's frequency and velocity
+            values, respectively.
 
-        Returns:
+        Returns
+        -------
+        DispersionCurve
             Initialized `DispersionCurve` object.
         """
         frequency, velocity = self.check_input(x=frequency, y=velocity)
@@ -80,11 +84,14 @@ class DispersionCurve(Curve):
         """Instantiate a `DispersionCurve` from a text file in the
         Geopsy format.
 
-        Args:
-            fname : str
-                Name of file to be read, may be a relative or full path.
+        Parameters
+        ----------
+        fname : str
+            Name of file to be read, may be a relative or full path.
 
-        Returns:
+        Returns
+        -------
+        DispersionCurve
             Instantiated `DispersionCurve` object.
         """
         with open(fname, "r") as f:

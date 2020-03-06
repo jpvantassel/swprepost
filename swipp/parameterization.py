@@ -21,11 +21,12 @@ class Parameterization():
     batch create general parameterizations then fine tune them if
     necessary using the Dinver user interface.
 
-    Attributes:
-        vs, vp, pr, rh : Parameter
-            Parameter objects defining shear-wave velocity,
-            compression-wave velocity, Poisson's ratio, and mass density
-            respectively.
+    Attributes
+    ----------
+    vs, vp, pr, rh : Parameter
+        Parameter objects defining shear-wave velocity,
+        compression-wave velocity, Poisson's ratio, and mass density
+        respectively.
     """
 
     @staticmethod
@@ -41,18 +42,22 @@ class Parameterization():
         Initialize a `Parameterization` using instantiated `Parameter`
         objects. 
 
-        Args:
-            vp, pr, vs, rh : Parameter
-                Instantitated `Parameter` objects, see :meth: `Parameter
-                <swipp.Parameter.__init__>`.
+        Parameters
+        ----------
+        vp, pr, vs, rh : Parameter
+            Instantitated `Parameter` objects, see :meth: `Parameter
+            <swipp.Parameter.__init__>`.
 
-        Returns:
-            An initialized Parameterization object.
+        Returns
+        -------
+        Parameterization
+            An initialized `Parameterization` object.
 
-        Raises:
-            TypeError
-                If `vp`, `pr`, `vs`, and `rh` are not `Parameter`
-                objects.
+        Raises
+        ------
+        TypeError
+            If `vp`, `pr`, `vs`, and `rh` are not `Parameter`
+            objects.
         """
 
         for name, par in zip(("vp", "pr", "vs", "rh"), [vp, pr, vs, rh]):
@@ -68,63 +73,67 @@ class Parameterization():
         """Intilize an instance of the Parameterization class from
         a minimum and maximum value.
 
-        Note: This method compromises readability for pure character
+        This method compromises readability for pure character
         efficiency (which is almost always a bad idea!), however some
         users may find this method useful.
 
-        Args:
-            vp, pr, vs, rh : list
-                Of the form `[type, value, min, max, bool]` where `type`
-                is discussed below, `min` and `max` are the minimum and
-                maximum values which the parameter may assume, and
-                `bool` indicates whether the non-typical condition is
-                allowed.
+        Parameters
+        ----------
+        vp, pr, vs, rh : list
+            Of the form `[type, value, min, max, bool]` where `type`
+            is discussed below, `min` and `max` are the minimum and
+            maximum values which the parameter may assume, and
+            `bool` indicates whether the non-typical condition is
+            allowed.
 
-                Type:
-                    If type = 'FX'
-                        Layering is Fixed, the next and only argument
-                        is its value.
+            Type:
+                If type = 'FX'
+                    Layering is Fixed, the next and only argument
+                    is its value.
 
-                    Ex. ['FX', value]
+                Ex. ['FX', value]
 
-                    If type = 'FTL'
-                        Layering follows Fixed Thickness Layinering, the
-                        second argument is the number of layers desired,
-                        followed by their thickness, min, max, and bool.
+                If type = 'FTL'
+                    Layering follows Fixed Thickness Layinering, the
+                    second argument is the number of layers desired,
+                    followed by their thickness, min, max, and bool.
 
-                    Ex. ['FTL', nlay, thickness, min, max, bool]
+                Ex. ['FTL', nlay, thickness, min, max, bool]
 
-                    If type = 'LN'
-                        Layering follows Layering by Number, the next
-                        argument is number of layers followed by min,
-                        max, and bool. 
+                If type = 'LN'
+                    Layering follows Layering by Number, the next
+                    argument is number of layers followed by min,
+                    max, and bool. 
 
-                    Ex. ['LN', ln, min, max, reversal]
+                Ex. ['LN', ln, min, max, reversal]
 
-                    If type = 'LR' 
-                        Layering follows the Layering Ratio, the next
-                        arguement is the layering ratio followed by
-                        min, max, and bool.
+                If type = 'LR' 
+                    Layering follows the Layering Ratio, the next
+                    arguement is the layering ratio followed by
+                    min, max, and bool.
 
-                    Ex. ['LR', lr, min, max, reversal]
+                Ex. ['LR', lr, min, max, reversal]
 
-            wv : iterable
-                Of the form [min_wave, max_wave] where 
-                `min_wave` and `max_wave` are of type `float` or `int`
-                and indicate the minimum and maximum measured wavelength
-                from the fundemental mode Rayleigh wave disperison.
+        wv : iterable
+            Of the form [min_wave, max_wave] where 
+            `min_wave` and `max_wave` are of type `float` or `int`
+            and indicate the minimum and maximum measured wavelength
+            from the fundemental mode Rayleigh wave disperison.
 
-            factor : float, optional
-                Factor by which the maximum wavelength is
-                divided to estimate the maxium depth of profiling,
-                default is 2.
+        factor : float, optional
+            Factor by which the maximum wavelength is
+            divided to estimate the maxium depth of profiling,
+            default is 2.
 
-        Returns:
+        Returns
+        -------
+        Parameterization
             Instantiated `Paramterization` object.
 
-        Raises:
-            Various:
-                If values do not comply with the instructions listed.
+        Raises
+        ------
+        Various
+            If values do not comply with the instructions listed.
         """
 
         input_arguements = {"vs": vs, "vp": vp, "pr": pr, "rh": rh}
@@ -168,25 +177,29 @@ class Parameterization():
         """Write paramterization to `.param` file that can be imported
         into Dinver.
 
-        Args:
-            fname_prefix : str
-                File name prefix (without the .param extension), may be
-                a relative or the full path. 
-            version : {'2', '3'}, optional
-                Major version of Geopsy, default is '3'.
-            full_version : str, optional
-                Full version of Geopsy in the form Major.Minor.Micro,
-                default is `None`. When equal to `None` the method
-                will produce a warning if `full_version` is required
-                to avoid ambiguity.
+        Parameters
+        ----------
+        fname_prefix : str
+            File name prefix (without the .param extension), may be
+            a relative or the full path. 
+        version : {'2', '3'}, optional
+            Major version of Geopsy, default is '3'.
+        full_version : str, optional
+            Full version of Geopsy in the form Major.Minor.Micro,
+            default is `None`. When equal to `None` the method
+            will produce a warning if `full_version` is required
+            to avoid ambiguity.
 
-        Returns:
-            `None`, writes `.param` file to disk.
+        Returns
+        -------
+        None
+            Writes `.param` file to disk.
 
-        Raises:
-            KeyError: 
-                If `version` does not match those listed in the
-                documentation.
+        Raises
+        ------
+        KeyError
+            If `version` does not match those listed in the
+            documentation.
         """
         available_versions = {'2': '2', '3': '3'}
         version = available_versions[version]
@@ -311,17 +324,21 @@ indicate by setting `full_version='2.9.0'`, otherwise no action is required."
     def from_param(cls, fname_prefix):
         """Instantitate a Parameterization object from a .param file.
 
-        Args:
-            fname_prefix : str
-                File name prefix, may include a relative or the full
-                path.
+        Parameters
+        ----------
+        fname_prefix : str
+            File name prefix, may include a relative or the full
+            path.
 
-        Returns:
+        Returns
+        -------
+        Parameterization
             Instantitated `Parameterization` object.
 
-        Raises:
-            ValueError:
-                If file encoding is not recognized.
+        Raises
+        ------
+        ValueError:
+            If file encoding is not recognized.
         """
         with tar.open(fname_prefix+".param", "r:gz") as a:
             a.extractall()

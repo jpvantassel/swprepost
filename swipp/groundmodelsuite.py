@@ -12,13 +12,14 @@ logging.Logger(name=__name__)
 class GroundModelSuite(Suite):
     """Class for manipulating suites of `GroundModel` objects.
 
-    Attributes:
-        gms : list
-            List of `GroundModel` objects, composing the suite.
-        ids : list
-            List of identifiers, one per `GroundModel` in the suite.
-        misfits : list
-            List of misfits, one per `GroundModel` in the suite.
+    Attributes
+    ----------
+    gms : list
+        List of `GroundModel` objects, composing the suite.
+    ids : list
+        List of identifiers, one per `GroundModel` in the suite.
+    misfits : list
+        List of misfits, one per `GroundModel` in the suite.
     """
     @staticmethod
     def check_type(groundmodel, identifier, misfit):
@@ -37,15 +38,18 @@ class GroundModelSuite(Suite):
     def __init__(self, groundmodel, identifier, misfit=0.0000):
         """Initialize a `GroundModelSuite` from a `GroundModelObject`.
 
-        Args:
-            groundmodel : GroundModel
-                Instantiated `GroundModel` object.
-            identifier : str
-                Human-readable, unique identifier for `groundmodel`.
-            misfit : [float, int], optional
-                Misfit associated with `groundmodel`, default is 0.0000.
+        Parameters
+        ----------
+        groundmodel : GroundModel
+            Instantiated `GroundModel` object.
+        identifier : str
+            Human-readable, unique identifier for `groundmodel`.
+        misfit : [float, int], optional
+            Misfit associated with `groundmodel`, default is 0.0000.
 
-        Returns:
+        Returns
+        -------
+        GroundModelSuite
             Initialized `GroundModelSuite`.
         """
         gm, identifier, misfit = self.check_type(groundmodel, identifier,
@@ -57,26 +61,29 @@ class GroundModelSuite(Suite):
     def append(self, groundmodel, identifier, misfit=0.0000, sort=True):
         """Append `GroundModel` object to `DispersionSuite` object.
 
-        Args:
-            groundmodel : GroundModel
-                refer to 
-                :meth: `__init__ <swipp.GroundModelSuite.__init__>`.
-            identifier : str
-                refer to
-                :meth: `__init__ <swipp.GroundModelSuite.__init__>`.
-            misfit : [float, int], optional
-                refer to
-                :meth: `__init__ <swipp.GroundModelSuite.__init__>`.
-            sort : bool
-                Sort models according to misfit (smallest to largest),
-                default is `True` indicating sort will be performed.
-                If it is known that the misfit of appended model is
-                larger than those already part of the suite, setting
-                `sort` to `False` can allow for a significant speed
-                improvement.
+        Parameters
+        ----------
+        groundmodel : GroundModel
+            refer to 
+            :meth: `__init__ <swipp.GroundModelSuite.__init__>`.
+        identifier : str
+            refer to
+            :meth: `__init__ <swipp.GroundModelSuite.__init__>`.
+        misfit : [float, int], optional
+            refer to
+            :meth: `__init__ <swipp.GroundModelSuite.__init__>`.
+        sort : bool
+            Sort models according to misfit (smallest to largest),
+            default is `True` indicating sort will be performed.
+            If it is known that the misfit of appended model is
+            larger than those already part of the suite, setting
+            `sort` to `False` can allow for a significant speed
+            improvement.
 
-        Returns:
-            `None`, updates the attributes `gms`, `ids`, and `misfits`.
+        Returns
+        -------
+        None
+            Instead updates the attributes `gms`, `ids`, and `misfits`.
         """
         gm, identifier, misfit = self.check_type(groundmodel, identifier,
                                                  misfit)
@@ -111,14 +118,17 @@ class GroundModelSuite(Suite):
         """Calculate the simplified, layer-by-layer median of a given
         parameter.
 
-        Args:
-            nbest : int
-                Number of best models to consider.
-            parameter : {'depth', 'vs', 'vp', 'rho'}, optional
-                Parameter along which to calculate the median, default
-                is 'vs' for shear-wave velocity.
+        Parameters
+        ----------
+        nbest : int
+            Number of best models to consider.
+        parameter : {'depth', 'vs', 'vp', 'rho'}, optional
+            Parameter along which to calculate the median, default
+            is 'vs' for shear-wave velocity.
 
-        Returns:
+        Returns
+        -------
+        Tuple
             A `tuple` of the form
             `([median_thickness], [median_parameter])`
             where `[median_thickness]` is a `list` of the median
@@ -146,13 +156,16 @@ class GroundModelSuite(Suite):
     def median(self, nbest="all"):
         """Calculate the median `GroundModel` of the `GroundModelSuite`.
 
-        Args:
-            nbest : int, optional
-                Number of the best profiles to consider when calculating
-                the median profile, default is "all", meaning all
-                available models will be used.
+        Parameters
+        ----------
+        nbest : int, optional
+            Number of the best profiles to consider when calculating
+            the median profile, default is "all", meaning all
+            available models will be used.
 
-        Returns:
+        Returns
+        -------
+        GroundModel
             Initialized `GroundModel` object.
         """
         med_vp_tk, med_vp = self.median_simple(nbest=nbest, parameter='vp')
@@ -166,12 +179,15 @@ class GroundModelSuite(Suite):
         """Write `GroundModelSuite` to text file, following the Geopsy
         format.
 
-        Args:
-            fname : str
-                Name of file, may be a relative or the full path.
+        Parameters
+        ----------
+        fname : str
+            Name of file, may be a relative or the full path.
 
-        Returns:
-            `None`, instead writes file to disk.
+        Returns
+        -------
+        None
+            Instead writes file to disk.
         """
         with open(fname, "w") as f:
             for cid, cmf, cgm in zip(self.ids, self.misfits, self.gms):
@@ -202,34 +218,38 @@ class GroundModelSuite(Suite):
                  misfit="misfits", identifier="indices"):
         """Instantiate a `GroundModelSuite` from a `.mat` file.
 
-        Note: This method is still largely experimental and is not
+        This method is still experimental and is not
         guaranteed to work.
 
-        Args:
-            fname : str
-                Name of file to be read, in general these files should
-                end with th `.mat` extension.
-            tk, vs, vp, rh, misfit, identifer : str, optional
-                Custom variable names, for which the program will search
-                to find the resulting values.
+        Parameters
+        ----------
+        fname : str
+            Name of file to be read, in general these files should
+            end with th `.mat` extension.
+        tk, vs, vp, rh, misfit, identifer : str, optional
+            Custom variable names, for which the program will search
+            to find the resulting values.
 
-                In addtion to these custom names (which are searched
-                first) the program will also fall back and search under
-                other common names:
+            In addtion to these custom names (which are searched
+            first) the program will also fall back and search under
+            other common names:
 
-                thickness : [tk, "thickness"]
-                vs : [vs, "Vs1", "vs1"]
-                vp : [vp, "Vp1", "vp1"]
-                rh : [rh, "Rho1", "rho1", "density1"]
-                misfit : [misfit, "misfit"]
-                ids : [identifier, "indices"]
+            thickness : [tk, "thickness"]
+            vs : [vs, "Vs1", "vs1"]
+            vp : [vp, "Vp1", "vp1"]
+            rh : [rh, "Rho1", "rho1", "density1"]
+            misfit : [misfit, "misfit"]
+            ids : [identifier, "indices"]
 
-        Returns:
+        Returns
+        -------
+        GroundModelSuite
             Instantiated `GroundModelSuite` object.
 
-        Raises:
-            KeyError : 
-                If required variables, can not be found in `.mat` file.
+        Raises
+        ------
+        KeyError
+            If required variables, can not be found in `.mat` file.
         """
         # Potential names for each parameter, from high to low priority.
         search_values = {"tk": [tk, "thickness"],
@@ -268,21 +288,25 @@ class GroundModelSuite(Suite):
     def from_array(cls, tks, vps, vss, rhs, ids, misfits):
         """Instantiate `GroundModelSuite` from an array of values.
 
-        Args:
-            tks, vps, vss, rhs : ndarray
-                2D array representation of the ground models composing
-                the suite. Each column represents a particular
-                groundmodel and each row a layer in that ground model.
+        Parameters
+        ----------
+        tks, vps, vss, rhs : ndarray
+            2D array representation of the ground models composing
+            the suite. Each column represents a particular
+            groundmodel and each row a layer in that ground model.
 
-            ids, misfits : ndarray
-                1D array where each entry corresponds to a ground model.
+        ids, misfits : ndarray
+            1D array where each entry corresponds to a ground model.
 
-        Returns:
+        Returns
+        -------
+        GroundModelSuite
             Instantiated `GroundModelSuite`.
     
-        Raises:
-            AssertionError:
-                If the size of the arrays are inconsistent.
+        Raises
+        ------
+        AssertionError
+            If the size of the arrays are inconsistent.
         """
 
         cols = tks.shape[1]
@@ -312,11 +336,14 @@ class GroundModelSuite(Suite):
         """Instantiate a `GroundModelSuite` from a file following the
         `Geopsy` format.
 
-        Args:
-            fname : str
-                Name of file, may contain a relative or the full path.
+        Parameters
+        ----------
+        fname : str
+            Name of file, may contain a relative or the full path.
 
-        Returns:
+        Returns
+        -------
+        GroundModelSuite
             Initialized `GroundModelSuite`.
         """
         with open(fname, "r") as f:

@@ -14,11 +14,12 @@ logging.Logger(name=__name__)
 class GroundModel():
     """Class for creating and manipulating `GroundModel` objects.
 
-    Attributes:
-        tk, vp, vs, rh : list
-            Thickness, compression-wave velocity (Vp), shear-wave
-            velcocity (Vs), and mass density defining each layer of the
-            ground model, respectively.
+    Attributes
+    ----------
+    tk, vp, vs, rh : list
+        Thickness, compression-wave velocity (Vp), shear-wave
+        velcocity (Vs), and mass density defining each layer of the
+        ground model, respectively.
     """
 
     @staticmethod
@@ -30,15 +31,17 @@ class GroundModel():
             2. Cast each value to a `list`.
             3. Casst each value of value to `float`.
 
-        Args:
-            values : list
-                Container of `list` one per parameter.
-            names : list
-                Container of `str` used for meaningful error messages.
+        Parameters
+        ----------
+        values : list
+            Container of `list` one per parameter.
+        names : list
+            Container of `str` used for meaningful error messages.
 
-        Raises:
-            TypeError:
-                If `values` does not pass the aforementioned criteria.
+        Raises
+        ------
+        TypeError
+            If `values` does not pass the aforementioned criteria.
         """
         for cid, (value, name) in enumerate(zip(values, names)):
             try:
@@ -56,15 +59,17 @@ class GroundModel():
             1. Check that all values are greater than zero.
             2. Check that `vp` > `vs`.
 
-        Args:
-            values : list
-                Container of `list` one per parameter.
-            names : list
-                Container of `str` used for meaningful error messages.
+        Parameters
+        ----------
+        values : list
+            Container of `list` one per parameter.
+        names : list
+            Container of `str` used for meaningful error messages.
 
-        Raises:
-            ValueError:
-                If `values` does not pass the aforementioned criteria.
+        Raises
+        ------
+        ValueError
+            If `values` does not pass the aforementioned criteria.
         """
 
         tmp_len = len(values[0])
@@ -83,23 +88,28 @@ class GroundModel():
     def __init__(self, thickness, vp, vs, density):
         """Initialize a ground model object.
 
-        Args:
-            thickness : iterable
-                Container of `float` or `int` denoting layer thickness
-                (one per layer) in meters starting from the ground
-                surface.
-            vp, vs : iterable
-                Container of `float` or `int` denoting the P- and S-wave
-                velocity of each layer in m/s.
-            density : iterable 
-                Container of `float` or `int` denoting the mass density
-                of each layer in kg/m3.
+        Parameters
+        ----------
+        thickness : iterable
+            Container of `float` or `int` denoting layer thickness
+            (one per layer) in meters starting from the ground
+            surface.
+        vp, vs : iterable
+            Container of `float` or `int` denoting the P- and S-wave
+            velocity of each layer in m/s.
+        density : iterable 
+            Container of `float` or `int` denoting the mass density
+            of each layer in kg/m3.
 
-        Returns:
+        Returns
+        -------
+        GroundModel
             Instantiated `GroundModel` object.
 
-        Raises:
-            Various exceptions, see
+        Raises
+        ------
+        Various
+            See
             :meth: `check_input_type <GroundModel.check_input_type` and
             :meth: `check_input_value <GroundModel.check_input_value`
             for details.
@@ -119,17 +129,21 @@ class GroundModel():
     def calc_pr(vp, vs):
         """Calculate Poisson's ratio from iterable of `vp` and `vs`.
 
-        Args:
-            vp, vs : iterable
-                Container of vp and vs values.
+        Parameters
+        ----------
+        vp, vs : iterable
+            Container of vp and vs values.
 
-        Returns:
-            `List` of Poisson's ratio, calculated from each vp, vs pair.
+        Returns
+        -------
+        list
+            Poisson's ratio, calculated from each vp, vs pair.
 
-        Raises:
-            ValueError: 
-                If vs>vp, or Poisson's ratio is negative
-                (i.e., vp/vs too close to 1).
+        Raises
+        ------
+        ValueError
+            If vs>vp, or Poisson's ratio is negative
+            (i.e., vp/vs too close to 1).
         """
         if type(vp) in [int, float]:
             warnings.warn("`vp` should be an iterable type.")
@@ -151,15 +165,18 @@ class GroundModel():
     def from_simple_profiles(cls, vp_tk, vp, vs_tk, vs, rh_tk, rh):
         """Instantiate `GroundModel` from simple profiles.
 
-        Args:
-            vp_tk, vs_tk, rh_tk : iterable
-                Iterable denoting the thicknesses of each parameter, one
-                per layer.
-            vp, vs, rh : iterable
-                Iterable denoting the value of Vp, Vs, and mass density
-                respectively.
+        Parameters
+        ----------
+        vp_tk, vs_tk, rh_tk : iterable
+            Iterable denoting the thicknesses of each parameter, one
+            per layer.
+        vp, vs, rh : iterable
+            Iterable denoting the value of Vp, Vs, and mass density
+            respectively.
 
-        Returns:
+        Returns
+        -------
+        GroundModel
             Instantiated `GroundModel` object.
         """
         new_depths = (cls.thick_to_depth(vp_tk) +
@@ -224,15 +241,20 @@ class GroundModel():
     def gm2(self, parameter):
         """Return parameter of `GroundModel` in stair-step form.
 
-        Args:
-            parameter : {'depth', 'vp', 'vs', 'rho', 'pr'}
-                Desired parameter to transform to stair-step profile.
+        Parameters
+        ----------
+        parameter : {'depth', 'vp', 'vs', 'rho', 'pr'}
+            Desired parameter to transform to stair-step profile.
 
-        Returns:
-            `List` defining the specified parameter. 
+        Returns
+        -------
+        list
+            Defining the specified parameter. 
 
-        Raises:
-            KeyError if `parameter` is not one of those specified.
+        Raises
+        ------
+        KeyError
+            If `parameter` is not one of those specified.
         """
         if parameter == "pr":
             vp = self.gm2(parameter="vp")
@@ -276,23 +298,27 @@ class GroundModel():
         Do not use these discretized models for plotting unless `dy` is
         very small, as they may be misleading.
 
-        Args:
-            dmax : float
-                Maximum depth of discretization.
-            dy : float, optional
-                Linear step of discretizaton in terms of depth, default
-                is 0.5 meter.
-            parameter : {'vp', 'vs', 'rho', 'pr'}, optional
-                Parameter to be discretized, default is 'vs'.
+        Parameters
+        ----------
+        dmax : float
+            Maximum depth of discretization.
+        dy : float, optional
+            Linear step of discretizaton in terms of depth, default
+            is 0.5 meter.
+        parameter : {'vp', 'vs', 'rho', 'pr'}, optional
+            Parameter to be discretized, default is 'vs'.
 
-        Returns:
+        Returns
+        -------
+        Tuple
             Tuple of the form `(depth, param)` where `depth` is a `list`
             of the discretized depths, and `parameter` is a `list` of
             the discretized parameter at those depths.
 
-        Raises:
-            KeyError:
-                If `parameter` is not one of those options specified.
+        Raises
+        ------
+        KeyError
+            If `parameter` is not one of those options specified.
         """
         disc_depth = np.linspace(0, dmax, int(dmax//dy)+1).tolist()
 
@@ -340,7 +366,7 @@ class GroundModel():
             par = self.vs
         elif param == 'vp':
             par = self.vp
-        elif param == 'rh':
+        elif param == 'rh' or param == "density":
             par = self.rh
         else:
             raise NotImplementedError(f"param={param} is unkown.")
@@ -362,7 +388,9 @@ class GroundModel():
         """Calcualte the time-averaged shear-wave velocity in the upper
         30m (Vs30).
 
-        Returns:
+        Returns
+        -------
+        float
             Vs30 of `GroundModel`.
         """
         depth = 0
@@ -381,13 +409,17 @@ class GroundModel():
     def write_to_mat(self, fname_prefix):
         """Save `GroundModel` information to `.mat` format.
 
-        Args:
-            fname_prefix: Name of file (excluding the `.mat` extension)
-                where the file should be saved, may be a relative or the
-                full path.
+        Parameters
+        ----------
+        fname_prefix : str
+            Name of file (excluding the `.mat` extension)
+            where the file should be saved, may be a relative or the
+            full path.
 
-        Returns:
-            `None`, instead write file to disk.
+        Returns
+        -------
+        None
+            Instead writes file to disk.
         """
         sio.savemat(fname_prefix+".mat", {"thickness": self.tk,
                                           "vp1": self.vp,
@@ -441,17 +473,19 @@ class GroundModel():
         """Write `GroundModel` to open file object following `Geopsy`
         format.
 
-        Args:
-            fileobj : _io.TextIOWrapper
-                Name of file, may be a relative or the full path.
-            model_num : int, optional
-                Model number, required to be consistent with `Geopsy`
-                format, default is 1.
-            misfit : float, optional
-                Misfit, required to be consistent with `Geopsy`
-                format, default is 0.0000.
+        Parameters
+        ----------
+        fileobj : _io.TextIOWrapper
+            Name of file, may be a relative or the full path.
+        model_num : int, optional
+            Model number, required to be consistent with `Geopsy`
+            format, default is 1.
+        misfit : float, optional
+            Misfit, required to be consistent with `Geopsy`
+            format, default is 0.0000.
 
-        Returns:
+        Returns
+        -------
             `None`, writes file to disk.
         """
         fobj.write(f"# Layered model {model_num}: value={misfit}\n")
@@ -461,18 +495,21 @@ class GroundModel():
     def write_to_txt(self, fname, model_num=1, misfit=0.0000):
         """Write `GroundModel` to file that follows the `Geospy` format.
 
-        Args:
-            fname : str
-                Name of file, may contain a relative or the full path.
-            model_num : int, optional
-                Model number, required to be consistent with `Geopsy`
-                format, default is 1.
-            misfit : float, optional
-                Misfit, required to be consistent with `Geopsy`
-                format, default is 0.0000.
+        Parameters
+        ----------
+        fname : str
+            Name of file, may contain a relative or the full path.
+        model_num : int, optional
+            Model number, required to be consistent with `Geopsy`
+            format, default is 1.
+        misfit : float, optional
+            Misfit, required to be consistent with `Geopsy`
+            format, default is 0.0000.
 
-        Returns:
-            `None`, writes file to disk.
+        Returns
+        -------
+        None
+            Instead writes file to disk.
         """
         with open(fname, "w") as f:
             f.write(f"# Layered model {model_num}: value={misfit}\n")
@@ -509,15 +546,20 @@ class GroundModel():
         """Instantiate a `GroundModel` from a file following the
         `Geopsy` format.
 
-        Args:
-            fname : fname
-                File name, may contain a relative or the full path.
+        Parameters
+        ----------
+        fname : fname
+            File name, may contain a relative or the full path.
 
-        Returns:
+        Returns
+        -------
+        GroundModel
             Initialized `GroundModel` object.
 
-        Raises:
-            Various errors if file does not follow the `Geopsy` format.
+        Raises
+        ------
+        Various
+            If file does not follow the `Geopsy` format.
             See example files for details.
         """
         with open(fname, "r") as f:

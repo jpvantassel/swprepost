@@ -9,28 +9,29 @@ logging.Logger(name=__name__)
 class Parameter():
     """Class for defining the bounds of an inversion parameter.
 
-    Attributes:
-        par_type : {'FX', 'FTL', 'LN', 'LR', 'CT', 'CD'}
-            String to denote how the layering was defined. Specifically,
-            'FX'  = Fixed
-            'FTL' = Fixed Thickness Layers
-            'LN'  = Layering by Number
-            'LR'  = Layering Ratio
-            'CT'  = Custom Thickness
-            'CD'  = Custom Depth
-        par_value, par_add_value : int or float
-            Numerical values to provide context about the
-            type of layering selected. `par_add_value` only used for
-            three letter parameter types (i.e., 'FTL').
-        lay_min, lay_max : list
-            Minimum and maximum thickness or depth of each layer,
-            respectively.
-        par_min, par_max : list
-            Minimum and maximum potential value of the parameter, one
-            `float` value per layer.
-        par_rev : list
-            Indicate whether to allow parameter reversals, one `bool`
-            value per layer.
+    Attributes
+    ----------
+    par_type : {'FX', 'FTL', 'LN', 'LR', 'CT', 'CD'}
+        String to denote how the layering was defined. Specifically,
+        'FX'  = Fixed
+        'FTL' = Fixed Thickness Layers
+        'LN'  = Layering by Number
+        'LR'  = Layering Ratio
+        'CT'  = Custom Thickness
+        'CD'  = Custom Depth
+    par_value, par_add_value : int or float
+        Numerical values to provide context about the
+        type of layering selected. `par_add_value` only used for
+        three letter parameter types (i.e., 'FTL').
+    lay_min, lay_max : list
+        Minimum and maximum thickness or depth of each layer,
+        respectively.
+    par_min, par_max : list
+        Minimum and maximum potential value of the parameter, one
+        `float` value per layer.
+    par_rev : list
+        Indicate whether to allow parameter reversals, one `bool`
+        value per layer.
     """
     @staticmethod
     def check_layers(lower_name, lower, upper_name, upper):
@@ -73,19 +74,20 @@ class Parameter():
                  lay_type="thickness"):
         """Initialize a `Parameter` object.
 
-        Args:
-            lay_min, lay_max : iterable
-                Minimum and maximum thickness or depth of each layer,
-                respectively.
-            par_min, par_max : iterable
-                Minimum and maximum potential value of the parameter,
-                one `float` per layer.
-            par_rev : iterable
-                Indicate whether to allow parameter reversals, one 
-                `bool` per layer.             
-            lay_type : {'thickness', 'depth'}, optional
-                Inidcate whether the layers are defined in terms of
-                depth or thickness.
+        Parameters
+        ----------
+        lay_min, lay_max : iterable
+            Minimum and maximum thickness or depth of each layer,
+            respectively.
+        par_min, par_max : iterable
+            Minimum and maximum potential value of the parameter,
+            one `float` per layer.
+        par_rev : iterable
+            Indicate whether to allow parameter reversals, one 
+            `bool` per layer.             
+        lay_type : {'thickness', 'depth'}, optional
+            Inidcate whether the layers are defined in terms of
+            depth or thickness.
         """
         if lay_type == "thickness":
             self._par_type = "CT"
@@ -110,11 +112,13 @@ class Parameter():
     def from_fx(cls, value):
         """Instantiate `Parameter` object using Fixed (FX) layering.
 
-        Args:
-            value : [float, int]
-                Value assigned to the parameter at all depths. Value
-                will not be allowed to change with depth.
-        Returns:
+        Parameters
+        ----------
+        value : {float, int}
+            Value assigned to the parameter at all depths. Value
+            will not be allowed to change with depth.
+        Returns
+        -------
             Instantiated `Parameter` object.
         """
         try:
@@ -182,13 +186,16 @@ class Parameter():
         """Calculate the minimum and maximum thicknesses for each layer
         using Fixed Thickness Layering (FTL).
 
-        Args:
-            nlayers : int
-                Desired number of layers.
-            thickness : float
-                Thickness of each layer.
+        Parameters
+        ----------
+        nlayers : int
+            Desired number of layers.
+        thickness : float
+            Thickness of each layer.
 
-        Returns:
+        Returns
+        -------
+        Tuple
             Tuple of lists indicating thicknesses of the form
             ([minthickness...], [maxthickness...]).
         """
@@ -212,25 +219,29 @@ class Parameter():
         Use Fixed Thickenss Layering (FTL) to define the
         parameterization.
 
-        Args:
-            nlayers : int
-                Number of desired layers.
-            thickness : float
-                Thickness of all layers in meters.
-            par_min, par_max : float
-                Minimum and maximum potential value of the parameter,
-                applied to all layers. 
-            par_rev : bool, optional
-                Indicate whether layers are allowed to reverse or not,
-                default is `False` (i.e., no reversal allowed).
+        Parameters
+        ----------
+        nlayers : int
+            Number of desired layers.
+        thickness : float
+            Thickness of all layers in meters.
+        par_min, par_max : float
+            Minimum and maximum potential value of the parameter,
+            applied to all layers. 
+        par_rev : bool, optional
+            Indicate whether layers are allowed to reverse or not,
+            default is `False` (i.e., no reversal allowed).
 
-        Returns:
+        Returns
+        -------
+        Parameter
             Instantiated `Parameter` object.
 
-        Note: 
-            If a more detailed parameterization is desired than
-            available here use the `dinver` user inferface to tweak the
-            resulting `.param` file.
+        Note
+        ----
+        If a more detailed parameterization is desired than
+        available here use the `dinver` user inferface to tweak the
+        resulting `.param` file.
         """
         lay_min, lay_max = cls.depth_ftl(nlayers, thickness)
         par_min, par_max, par_rev = cls.min_max_rev(nlayers,
@@ -249,22 +260,25 @@ class Parameter():
         """Calculate the minimum and maximum thickness for each layer 
         using Layering by Number (LN).
 
-        Args:
-            wmin, wmax : float
-                Minimum and maximum measured wavelengths from the
-                fundemental mode Rayleigh wave dispersion respectively.
-            nlayers : int
-                Desired number of layers.
-            depth_factor : [float, int], optional
-                Factor by which the maximum wavelength is
-                divided to estimate the maxium depth of profiling,
-                default is 2.
-            increasing : bool, optional
-                Indicate whether the layering thickness should be 
-                contrained to increase, default value is `False`
-                meaning that layers are not contrained to increase.
+        Parameters
+        ----------
+        wmin, wmax : float
+            Minimum and maximum measured wavelengths from the
+            fundemental mode Rayleigh wave dispersion respectively.
+        nlayers : int
+            Desired number of layers.
+        depth_factor : [float, int], optional
+            Factor by which the maximum wavelength is
+            divided to estimate the maxium depth of profiling,
+            default is 2.
+        increasing : bool, optional
+            Indicate whether the layering thickness should be 
+            contrained to increase, default value is `False`
+            meaning that layers are not contrained to increase.
 
-        Returns:
+        Returns
+        -------
+        Tuple
             Tuple of lists indicating thicknesses of the form
             ([minthickness...], [maxthickness...]).
         """
@@ -293,31 +307,34 @@ class Parameter():
         Use Layering by Number (LN) or Layering by Number Increasing
         (LNI) to define the `Parameter`.
 
-        Args:
-            wmin, wmax : float
-                Minimum and maximum measured wavelength from the
-                fundemental mode Rayleigh wave disperison.
-            nlayers : int
-                Desired number of layers.
-            par_min, par_max : float
-                Minimum and maximum potential value of the parameter,
-                applied to all layers. 
-            par_rev : bool, optional
-                Indicate whether layers are allowed to reverse or not,
-                default is `False` (i.e., no reversal allowed).
-            depth_factor : [float, int], optional
-                Factor by which the maximum wavelength is
-                divided to estimate the maxium depth of profiling,
-                default is 2.
-            increasing : bool, optional
-                Determines whether LN or LNI layering is used, default
-                is `False` meaning LN is used.
-            increasing_factor : float, optional
-                Factor by which each subsequent layer must be thicker
-                than the previous layer previous layer, default is 1.2.
-                Arguement is only used if `increasing=True`.
+        Parameters
+        ----------
+        wmin, wmax : float
+            Minimum and maximum measured wavelength from the
+            fundemental mode Rayleigh wave disperison.
+        nlayers : int
+            Desired number of layers.
+        par_min, par_max : float
+            Minimum and maximum potential value of the parameter,
+            applied to all layers. 
+        par_rev : bool, optional
+            Indicate whether layers are allowed to reverse or not,
+            default is `False` (i.e., no reversal allowed).
+        depth_factor : [float, int], optional
+            Factor by which the maximum wavelength is
+            divided to estimate the maxium depth of profiling,
+            default is 2.
+        increasing : bool, optional
+            Determines whether LN or LNI layering is used, default
+            is `False` meaning LN is used.
+        increasing_factor : float, optional
+            Factor by which each subsequent layer must be thicker
+            than the previous layer previous layer, default is 1.2.
+            Arguement is only used if `increasing=True`.
 
-        Returns:
+        Returns
+        -------
+        Parameter
             Instantiated `Parameter` object.
         """
         msg = "`from_ln_thickness` is deprecated use `from_ln_depth` instead"
@@ -346,18 +363,21 @@ class Parameter():
         """Calculate the minimum and maximum depth for each layer 
         using Layering by Number.
 
-        Args:
-            wmin, wmax : float
-                Minimum and maximum measured wavelength from the
-                fundemental mode Rayleigh wave disperison.
-            nlayers : int
-                Desired number of layers.
-            depth_factor : [float, int], optional
-                Factor by which the maximum wavelength is
-                divided to estimate the maxium depth of profiling,
-                default is 2.
+        Parameters
+        ----------
+        wmin, wmax : float
+            Minimum and maximum measured wavelength from the
+            fundemental mode Rayleigh wave disperison.
+        nlayers : int
+            Desired number of layers.
+        depth_factor : [float, int], optional
+            Factor by which the maximum wavelength is
+            divided to estimate the maxium depth of profiling,
+            default is 2.
 
-        Returns:
+        Returns
+        -------
+        Tuple
             Tuple of lists indicating depths of the form
             ([mindepth...], [maxdepth...]).
         """
@@ -396,24 +416,27 @@ class Parameter():
 
         Use Layering by Number (LN) to define the `Parameter`.
 
-        Args:
-            wmin, wmax : float
-                Minimum and maximum measured wavelength from the
-                fundemental mode Rayleigh wave disperison.
-            nlayers : int
-                Desired number of layers.
-            par_min, par_max : float
-                Minimum and maximum potential value of the parameter,
-                applied to all layers. 
-            par_rev : bool, optional
-                Indicate whether layers are allowed to reverse or not,
-                default is `False` (i.e., no reversal allowed).
-            depth_factor : [float, int], optional
-                Factor by which the maximum wavelength is
-                divided to estimate the maxium depth of profiling,
-                default is 2.
+        Parameters
+        ----------
+        wmin, wmax : float
+            Minimum and maximum measured wavelength from the
+            fundemental mode Rayleigh wave disperison.
+        nlayers : int
+            Desired number of layers.
+        par_min, par_max : float
+            Minimum and maximum potential value of the parameter,
+            applied to all layers. 
+        par_rev : bool, optional
+            Indicate whether layers are allowed to reverse or not,
+            default is `False` (i.e., no reversal allowed).
+        depth_factor : [float, int], optional
+            Factor by which the maximum wavelength is
+            divided to estimate the maxium depth of profiling,
+            default is 2.
 
-        Returns:
+        Returns
+        -------
+        Parameter
             Instantiated `Parameter` object.
         """
 
@@ -439,20 +462,23 @@ class Parameter():
         does not exceed dmax. Suggestions for solving this issue are
         hinted at in Cox and Teague (2016), but not provided explicitly.
 
-        Args:
-            wmin, wmax : float
-                Minimum and maximum measured wavelength from the
-                fundemental mode Rayleigh wave dispersion.
-            lr : float
-                Layering Ratio, this controls the number of layers and
-                their potential thicknesses, refer to Cox and Teague
-                2016 for details.
-            depth_factor : [float, int], optional
-                Factor by which the maximum wavelength is
-                divided to estimate the maxium depth of profiling,
-                default is 2.
+        Parameters
+        ----------
+        wmin, wmax : float
+            Minimum and maximum measured wavelength from the
+            fundemental mode Rayleigh wave dispersion.
+        lr : float
+            Layering Ratio, this controls the number of layers and
+            their potential thicknesses, refer to Cox and Teague
+            2016 for details.
+        depth_factor : [float, int], optional
+            Factor by which the maximum wavelength is
+            divided to estimate the maxium depth of profiling,
+            default is 2.
 
-        Returns:
+        Returns
+        -------
+        Tuple
             Tuple of lists indicating depths of the form
             ([mindepth...], [maxdepth...]).
         """
@@ -506,32 +532,36 @@ class Parameter():
 
         Use Layering Ratio (LR) to define the `Parameter`.
 
-        Args:
-            wmin, wmax : float
-                Minimum and maximum measured wavelength from the
-                fundemental mode Rayleigh wave dispersion.
-            lr : float
-                Layering Ratio, this controls the number of layers and
-                their potential thicknesses, refer to Cox and Teague
-                (2016) for details.                
-            par_min, par_max : float
-                Minimum and maximum potential value of the parameter,
-                applied to all layers. 
-            par_rev : bool, optional
-                Indicate whether layers are allowed to reverse or not,
-                default is `False` (i.e., no reversal allowed).
-            depth_factor : [float, int], optional
-                Factor by which the maximum wavelength is
-                divided to estimate the maxium depth of profiling,
-                default is 2.
+        Parameters
+        ----------
+        wmin, wmax : float
+            Minimum and maximum measured wavelength from the
+            fundemental mode Rayleigh wave dispersion.
+        lr : float
+            Layering Ratio, this controls the number of layers and
+            their potential thicknesses, refer to Cox and Teague
+            (2016) for details.                
+        par_min, par_max : float
+            Minimum and maximum potential value of the parameter,
+            applied to all layers. 
+        par_rev : bool, optional
+            Indicate whether layers are allowed to reverse or not,
+            default is `False` (i.e., no reversal allowed).
+        depth_factor : [float, int], optional
+            Factor by which the maximum wavelength is
+            divided to estimate the maxium depth of profiling,
+            default is 2.
 
-        Returns:
+        Returns
+        -------
+        Parameter
             Instantiated `Parameter` object.
 
-        Note: 
-            If a more detailed parameterization is desired than
-            available here use the `dinver` user inferface to tweak the
-            resulting `.param` file.
+        Note
+        ---- 
+        If a more detailed parameterization is desired than
+        available here use the `dinver` user inferface to tweak the
+        resulting `.param` file.
         """
         lay_min, lay_max = cls.depth_lr(wmin, wmax, lr, depth_factor)
         par_min, par_max, par_rev = cls.min_max_rev(len(lay_min),
@@ -547,6 +577,7 @@ class Parameter():
                 [upper, lower, lower, upper])
 
     def plot(self, ax=None, show_example=True):
+        #TODO (jpv): Add docstring.
         if ax is None:
             ax_was_none = True
             fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(3.5, 5))

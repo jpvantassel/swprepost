@@ -9,9 +9,10 @@ class DispersionSuite(Suite):
     """Class for handling suites of instantiated `DispersionSet`
     objects.
 
-    Attributes:
-        sets : list
-            Container for instantiated `DispersionSet` objects.
+    Attributes
+    ----------
+    sets : list
+        Container for instantiated `DispersionSet` objects.
     """
     @staticmethod
     def check_input(curveset, set_type):
@@ -28,16 +29,20 @@ class DispersionSuite(Suite):
         """Initialize a `DispersionSuite` object, from a `DispersionSet`
         object.
 
-        Args:
-            dispersionset : DispersionSet
-                Initialized `DispersionSet` object.
+        Parameters
+        ----------
+        dispersionset : DispersionSet
+            Initialized `DispersionSet` object.
 
-        Returns:
-            Instantiated DispersionSuite object.
+        Returns
+        -------
+        DispersionSuite
+            Instantiated `DispersionSuite` object.
 
-        Raises:
-            TypeError:
-                If `dispersionset` is not of type `DispersionSet`.
+        Raises
+        ------
+        TypeError
+            If `dispersionset` is not of type `DispersionSet`.
         """
         self.check_input(dispersionset, DispersionSet)
         self.sets = [dispersionset]
@@ -45,15 +50,19 @@ class DispersionSuite(Suite):
     def append(self, dispersionset):
         """Append `DispersionSet` object to `DispersionSuite`.
 
-        Args:
+        Parameters
+        ----------
             Refer to :meth: `__init__ <DispersionSuite.__init__>`.
 
-        Returns:
-            `None`, updates the attribute `sets`.
+        Returns
+        -------
+        None
+            Updates the attribute `sets`.
 
-        Raises:
-            TypeError:
-                If `dispersionset` is not of type `DispersionSet`.
+        Raises
+        ------
+        TypeError
+            If `dispersionset` is not of type `DispersionSet`.
         """
         self.check_input(dispersionset, DispersionSet)
         self.sets.append(dispersionset)
@@ -79,17 +88,20 @@ class DispersionSuite(Suite):
         """Create `DispersionSuite` from a text file following the
         Geopsy format.
 
-        Args:
-            fname : str
-                Name of file to be read, may be a relative or full path.
-            nsets : int, optional
-                Number of sets to extract, default is "all" so all 
-                available sets will be extracted.
-            nrayleigh, nlove : int, optional
-                Number of Rayleigh and Love modes respectively, default
-                is "all" so all available modes will be extracted.
+        Parameters
+        ----------
+        fname : str
+            Name of file to be read, may be a relative or full path.
+        nsets : int, optional
+            Number of sets to extract, default is "all" so all 
+            available sets will be extracted.
+        nrayleigh, nlove : int, optional
+            Number of Rayleigh and Love modes respectively, default
+            is "all" so all available modes will be extracted.
 
-        Returns:
+        Returns
+        -------
+        DispersionSuite
             Instantiated `DispersionSuite` object.
         """
         with open(fname, "r") as f:
@@ -136,18 +148,23 @@ class DispersionSuite(Suite):
         """Create `DispersionSuite` from a list of `DispersionSet`
         objects.
 
-        Args:
-            dc_sets : list
-                List of `DispersionSet` objects.
+        Parameters
+        ----------
+        dc_sets : list
+            List of `DispersionSet` objects.
 
-        Returns:
-            Instatiated `DispersionSuite`.
+        Returns
+        -------
+        DipsersionSutie
+            Instatiated `DispersionSuite` object.
         """
         obj = cls(dc_sets[0])
         if len(dc_sets) > 1:
             for dc_set in dc_sets[1:]:
                 obj.append(dc_set)
         return obj
+
+    # TODO (jpv): Write DispersionSuite to file.
 
     def __getitem__(self, slce):
         return self.sets[slce]

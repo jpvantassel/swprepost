@@ -12,7 +12,7 @@ with open('README.md', "r") as f:
 
 setup(
     name='swipp',
-    version='0.2.0',
+    version='0.2.1',
     description='A Python Package for Surface-Wave Inversion Pre- and Post-Processing',
     long_description=long_description,
     long_description_content_type='text/markdown',
