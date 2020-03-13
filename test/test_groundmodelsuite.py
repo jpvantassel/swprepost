@@ -146,6 +146,25 @@ class Test_GroundModelSuite(TestCase):
         med_gm = swipp.GroundModel(med_tks, med_vps, med_vss, med_rhs)
         self.assertTrue(med_gm == calc_med_gm)
 
+    def test_sigma_ln(self):
+        tk = [1, 5, 0]
+        vss = [[100, 200, 300], [150, 275, 315], [100, 300, 200]]
+        vp = [200, 400, 600]
+        rh = [2000]*3
+
+        gm = swipp.GroundModel(tk, vp, vss[0], rh)
+        suite = swipp.GroundModelSuite(gm, "test")
+        for vs in vss[1:]:
+            gm = swipp.GroundModel(tk, vp, vs, rh)
+            suite.append(gm, "test")
+        dmax = 10
+        dy = 0.5
+        depth, sigln = suite.sigma_ln(nbest=3, dmax=dmax, dy=dy, param='vs')
+        self.assertListEqual(depth, list(np.arange(0, dmax+dy, dy)))
+        self.assertListEqual(sigln, ([np.std(np.log([100, 150, 100]), ddof=1)]*3 +
+                                     [np.std(np.log([200, 275, 300]), ddof=1)]*10 +
+                                     [np.std(np.log([300, 315, 200]), ddof=1)]*8))
+
     def test_from_mat(self):
         tk = np.array([2.2989, 2.2428, 1.8436, 5.3886, 3.2876, 5.7847, 5.6917,
                        13.293, 3.2605, 16.71, 12.717, 19.439, 27.657, 7.7677,

@@ -193,6 +193,16 @@ class GroundModelSuite(Suite):
             for cid, cmf, cgm in zip(self.ids, self.misfits, self.gms):
                 cgm.write_model(f, cid, cmf)
 
+    def sigma_ln(self, nbest, dmax, dy=0.5, param='vs'):
+        """Return sigma_ln of the nbest discretized profiles."""
+        NVs = np.zeros((int(dmax/dy)+1, nbest))
+        for ncol, gm in enumerate(self.gms[:nbest]):
+            disc_depth, disc_par = gm.discretize(dmax=dmax, dy=dy,
+                                                 parameter=param)
+            NVs[:, ncol] = disc_par
+        sigma_ln = np.std(np.log(NVs), axis=1, ddof=1)
+        return (disc_depth, sigma_ln.tolist())
+
     @classmethod
     def _gm(cls):
         return GroundModel
