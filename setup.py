@@ -41,7 +41,7 @@ setup(
     python_requires = '>3.6',
     install_requires=["numpy", "scipy", "matplotlib"],
     extras_require={
-        'test': ['unittest', 'hypothesis'],
+        'dev': ['hypothesis'],
     },
     package_data={
     },
