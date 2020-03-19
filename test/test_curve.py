@@ -39,6 +39,22 @@ class Test_Curve(TestCase):
         self.assertRaises(ValueError, swipp.Curve.check_input, good,
                           bad_values, fxn)
 
+    def test_resample(self):
+        x = [1,2,4,5]
+        y = [0,1,3,4]
+        curve = swipp.Curve(x, y)
+
+        # Inplace = False
+        xx, returned = curve.resample([3], inplace=False)
+        expected = np.array([2])
+        self.assertArrayEqual(expected, returned)
+
+        # Inplace = True
+        curve.resample([3], inplace=True)
+        returned = curve._y
+        expected = np.array([2])
+        self.assertArrayEqual(expected, returned)
+
 
 if __name__ == "__main__":
     unittest.main()

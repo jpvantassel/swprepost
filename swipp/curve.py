@@ -1,4 +1,21 @@
-"""This file contains a class `Curve` for handling x, y coordinates."""
+# This file is part of swipp, a Python package for surface-wave
+# inversion pre- and post-processing.
+# Copyright (C) 2019-2020 Joseph P. Vantassel (jvantassel@utexas.edu)
+#
+#     This program is free software: you can redistribute it and/or modify
+#     it under the terms of the GNU General Public License as published by
+#     the Free Software Foundation, either version 3 of the License, or
+#     (at your option) any later version.
+#
+#     This program is distributed in the hope that it will be useful,
+#     but WITHOUT ANY WARRANTY; without even the implied warranty of
+#     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#     GNU General Public License for more details.
+#
+#     You should have received a copy of the GNU General Public License
+#     along with this program.  If not, see <https: //www.gnu.org/licenses/>.
+
+"""The Curve class definition."""
 
 import numpy as np
 import scipy.interpolate as sp
@@ -13,7 +30,8 @@ class Curve():
         1D array of x coordinates defining the curve. These
         should, in general, not be accessed directly.
     _y : ndarray
-        Same as `_x`
+        Same as `_x` but for the y coordiantes of the curve.
+
     """
 
     @staticmethod
@@ -23,6 +41,7 @@ class Curve():
         Specifically:
             1. Cast x and y to `ndarray` of type `double`.
             2. Check x and y have the same length.
+
         """
         try:
             x = np.array(x, dtype=np.double)
@@ -32,16 +51,14 @@ class Curve():
             raise TypeError(msg)
 
         if x.size != y.size:
-            msg = f"""Abscissa and ordinate must be the same size,
-                      currently {x.size} and {y.size}, respectively."""
+            msg = f"""x and y must be the same size, currently {x.size} and {y.size}, respectively."""
             raise IndexError(msg)
         return (x, y)
 
     @staticmethod
     def check_values(x, y, check_fxn):
-        """Use custom checking function to check the values of `x` and
-        `y`.
-        
+        """Apply custom checking function on the values of `x` and `y`.
+
         Parameters
         ----------
         x, y : iterable
@@ -60,6 +77,7 @@ class Curve():
         ------    
         ValueError
             If `x` and `y` fail.
+
         """
         if check_fxn is not None:
             for _x, _y in zip(x, y):
@@ -81,12 +99,12 @@ class Curve():
             Iterables of the same size defining the curve's x and y
             coordinates.
         check_fxn : function, optional
-            Function that takes an x, y pair, checks if they are
+            Function that takes an x, y pair, and checks if they are
             valid.
-            
+
             If they are valid the function returns `None`
             otherwise raises a `ValueError`, default is `None`
-            meaning no function is used to check the x and y values.
+            meaning no function is used to check the `x` and `y` values.
 
         Returns
         -------
@@ -100,6 +118,7 @@ class Curve():
         ValueError
             If `check_fxn` is defined and any `x`, `y` pair fails to
             meet the defined criteria.
+
         """
         x, y = self.check_input(x, y, check_fxn)
         self._x = x
@@ -110,7 +129,8 @@ class Curve():
         """Wrapper for `interp1d` from `scipy`."""
         return sp.interp1d(x, y, **kwargs)
 
-    def resample(self, xx, inplace=False, res_fxn=None):
+    def resample(self, xx, inplace=False,
+                 interp1d_kwargs={"kind": "cubic"}, res_fxn=None):
         """Resample Curve at select x values.
 
         Parameters
@@ -123,28 +143,31 @@ class Curve():
             If inplace the, attributes `_x` and `_y` are
             overwritten. Otherwise the new values are returned,
             default is `False` resampling is not done inplace.
+        interp1d_settings : dict, optional
+            Settings for use with the `interp1d` function from `scipy`.
+            See documentation `here
+            <https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.interp1d.html>`_
+            for details.
         res_fxn : function, optional
-            Custom resampling function, default is `None` indicating
-            the default resampling function is used. Custom
-            resampling functions can be created using the :meth: 
-            `resampling_function <Curve.resample_function>`.
+            Define a custom resampling function. It should accept an
+            ndarray of resampling locations and return the
+            interpolated y-coordinates as an iterable.
 
         Returns
         -------
         None or (xx, yy)
             `None`, if `inplace=True`; `_x` and `_y` will be updated.
-            `(xx,yy)` if `inplace=False`.
+            `(xx, yy)` if `inplace=False`.
+
         """
-        # Perform resample
+
         if res_fxn is None:
             res_fxn = self.resample_function(self._x,
-                                            self._y,
-                                            kind="cubic")
+                                             self._y,
+                                             **interp1d_kwargs)
         yy = res_fxn(xx)
 
-        # Update attributes or return values.
         if inplace:
-            self._x = xx
-            self._y = yy
+            self._x, self._y = self.check_types(xx, yy)
         else:
             return (xx, yy)
