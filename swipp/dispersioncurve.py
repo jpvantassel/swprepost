@@ -1,4 +1,21 @@
-"""This file contains the class `DispersionCurve`."""
+# This file is part of swipp, a Python package for surface-wave
+# inversion pre- and post-processing.
+# Copyright (C) 2019-2020 Joseph P. Vantassel (jvantassel@utexas.edu)
+#
+#     This program is free software: you can redistribute it and/or modify
+#     it under the terms of the GNU General Public License as published by
+#     the Free Software Foundation, either version 3 of the License, or
+#     (at your option) any later version.
+#
+#     This program is distributed in the hope that it will be useful,
+#     but WITHOUT ANY WARRANTY; without even the implied warranty of
+#     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#     GNU General Public License for more details.
+#
+#     You should have received a copy of the GNU General Public License
+#     along with this program.  If not, see <https: //www.gnu.org/licenses/>.
+
+"""The DispersionCurve class definition."""
 
 from swipp import Curve, regex
 import numpy as np
@@ -10,8 +27,9 @@ class DispersionCurve(Curve):
     Attributes
     ----------
     frequency, velocity : ndarray
-        Vector of the dispersion curve's frequency and velocity
+        1D array of the dispersion curve's frequency and velocity
         values, respectively.
+
     """
 
     def __init__(self, frequency, velocity):
@@ -19,7 +37,7 @@ class DispersionCurve(Curve):
 
         Parameters
         ----------
-        frequency, velocity : ndarray
+        frequency, velocity : iterable
             Vector of the dispersion curve's frequency and velocity
             values, respectively.
 
@@ -28,7 +46,6 @@ class DispersionCurve(Curve):
         DispersionCurve
             Initialized `DispersionCurve` object.
         """
-        frequency, velocity = self.check_input(x=frequency, y=velocity)
         super().__init__(x=frequency, y=velocity)
 
     @property
@@ -49,19 +66,32 @@ class DispersionCurve(Curve):
 
     @classmethod
     def _parse_dc(cls, dc_data):
-        """Parse a single `DispersionCurve` from a `str` of frequency,
-        slowness data. It is assumed that frequencies increase
-        monitonically.
+        """Parse a single `DispersionCurve` from dispersion data.
+        
+        Parameters
+        ----------
+        dc_data : str
+            Dispersion curve data of the form `frequency, slowness`.
+            It is assumed that frequencies increases monitonically. If
+            this assumption is not true, incorrect results may result.
+            See example below.
 
-        Example Data:
+        Returns
+        -------
+        DispersionCurve
+            Instantiated `DispersionCurve` object.
+
+        Example
+        -------
+        If `dc_data` is as follows:
             Line 1: # Frequency, Slowness
             Line 2: 0.1, 0.01
             Line 3: 0.2, 0.012
             Line 4: # Frequency, Slowness
             Line 5: 0.1, 0.011
             Line 6: 0.2, 0.013
-
         Only lines 2 and 3 will be parsed.
+
         """
         frequency, slowness = [], []
         for curve in regex.dc_data.finditer(dc_data):
@@ -81,8 +111,7 @@ class DispersionCurve(Curve):
 
     @classmethod
     def from_geopsy(cls, fname):
-        """Instantiate a `DispersionCurve` from a text file in the
-        Geopsy format.
+        """Create `DispersionCurve` from text file in the Geopsy format.
 
         Parameters
         ----------
@@ -93,12 +122,14 @@ class DispersionCurve(Curve):
         -------
         DispersionCurve
             Instantiated `DispersionCurve` object.
+
         """
         with open(fname, "r") as f:
             lines = f.read()
         return cls._parse_dc(lines)
 
     def __eq__(self, other):
+        """Check if the current and `other` object are equal."""
         attrs = ["frequency", "velocity"]
         for attr in attrs:
             my_vals = getattr(self, attr)
@@ -111,5 +142,9 @@ class DispersionCurve(Curve):
         return True
 
     def __repr__(self):
-        return f"DispersionCurve(frequency={self.frequency},\
-velocity={self.velocity})"
+        """Unambiguous representation of a `DispersionCurve` object."""
+        return f"DispersionCurve(frequency={self.frequency}, velocity={self.velocity})"
+
+    def __str__(self):
+        """Readable representation of a `DispersionCurve` object."""
+        return f"DispersionCurve with {len(self.frequency)} points"
