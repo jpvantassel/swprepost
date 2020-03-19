@@ -1,5 +1,4 @@
 class_names = ["Curve",
-               "CurveSet",
                "CurveUncertain",
                "DispersionCurve",
                "DispersionSet",

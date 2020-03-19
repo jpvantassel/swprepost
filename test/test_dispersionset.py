@@ -11,6 +11,20 @@ class Test_DispersionSet(TestCase):
     def setUp(self):
         self.full_path = get_full_path(__file__)
 
+    def test_check_type(self):
+        # curveset is not dict
+        for curveset in ["curveset", False, ["this"]]:
+            self.assertRaises(TypeError, swipp.DispersionSet.check_type,
+                              curveset=curveset,
+                              valid_type=swipp.DispersionCurve)
+
+        # values are not of DispersionCurve
+        for bad_dc in ["this", False, ["this"]]:
+            curveset = {0: bad_dc}
+            self.assertRaises(TypeError, swipp.DispersionSet,
+                              curveset=curveset,
+                              valid_type=swipp.DispersionCurve)
+
     def test_init(self):
         # Instantiate DispersionCurve objects.
         frequency = [1, 2, 3]
@@ -36,12 +50,12 @@ class Test_DispersionSet(TestCase):
         self.assertListEqual(velocity, ex_c.rayleigh[0].velocity.tolist())
         self.assertListEqual(velocity, ex_c.love[0].velocity.tolist())
 
+        # Rayleigh and Love are None
+        self.assertRaises(ValueError, swipp.DispersionSet, identifier="Test")
+
     def test_from_geopsy(self):
         # Quick test -> Full test in DispersionSuite
         fname = self.full_path+"data/test_dc_mod2_ray2_lov2_shrt.txt"
-        returned = swipp.DispersionSet.from_geopsy(fname=fname)
-        self.assertEqual("149641", returned.identifier)
-        self.assertEqual(1.08851, returned.misfit)
         rayleigh = {0: swipp.DispersionCurve([0.15, 64],
                                              [1/0.000334532972901842,
                                               1/0.00917746839997367]),
@@ -54,11 +68,35 @@ class Test_DispersionSet(TestCase):
                 1: swipp.DispersionCurve([0.920128309893243, 69],
                                          [1/0.000305221889470528,
                                           1/0.00828240730448549])}
+        expected_id = "149641"
+        expected_misfit = 1.08851
 
+        # Both Rayleigh and Love
+        returned = swipp.DispersionSet.from_geopsy(fname=fname)
+        self.assertEqual(expected_id, returned.identifier)
+        self.assertEqual(expected_misfit, returned.misfit)
         for mode, expected in rayleigh.items():
             self.assertEqual(expected, returned.rayleigh[mode])
         for mode, expected in love.items():
             self.assertEqual(expected, returned.love[mode])
+
+        # Only Rayleigh
+        returned = swipp.DispersionSet.from_geopsy(fname=fname)
+        self.assertEqual(expected_id, returned.identifier)
+        self.assertEqual(expected_misfit, returned.misfit)
+        for mode, expected in rayleigh.items():
+            self.assertEqual(expected, returned.rayleigh[mode])
+
+        # Only Love
+        returned = swipp.DispersionSet.from_geopsy(fname=fname)
+        self.assertEqual(expected_id, returned.identifier)
+        self.assertEqual(expected_misfit, returned.misfit)
+        for mode, expected in love.items():
+            self.assertEqual(expected, returned.love[mode])
+
+        # Neither
+        self.assertRaises(ValueError, swipp.DispersionSet.from_geopsy,
+                          fname=fname, nrayleigh=0, nlove=0)
 
 
 if __name__ == "__main__":

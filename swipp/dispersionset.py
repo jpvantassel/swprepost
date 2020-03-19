@@ -1,62 +1,105 @@
-"""This file contains the class `DispersionSet`."""
+# This file is part of swipp, a Python package for surface-wave
+# inversion pre- and post-processing.
+# Copyright (C) 2019-2020 Joseph P. Vantassel (jvantassel@utexas.edu)
+#
+#     This program is free software: you can redistribute it and/or modify
+#     it under the terms of the GNU General Public License as published by
+#     the Free Software Foundation, either version 3 of the License, or
+#     (at your option) any later version.
+#
+#     This program is distributed in the hope that it will be useful,
+#     but WITHOUT ANY WARRANTY; without even the implied warranty of
+#     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#     GNU General Public License for more details.
+#
+#     You should have received a copy of the GNU General Public License
+#     along with this program.  If not, see <https: //www.gnu.org/licenses/>.
 
-import re
+"""The DispersionSet class definition."""
+
 import copy
-from swipp import CurveSet, DispersionCurve, regex
+from swipp import DispersionCurve, regex
 
 
-class DispersionSet(CurveSet):
-    """Class for handling sets of 
-    :meth: `DispersionCurve <swipp.DispersionCurve>`
-    objects, which all belong to a common velocity model.
+class DispersionSet():
+    """Class for handling sets of
+    :meth: `DispersionCurve <swipp.DispersionCurve>` objects, which all
+    belong to a common velocity model.
 
     Attributes
     ----------
     rayleigh, love : dict
         Container for `DispersionCurve` objects, of the form:
-        {0:disp_curve_obj0, ... N:disp_curve_objN}
+        `{0:DispersionCurve0, ... N:DispersionCurveN}`
         where each key is the mode number and the value is the
         corresponding instantiated `DispersionCurve` object.
+    identifier : str
+        Meaningful identifier of the `DispersionSet`.
+    misfit : float or None
+        Value of dispersion misfit if provided, `None` otherwise.
+
     """
 
     @classmethod
-    def check_input_local(cls, identifier, misfit):
-        """Check inputs comply with the required format.
+    def check_type(cls, curveset, valid_type):
+        """Check that the `curveset` are are valid.
 
-        Specfically:
-            1. `identifier` is a `str`.
-            2. `misfit` is an `int` or `float`.
+        Specifically:
+            1. Assume `curveset` is instance of `dict`.
+            2. If it is a `dict`, check all values are instances of the
+            `valid_type` and return zero, otherwise raise `TypeError`.
+            3. If it is not check if `None`, if so return one.
+            4. Otherwise, raise `TypeError`.
+
         """
-        if not isinstance(identifier, str):
-            msg = f"'{identifier}' must be `str`, not {type(identifier)}."
-            raise TypeError(msg)
-        if misfit != None:
-            if type(misfit) not in [int, float]:
-                msg = f"`misfit` must be `int` or `float`, not {type(misfit)}."
+        try:
+            for key, value in curveset.items():
+                if not isinstance(value, valid_type):
+                    msg = f"{key} must be a {valid_type}, not {type(value)}."
+                    raise TypeError(msg)
+        except AttributeError:
+            if curveset is None:
+                return 1
+            else:
+                msg = f"CurveSet must be a `dict` or `None`, not {type(curveset)}."
                 raise TypeError(msg)
+        return 0
 
-    def __init__(self, identifier, misfit=None, rayleigh=None, love=None,):
-        """Initialize a `DispersionSet` object from a `dict` of 
-        instantiated `DispersionCurve` objects.
+    def __init__(self, identifier, misfit=None, rayleigh=None, love=None):
+        """Initialize a `DispersionSet` from `dict`(s) of
+        `DispersionCurve` objects.
 
         Parameters
         ----------
         identifier : str
             Unique identifier of the `DispersionSet`.
-        misfit : float, int
-            `DispersionSet` misfit.
+        misfit : float or None, optional
+            `DispersionSet` misfit or `None`.
         rayleigh, love : dict
-            Container for `DispersionCurve` objectso of the form
+            Container for `DispersionCurve` objects of the form
             `{0:disp_curve_obj0, ... N:disp_curve_objN}` where each
             key is the mode number and the value is the
             corresponding `DispersionCurve` object.
+
+        Returns
+        -------
+        DispersionSet
+            Instantiated `DispersionSet` object.
+
         """
-        self.check_input([rayleigh, love], DispersionCurve)
-        self.check_input_local(identifier, misfit)
-        self.rayleigh = copy.deepcopy(rayleigh)
-        self.love = copy.deepcopy(love)
-        self.identifier = identifier
-        self.misfit = misfit
+        none_count = 0
+        none_count += self.check_type(rayleigh, DispersionCurve)
+        none_count += self.check_type(love, DispersionCurve)
+        
+        if none_count == 2:
+            msg = "`rayleigh` and `love` cannot both be `None`."
+            raise ValueError(msg)
+
+        self.rayleigh = None if rayleigh is None else dict(rayleigh)
+        self.love = None if love is None else dict(love)
+
+        self.identifier = str(identifier)
+        self.misfit = None if misfit is None else float(misfit)
 
     @classmethod
     def _parse_dcs(cls, dcs_data, nmodes="all"):
@@ -75,6 +118,26 @@ class DispersionSet(CurveSet):
 
     @classmethod
     def _from_full_file(cls, data, nrayleigh="all", nlove="all"):
+        """Parse the first `DispersionSet` from a Geopsy-style contents.
+        
+        Parameters
+        ----------
+        data : str
+            Contents of Geopsy-style text file.
+        nrayleigh, nlove : {"all", int}, optional
+            Number of Rayleigh and Love modes to extract into a
+            `DispersionSet` object, default is "all" meaning all
+            available modes will be extracted.
+        
+        Returns
+        -------
+        DispersionSet
+            Instantiated `DispersionSet` object.
+
+        """
+        if nrayleigh == 0 and nlove == 0:
+            raise ValueError(f"`nrayleigh` and `nlove` cannot both be 0.")
+
         rayleigh, love = None, None
         previous_id, previous_misfit = "start", "0"
         for model_info in regex.dcset.finditer(data):
@@ -97,30 +160,32 @@ class DispersionSet(CurveSet):
 
     @classmethod
     def _dc(cls):
+        """Define DispersionCurve classmethod to allow replacement."""
         return DispersionCurve
 
     @classmethod
     def from_geopsy(cls, fname, nrayleigh="all", nlove="all"):
-        """Create a `DispersionSet` object from a text file following
-        the Geopsy format.
+        """Create from a text file following the Geopsy format.
 
         Parameters
         ----------
         fname : str
             Name of file to be read, may be a relative or full path.
-        nrayleigh, nlove : int, optional
-            Number of Rayleigh and Love modes respectively, default
-            is `None` so all available modes will be extracted.
-
+        nrayleigh, nlove : {"all", int}, optional
+            Number of Rayleigh and Love modes to extract into a
+            `DispersionSet` object, default is "all" meaning all
+            available modes will be extracted.
+        
         Returns
         -------
         DispersionSet
             Instantiated `DispersionSet` object.
+
         """
         with open(fname, "r") as f:
             data = f.read()
         return cls._from_full_file(data, nrayleigh=nrayleigh, nlove=nlove)
 
     def __repr__(self):
-        return f"DispersionSet(identifier={self.identifier},\
-rayleigh={self.rayleigh}, love={self.love}, misfit={self.misfit})"
+        """Unambiguous representation of a `DispersionSet` object."""
+        return f"DispersionSet(identifier={self.identifier}, rayleigh={self.rayleigh}, love={self.love}, misfit={self.misfit})"
