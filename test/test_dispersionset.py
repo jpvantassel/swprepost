@@ -21,7 +21,7 @@ class Test_DispersionSet(TestCase):
         # values are not of DispersionCurve
         for bad_dc in ["this", False, ["this"]]:
             curveset = {0: bad_dc}
-            self.assertRaises(TypeError, swipp.DispersionSet,
+            self.assertRaises(TypeError, swipp.DispersionSet.check_type,
                               curveset=curveset,
                               valid_type=swipp.DispersionCurve)
 
