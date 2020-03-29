@@ -1,25 +1,47 @@
-"""This file contains the class `DispersionSuite`."""
+# This file is part of swipp, a Python package for surface-wave
+# inversion pre- and post-processing.
+# Copyright (C) 2019-2020 Joseph P. Vantassel (jvantassel@utexas.edu)
+#
+#     This program is free software: you can redistribute it and/or modify
+#     it under the terms of the GNU General Public License as published by
+#     the Free Software Foundation, either version 3 of the License, or
+#     (at your option) any later version.
+#
+#     This program is distributed in the hope that it will be useful,
+#     but WITHOUT ANY WARRANTY; without even the implied warranty of
+#     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#     GNU General Public License for more details.
+#
+#     You should have received a copy of the GNU General Public License
+#     along with this program.  If not, see <https: //www.gnu.org/licenses/>.
+
+"""The DispersionSuite class definition."""
 
 from swipp import DispersionSet, Suite, regex
 import logging
 logging.Logger(name=__name__)
 
+__all__ = ["DispersionSuite", "Suite"]
+
+# TODO (jpv): Write DispersionSuite to file.
+
 
 class DispersionSuite(Suite):
-    """Class for handling suites of instantiated `DispersionSet`
-    objects.
+    """Container for instantiated `DispersionSet` objects.
 
     Attributes
     ----------
     sets : list
         Container for instantiated `DispersionSet` objects.
+
     """
     @staticmethod
     def check_input(curveset, set_type):
         """Check inputs comply with the required format.
 
         Specifically:
-            1. `curveset` is of type `set_type`.
+        1. `curveset` is of type `set_type`.
+
         """
         if not isinstance(curveset, set_type):
             msg = f"Must be instance of {type(set_type)}, not {type(curveset)}."
@@ -43,6 +65,7 @@ class DispersionSuite(Suite):
         ------
         TypeError
             If `dispersionset` is not of type `DispersionSet`.
+
         """
         self.check_input(dispersionset, DispersionSet)
         self.sets = [dispersionset]
@@ -63,13 +86,14 @@ class DispersionSuite(Suite):
         ------
         TypeError
             If `dispersionset` is not of type `DispersionSet`.
+
         """
         self.check_input(dispersionset, DispersionSet)
         self.sets.append(dispersionset)
 
     @property
     def ids(self):
-        """Return the ids correspinding to `sets`."""
+        """Return the ids corresponding to `sets`."""
         ids = []
         for cset in self.sets:
             ids.append(cset.identifier)
@@ -77,7 +101,7 @@ class DispersionSuite(Suite):
 
     @property
     def misfits(self):
-        """Return the misfits correspinding to `sets`."""
+        """Return the misfits corresponding to `sets`."""
         msft = []
         for cset in self.sets:
             msft.append(cset.misfit)
@@ -85,13 +109,12 @@ class DispersionSuite(Suite):
 
     @classmethod
     def from_geopsy(cls, fname, nsets="all", nrayleigh="all", nlove="all"):
-        """Create `DispersionSuite` from a text file following the
-        Geopsy format.
+        """Instantiate from a text file following the Geopsy format.
 
         Parameters
         ----------
         fname : str
-            Name of file to be read, may be a relative or full path.
+            Name of file, may be a relative or full path.
         nsets : int, optional
             Number of sets to extract, default is "all" so all 
             available sets will be extracted.
@@ -103,6 +126,7 @@ class DispersionSuite(Suite):
         -------
         DispersionSuite
             Instantiated `DispersionSuite` object.
+
         """
         with open(fname, "r") as f:
             lines = f.read()
@@ -141,12 +165,12 @@ class DispersionSuite(Suite):
 
     @classmethod
     def _dcset(cls):
+        """Convenient `DispersionSet` to allow subclassing."""
         return DispersionSet
 
     @classmethod
     def from_list(cls, dc_sets):
-        """Create `DispersionSuite` from a list of `DispersionSet`
-        objects.
+        """Instantiate from a list of `DispersionSet` objects.
 
         Parameters
         ----------
@@ -155,8 +179,9 @@ class DispersionSuite(Suite):
 
         Returns
         -------
-        DipsersionSutie
+        DipsersionSuite
             Instatiated `DispersionSuite` object.
+
         """
         obj = cls(dc_sets[0])
         if len(dc_sets) > 1:
@@ -164,10 +189,10 @@ class DispersionSuite(Suite):
                 obj.append(dc_set)
         return obj
 
-    # TODO (jpv): Write DispersionSuite to file.
-
     def __getitem__(self, slce):
+        """Define slicing behavior"""
         return self.sets[slce]
 
-    def __repr__(self):
+    def __str__(self):
+        """Human-readable representation of the object."""
         return f"DispersionSuite with {len(self.sets)} DispersionSets."

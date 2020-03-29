@@ -17,7 +17,6 @@
 
 """The DispersionSet class definition."""
 
-import copy
 from swipp import DispersionCurve, regex
 
 __all__ = ["DispersionSet"]

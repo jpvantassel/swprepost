@@ -1,4 +1,21 @@
-"""Tests for `DispersionSuite` class."""
+# This file is part of swipp, a Python package for surface-wave
+# inversion pre- and post-processing.
+# Copyright (C) 2019-2020 Joseph P. Vantassel (jvantassel@utexas.edu)
+#
+#     This program is free software: you can redistribute it and/or modify
+#     it under the terms of the GNU General Public License as published by
+#     the Free Software Foundation, either version 3 of the License, or
+#     (at your option) any later version.
+#
+#     This program is distributed in the hope that it will be useful,
+#     but WITHOUT ANY WARRANTY; without even the implied warranty of
+#     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#     GNU General Public License for more details.
+#
+#     You should have received a copy of the GNU General Public License
+#     along with this program.  If not, see <https: //www.gnu.org/licenses/>.
+
+"""Tests for DispersionSuite."""
 
 from testtools import unittest, TestCase, get_full_path
 import swipp
@@ -25,28 +42,32 @@ class Test_DispersionSuite(TestCase):
         dc_set = swipp.DispersionSet(identifier="Test", misfit=None,
                                      rayleigh={0: dc}, love=None)
         dc_suite = swipp.DispersionSuite(dispersionset=dc_set)
-        
+
         # Compare the Result
         expected = frequency
         returned = dc_suite[0].rayleigh[0].frequency
         self.assertArrayEqual(expected, returned)
-        
+
         expected = velocity
         returned = dc_suite[0].rayleigh[0].velocity
         self.assertArrayEqual(expected, returned)
-        
+
+        # Invalid type
+        self.assertRaises(TypeError, swipp.DispersionSuite,
+                          ["this isnt a dispersionset"])
+
     def test_append(self):
         # Manual instantiation
         frequency = np.array([1, 2, 3])
         velocity = np.array([4, 5, 6])
         dc = swipp.DispersionCurve(frequency=frequency, velocity=velocity)
         dc_set_0 = swipp.DispersionSet(identifier="Test_0", misfit=None,
-                                     rayleigh={0: dc}, love=None)
+                                       rayleigh={0: dc}, love=None)
         dc_suite = swipp.DispersionSuite(dispersionset=dc_set_0)
 
         # Manual Append
         dc_set_1 = swipp.DispersionSet(identifier="Test_1", misfit=None,
-                                     rayleigh={0: dc}, love=None)
+                                       rayleigh={0: dc}, love=None)
         dc_suite.append(dispersionset=dc_set_1)
 
         # Compare the Result
@@ -55,6 +76,13 @@ class Test_DispersionSuite(TestCase):
             self.assertArrayEqual(velocity, dc_set.rayleigh[0].velocity)
         self.assertListEqual(["Test_0", "Test_1"], dc_suite.ids)
         self.assertListEqual([None, None], dc_suite.misfits)
+
+    def test_str(self):
+        fname = "data/test_dc_mod2_ray2_lov0_shrt.txt"
+        suite = swipp.DispersionSuite.from_geopsy(self.full_path+fname)
+        expected = "DispersionSuite with 2 DispersionSets."
+        returned = suite.__str__()
+        self.assertEqual(expected, returned)
 
     def test_from_geopsy(self):
 
@@ -79,7 +107,8 @@ class Test_DispersionSuite(TestCase):
                             expected = np.array(model[wave][mode_number][attr])
                             returned = getattr(getattr(dc_set, wave)[
                                                mode_number], attr)
-                            self.assertArrayAlmostEqual(expected, returned, places=10)
+                            self.assertArrayAlmostEqual(
+                                expected, returned, places=10)
 
         # One Set with Two Rayleigh and Two Love Modes
         fname = self.full_path+"data/test_dc_mod1_ray2_lov2_shrt.txt"
@@ -180,14 +209,14 @@ class Test_DispersionSuite(TestCase):
         compare(fname, models)
 
         # Two Sets with Two Rayleigh and Love Modes Each -> Only Rayleigh
-        e1_tmp = {key:e1[key] if key!="love" else None for key in e1}
-        e2_tmp = {key:e2[key] if key!="love" else None for key in e2}
+        e1_tmp = {key: e1[key] if key != "love" else None for key in e1}
+        e2_tmp = {key: e2[key] if key != "love" else None for key in e2}
         models = [e1_tmp, e2_tmp]
         compare(fname, models, nrayleigh="all", nlove=0)
 
         # Two Sets with Two Rayleigh and Love Modes Each -> Only Love
-        e1_tmp = {key:e1[key] if key!="rayleigh" else None for key in e1}
-        e2_tmp = {key:e2[key] if key!="rayleigh" else None for key in e2}
+        e1_tmp = {key: e1[key] if key != "rayleigh" else None for key in e1}
+        e2_tmp = {key: e2[key] if key != "rayleigh" else None for key in e2}
         models = [e1_tmp, e2_tmp]
         compare(fname, models, nrayleigh=0, nlove="all")
 
@@ -285,7 +314,7 @@ class Test_DispersionSuite(TestCase):
                                             0.00834358889522566,
                                             0.00835691356059072]}}}
         models = [e1]
-        compare(fname, models)
+        compare(fname, models, nsets=20)
 
 
 if __name__ == "__main__":
