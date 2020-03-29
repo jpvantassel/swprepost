@@ -20,11 +20,12 @@
 import copy
 from swipp import DispersionCurve, regex
 
+__all__ = ["DispersionSet"]
 
 class DispersionSet():
     """Class for handling sets of
     :meth: `DispersionCurve <swipp.DispersionCurve>` objects, which all
-    belong to a common velocity model.
+    belong to a common ground model.
 
     Attributes
     ----------
@@ -45,11 +46,11 @@ class DispersionSet():
         """Check that the `curveset` are are valid.
 
         Specifically:
-            1. Assume `curveset` is instance of `dict`.
-            2. If it is a `dict`, check all values are instances of the
-            `valid_type` and return zero, otherwise raise `TypeError`.
-            3. If it is not check if `None`, if so return one.
-            4. Otherwise, raise `TypeError`.
+        1. Assume `curveset` is instance of `dict`.
+        2. If it is a `dict`, check all values are instances of the
+        `valid_type` and return zero, otherwise raise `TypeError`.
+        3. If it is not check if `None`, if so return one.
+        4. Otherwise, raise `TypeError`.
 
         """
         try:
@@ -88,8 +89,8 @@ class DispersionSet():
 
         """
         none_count = 0
-        none_count += self.check_type(rayleigh, DispersionCurve)
-        none_count += self.check_type(love, DispersionCurve)
+        none_count += self.check_type(rayleigh, self._dc())
+        none_count += self.check_type(love, self._dc())
         
         if none_count == 2:
             msg = "`rayleigh` and `love` cannot both be `None`."
@@ -118,7 +119,7 @@ class DispersionSet():
 
     @classmethod
     def _from_full_file(cls, data, nrayleigh="all", nlove="all"):
-        """Parse the first `DispersionSet` from a Geopsy-style contents.
+        """Parse the first `DispersionSet` from Geopsy-style contents.
         
         Parameters
         ----------
@@ -160,7 +161,7 @@ class DispersionSet():
 
     @classmethod
     def _dc(cls):
-        """Define DispersionCurve classmethod to allow replacement."""
+        """Define `DispersionCurve` to allow subclassing."""
         return DispersionCurve
 
     @classmethod
@@ -189,3 +190,7 @@ class DispersionSet():
     def __repr__(self):
         """Unambiguous representation of a `DispersionSet` object."""
         return f"DispersionSet(identifier={self.identifier}, rayleigh={self.rayleigh}, love={self.love}, misfit={self.misfit})"
+
+    def __str__(self):
+        """Human-readable representation of `DispersionSet` object."""
+        return f"DispersionSet with {len(self.rayleigh)} Rayleigh and {len(self.love)} Love modes"

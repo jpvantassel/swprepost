@@ -98,6 +98,16 @@ class Test_DispersionSet(TestCase):
         self.assertRaises(ValueError, swipp.DispersionSet.from_geopsy,
                           fname=fname, nrayleigh=0, nlove=0)
 
+    def test_str(self):
+        # Quick test -> Full test in DispersionSuite
+        fname = self.full_path+"data/test_dc_mod2_ray2_lov2_shrt.txt"
+        a_set = {0: swipp.DispersionCurve([0.1, 0.2], [200, 100]),
+                 1: swipp.DispersionCurve([0.1, 0.2], [400, 200])}
+        dc_set = swipp.DispersionSet(0, rayleigh=a_set, love=a_set)
+        expected = "DispersionSet with 2 Rayleigh and 2 Love modes"
+        returned = dc_set.__str__()
+        self.assertEqual(expected, returned)
+
 
 if __name__ == "__main__":
     unittest.main()
