@@ -1,5 +1,21 @@
-"""This file includes a derived class `CurveUncertian` which is a
-`Curve` objects with arbitrary uncertainty in x and/or y."""
+# This file is part of swipp, a Python package for surface-wave
+# inversion pre- and post-processing.
+# Copyright (C) 2019-2020 Joseph P. Vantassel (jvantassel@utexas.edu)
+#
+#     This program is free software: you can redistribute it and/or modify
+#     it under the terms of the GNU General Public License as published by
+#     the Free Software Foundation, either version 3 of the License, or
+#     (at your option) any later version.
+#
+#     This program is distributed in the hope that it will be useful,
+#     but WITHOUT ANY WARRANTY; without even the implied warranty of
+#     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#     GNU General Public License for more details.
+#
+#     You should have received a copy of the GNU General Public License
+#     along with this program.  If not, see <https: //www.gnu.org/licenses/>.
+
+"""Definition of CurveUncertain."""
 
 import numpy as np
 from swipp import Curve
@@ -14,8 +30,8 @@ class CurveUncertain(Curve):
         Flags to indicate if x and y error has been provided.
     _xerr, _yerr : ndarray
         Vector defining the error in x and y respectively.
-    """
 
+    """
 
     def __init__(self, x, y, yerr=None, xerr=None):
         """Initialize a new `CurveUncertain` object.
@@ -28,7 +44,7 @@ class CurveUncertain(Curve):
         yerr, xerr : iterable, optional
             Relative error in the y- and x-direction respectively,
             default is `None` indicating no error is defined.
-            
+
         Returns
         -------
         CurveUncertain
@@ -39,6 +55,7 @@ class CurveUncertain(Curve):
         IndexError
             If size of x, y, yerr (if provided) and xerr (if
             provided) are inconsistent.
+
         """
         # Pass x, y to `Curve` constuctor.
         super().__init__(x, y)
@@ -76,13 +93,14 @@ class CurveUncertain(Curve):
 
         Returns
         -------          
-        None or Tupe
+        None or Tuple
             If `inplace=True`, returns `None`, instead update
             attributes `_x`, `_y`, `_xerr`, and `_yerr` if they exist.
             If `inplace=False`, returns `Tuple` of the form
             `(xx, yy, yyerr, xxerr)`. If `xerr` and/or `yerr` are not
             defined they are not resampled and ommited from the return
             statement.
+
         """
         # Create resample functions before resampling mean curve
         if self._isyerr and res_fxn_yerr is None:

@@ -1,5 +1,5 @@
-# This file is part of SigProPy, a Python package for digital signal
-# processing.
+# This file is part of swipp, a Python package for surface-wave
+# inversion pre- and post-processing.
 # Copyright (C) 2019-2020 Joseph P. Vantassel (jvantassel@utexas.edu)
 #
 #     This program is free software: you can redistribute it and/or modify
