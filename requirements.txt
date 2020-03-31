@@ -3,3 +3,4 @@ matplotlib
 scipy
 hypothesis
 jupyter
+nbformat
