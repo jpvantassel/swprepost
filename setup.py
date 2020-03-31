@@ -37,7 +37,7 @@ setup(
     python_requires = '>3.6',
     install_requires=["numpy", "scipy", "matplotlib"],
     extras_require={
-        'dev': ['hypothesis', 'jupyter'],
+        'dev': ['hypothesis', 'jupyter', 'nbformat'],
     },
     package_data={
     },

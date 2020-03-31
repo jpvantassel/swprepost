@@ -255,7 +255,7 @@ class Test_Target(TestCase):
             warnings.simplefilter("ignore")
             self.assertTrue(tar.vr40 is None)
 
-    def test_to_target(self):
+    def test_to_and_from_target(self):
         prefix = self.full_path+"data/test_tar_wstd_nonlin_1"
         tar = swipp.Target.from_csv(prefix + ".csv")
         tar.to_target(fname_prefix=prefix+"_swipp_v3", version="3")
@@ -274,6 +274,8 @@ class Test_Target(TestCase):
         # Bad version
         self.assertRaises(NotImplementedError, tar.to_target,
                           fname_prefix="blahbal", version="12000")
+        self.assertRaises(NotImplementedError, tar.from_target,
+                          fname_prefix=prefix+"_geopsy_v3", version="12000")
 
     def test_to_and_from_dinver_txt(self):
         frq = [1, 3, 5, 7, 9, 15]
@@ -300,20 +302,62 @@ class Test_Target(TestCase):
 
         os.remove(fname)
 
-    # def test_notebook(self):
-    #     fname = "../examples/Targets.ipynb"
-    #     with open(self.full_path+fname) as f:
-    #         nb = nbformat.read(f, as_version=4)
+    def test_to_and_from_csv(self):
+        frq = [1, 3, 5, 7, 9, 15]
+        vel = [200, 150, 112, 95, 90, 85]
+        velstd = [10, 8, 6, 5, 5, 5]
+        tar = swipp.Target(frq, vel, velstd)
 
-    #     try:
-    #         with warnings.catch_warnings():
-    #             warnings.simplefilter("ignore")
-    #             ep = ExecutePreprocessor(timeout=600, kernel_name='python3')
-    #             ep.preprocess(
-    #                 nb, {'metadata': {'path': self.full_path+"../examples"}})
-    #     finally:
-    #         with open(self.full_path+fname, 'w', encoding='utf-8') as f:
-    #             nbformat.write(nb, f)
+        fname = self.full_path+"test_csv.txt"
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            tar.to_txt_swipp(fname)
+        new = swipp.Target.from_csv(fname)
+        self.assertEqual(tar, new)
+
+        os.remove(fname)
+
+    def test_str_and_repr(self):
+        x = np.array([1, 2.01, 3.155])
+        tar = swipp.Target(x, x, x)
+
+        arr = "[1.   2.01 3.16]"
+        expected = f"Target(frequency={arr}, velocity={arr}, velstd={arr})"
+        returned = tar.__repr__()
+        self.assertEqual(expected, returned)
+
+        expected = "Target with 3 frequency/wavelength points"
+        returned = tar.__str__()
+        self.assertEqual(expected, returned)
+
+    def test_eq(self):
+        x = [1, 2]
+        tar1 = swipp.Target(x, x, x)
+
+        # False - Wrong Values
+        y = [1, 15]
+        tar2 = swipp.Target(y, y, y)
+        self.assertFalse(tar1 == tar2)
+
+        # False - Wrong Length
+        y = [1, 2, 3]
+        tar2 = swipp.Target(y, y, y)
+        self.assertFalse(tar1 == tar2)
+
+    def test_notebook(self):
+        fname = "../examples/Targets.ipynb"
+        with open(self.full_path+fname) as f:
+            nb = nbformat.read(f, as_version=4)
+
+        try:
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                ep = ExecutePreprocessor(timeout=600, kernel_name='python3')
+                ep.preprocess(
+                    nb, {'metadata': {'path': self.full_path+"../examples"}})
+        finally:
+            with open(self.full_path+fname, 'w', encoding='utf-8') as f:
+                nbformat.write(nb, f)
 
 
 if __name__ == '__main__':

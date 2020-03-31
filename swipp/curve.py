@@ -160,6 +160,7 @@ class Curve():
             `(xx, yy)` if `inplace=False`.
 
         """
+        xx = np.array(xx, dtype=np.double)
 
         if res_fxn is None:
             res_fxn = self.resample_function(self._x,
@@ -168,6 +169,6 @@ class Curve():
         yy = res_fxn(xx)
 
         if inplace:
-            self._x, self._y = self.check_types(xx, yy)
+            self._x, self._y = xx, yy
         else:
             return (xx, yy)

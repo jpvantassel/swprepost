@@ -43,16 +43,17 @@ class Test_Curve(TestCase):
         x = [1,2,4,5]
         y = [0,1,3,4]
         curve = swipp.Curve(x, y)
+        
+        xx = [1,2,3,4,5]
+        expected = np.array([0,1,2,3,4])
 
         # Inplace = False
-        xx, returned = curve.resample([3], inplace=False)
-        expected = np.array([2])
+        xx, returned = curve.resample(xx, inplace=False)
         self.assertArrayEqual(expected, returned)
 
         # Inplace = True
-        curve.resample([3], inplace=True)
+        curve.resample(xx, inplace=True)
         returned = curve._y
-        expected = np.array([2])
         self.assertArrayEqual(expected, returned)
 
 

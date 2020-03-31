@@ -545,8 +545,7 @@ class Target(CurveUncertain):
 
         return cls(frq, vel, velstd)
 
-
-    def to_txt_swipp(self, fname):
+    def to_csv(self, fname):
         """Write in text format readily accepted by `swipp`.
 
         Parameters
@@ -564,6 +563,25 @@ class Target(CurveUncertain):
             f.write("#Frequency,Velocity,Velstd\n")
             for c_frq, c_vel, c_velstd in zip(self.frequency, self.velocity, self.velstd):
                 f.write(f"{c_frq},{c_vel},{c_velstd}\n")
+
+
+    def to_txt_swipp(self, fname):
+        """Write in text format readily accepted by `swipp`.
+
+        Parameters
+        ----------
+        fname : str
+            Name of output file, may a relative or full path.
+
+        Returns
+        -------
+        None
+            Writes file to disk.
+
+        """
+        msg = "to_txt_swipp is deprecated, perfer to_csv instead."
+        warnings.warn(msg, DeprecationWarning)
+        self.to_csv(fname)
 
     def to_target(self, fname_prefix, version="3"):
         """Write info to the .target file format used by `Dinver`.
@@ -739,7 +757,7 @@ class Target(CurveUncertain):
         os.remove("contents.xml")
 
     @classmethod
-    def from_target(cls, target_prefix, version="3"):
+    def from_target(cls, fname_prefix, version="3"):
         """Create from target file.
 
         Note that this method is still largely experimental and may
@@ -747,7 +765,7 @@ class Target(CurveUncertain):
 
         Parameters
         ----------
-        target_prefix : str
+        fname_prefix : str
             Name of target file to be opened excluding the `.target`
             suffix, may include the relative or full path.
         version : {'2', '3'}, optional
@@ -759,7 +777,7 @@ class Target(CurveUncertain):
             Instantiated `Target` object.
 
         """
-        with tar.open(target_prefix+".target", "r:gz") as a:
+        with tar.open(fname_prefix+".target", "r:gz") as a:
             a.extractall()
 
         try:
