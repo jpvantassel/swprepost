@@ -18,3 +18,4 @@ html
 *.png
 *.hypothesis
 *.tmp_profiler_run
+examples/to_*
