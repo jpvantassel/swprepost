@@ -1,13 +1,9 @@
-"""A setuptools based setup module.
 
-See:
-https://packaging.python.org/guides/distributing-packages-using-setuptools/
-https://github.com/pypa/sampleproject
-"""
+"""A setuptools based setup module."""
 
 from setuptools import setup, find_packages
 
-with open('README.md', "r") as f:
+with open('README.md', "r", encoding="utf-8") as f:
     long_description = f.read()
 
 setup(
@@ -20,7 +16,7 @@ setup(
     author='Joseph P. Vantassel',
     author_email='jvantassel@utexas.edu',
     classifiers=[
-        'Development Status :: 5 - Production/Stable',
+        'Development Status :: 4 - Beta',
 
         'Intended Audience :: Developers',
         'Intended Audience :: Education',
@@ -41,7 +37,7 @@ setup(
     python_requires = '>3.6',
     install_requires=["numpy", "scipy", "matplotlib"],
     extras_require={
-        'dev': ['hypothesis'],
+        'dev': ['hypothesis', 'jupyter'],
     },
     package_data={
     },

@@ -1,4 +1,21 @@
-"""This file defines the `Target` class."""
+# This file is part of swipp, a Python package for surface-wave
+# inversion pre- and post-processing.
+# Copyright (C) 2019-2020 Joseph P. Vantassel (jvantassel@utexas.edu)
+#
+#     This program is free software: you can redistribute it and/or modify
+#     it under the terms of the GNU General Public License as published by
+#     the Free Software Foundation, either version 3 of the License, or
+#     (at your option) any later version.
+#
+#     This program is distributed in the hope that it will be useful,
+#     but WITHOUT ANY WARRANTY; without even the implied warranty of
+#     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#     GNU General Public License for more details.
+#
+#     You should have received a copy of the GNU General Public License
+#     along with this program.  If not, see <https: //www.gnu.org/licenses/>.
+
+"""Definition of Target class."""
 
 import tarfile as tar
 import os
@@ -24,6 +41,7 @@ class Target(CurveUncertain):
         Vectors of frequency, velocity, and velocity standard
         deviation values in the experimental dispersion
         curve (one per point).
+
     """
 
     def __init__(self, frequency, velocity, velstd=0.05):
@@ -34,16 +52,16 @@ class Target(CurveUncertain):
         frequency, velocity : array-like
             Vector of frequency and velocity values respectively
             in the experimental dispersion curve (one per point).
-        velstd : None, float, iterable, optional
+        velstd : None, float, array-like, optional
             Velocity standard deviation of the experimental
             dispersion curve. If `None`, no standard deviation is
-            defined. If `float`, a constant coefficient of variation 
-            (COV) is applied, the default is 0.05. If `iterable`,
-            standard deviation is defined point by point.
+            defined. If `float`, a constant coefficient of variation
+            (COV) is applied, the default is 0.05. If `array-like`,
+            standard deviation is defined point-by-point.
 
         Returns
         -------
-        `Target`
+        Target
             Instantiated `Target` object.
 
         Raises
@@ -53,29 +71,34 @@ class Target(CurveUncertain):
             `array-like`.
         ValueError
             If `velstd` is `float` and the value is less than zero.
-        """
-        # Convert velstd input to vector, if necessary.
-        frequency = np.array(frequency)
-        velocity = np.array(velocity)
-        if velstd is None:
-            velstd = np.zeros(frequency.shape)
-        elif type(velstd) == float:
-            velstd = velocity*velstd
 
-        super().__init__(x=frequency, y=velocity, yerr=velstd, xerr=None)
+        """
+        try:
+            super().__init__(x=frequency, y=velocity, yerr=velstd, xerr=None)
+        except IndexError as e:
+            try:
+                velocity = np.array(velocity)
+                velstd = velocity*velstd
+            finally:
+                super().__init__(x=frequency, y=velocity, yerr=velstd, xerr=None)
+
         self._sort_data()
         self.dc_weight = 1
 
     def _sort_data(self):
-        """Sort Target attributes from smallest to largest."""
-        if (self._y.size != self._x.size) and (self._y.size != self._yerr.size):
-            msg = "`frequency`, `velocity`, and `velstd` must be the same size."
-            raise ValueError(msg)
-
+        """Sort attributes by frequency from smallest to largest."""
         sort_ids = np.argsort(self._x)
-        self._yerr = self._yerr[sort_ids]
+        self._yerr = self._yerr[sort_ids] if self._isyerr else None
         self._y = self._y[sort_ids]
         self._x = self._x[sort_ids]
+    
+    def _check_new_value(self, value):
+        value = np.array(value, dtype=np.double)
+        if value.shape == self._x.shape:
+            return value
+        else:
+            msg = "`frequency`, `velocity`, and `velstd` must be the same size."
+            raise ValueError(msg)
 
     @property
     def frequency(self):
@@ -83,7 +106,7 @@ class Target(CurveUncertain):
 
     @frequency.setter
     def frequency(self, value):
-        self._x = value
+        self._x = self._check_new_value(value)
 
     @property
     def velocity(self):
@@ -91,27 +114,37 @@ class Target(CurveUncertain):
 
     @velocity.setter
     def velocity(self, value):
-        self._y = value
+        self._y = self._check_new_value(value)
 
     @property
     def wavelength(self):
-        return self.velocity/self.frequency
+        return self._y/self._x
 
     @property
     def velstd(self):
-        return self._yerr
+        if self._isyerr:
+            return self._yerr
+        else:
+            self._isyerr = True
+            self._yerr = np.zeros_like(self._x)
+            return self._yerr
 
     @velstd.setter
     def velstd(self, value):
-        self._yerr = value
+        self._yerr = self._check_new_value(value)
+
+    @property
+    def is_no_velstd(self):
+        """Indicates `True` if every point has zero `velstd`."""
+        return all(std == 0 for std in self.velstd)
 
     @property
     def cov(self):
-        return self.velstd/self.velocity
+        return self.velstd/self._y
 
     @property
     def slowness(self):
-        return 1/self.velocity
+        return 1/self._y
 
     @property
     def slostd(self):
@@ -130,18 +163,18 @@ class Target(CurveUncertain):
 
     @classmethod
     def from_csv(cls, fname, commentcharacter="#"):
-        """Construct instance of `Target` class from csv file.
+        """Construct instance from csv file.
 
         Read a comma seperated values (csv) file with header line(s) to
         construct a target object.
 
         Parameters
         ----------
-        filename : str
+        fname : str
             Name or path to file containing surface-wave dispersion.
-            The file should have at a minimum a column for frequency
-            in Hz and velocity in m/s. Velocity standard devaiton in
-            m/s may also be provided.
+            The file should have at a minimum two columns of frequency
+            in Hz and velocity in m/s. A third column velocity standard
+            deviation in m/s may also be provided.
         commentcharacter : str, optional
             Character at the beginning of a line denoting a
             comment, default value is '#'.
@@ -156,6 +189,7 @@ class Target(CurveUncertain):
         ValueError
             If the format of the input file does not match that
             detailed above.
+
         """
         with open(fname, "r") as f:
             lines = f.read().splitlines()
@@ -184,7 +218,7 @@ class Target(CurveUncertain):
         """Set coefficient of variation (COV) to a constant value.
 
         This method may be used if no velocity standard deviation was
-        measured or provided. In general, a COV between 0.05 and 0.15
+        measured or provided. In general, a COV between 0.05 and 0.10
         should provide a reasonable estimate of the uncertainty.
 
         If velocity standard deviations have already been provided this
@@ -205,20 +239,25 @@ class Target(CurveUncertain):
         ------
             ValueError:
                 If `cov` < 0.
+
         """
-        if cov < 0:
-            raise ValueError("`cov` must be greater than zero.")
+        self._is_valid_cov(cov)
         self.velstd = self.velocity*cov
 
+    @staticmethod
+    def _is_valid_cov(cov):
+        if cov < 0:
+            raise ValueError(f"`cov` must be greater than zero, not {cov}.")
+
     def setmincov(self, cov):
-        """Set minimum coefficient of variation (COV) for targets.
+        """Set minimum coefficient of variation (COV).
 
         If uncertainty in the experimental data has been provided, this
         method allows the setting of a minimum COV, where all data
         points with uncertainty below this threshold will be modified
         and those above this threshold will be left alone.
 
-        If no measure of uncertainty has been provided, use :meth:
+        If no measure of uncertainty has been provided, prefer :meth:
         `setcov`.
 
         Parameters
@@ -235,20 +274,14 @@ class Target(CurveUncertain):
         ------
         ValueError
             If `cov` < 0.
-        """
-        if cov < 0:
-            raise ValueError("`cov` must be greater than zero.")
 
-        current_cov = self.cov
-        update_ids = np.where(current_cov < cov)
+        """
+        self._is_valid_cov(cov)
+        update_ids = np.where(self.cov < cov)
         self.velstd[update_ids] = self.velocity[update_ids]*cov
 
-    def is_no_velstd(self):
-        """Indicates `True` if every point has zero `velstd`."""
-        return all(std == 0 for std in self.velstd)
-
     def pseudo_depth(self, depth_factor=2.5):
-        """Estimates depth based on the experimental dispersion data.
+        """Estimate depth based on the experimental dispersion data.
 
         This method, along with :meth: `pseudo-vs`, may be useful to
         create plots of pseudo-Vs vs pseudo-depth for selecting
@@ -257,15 +290,16 @@ class Target(CurveUncertain):
 
         Parameters
         ----------
-        depth_factor : float
+        depth_factor : float, optional
             Factor by which the mean wavelegnth is divided to
-            produce an estimate of depth. Typical between 2 and 3,
+            produce an estimate of depth. Typical are between 2 and 3,
             default 2.5.
 
         Returns
         -------
         ndarray
             Of pseudo-depth.
+
         """
         if (depth_factor > 3) | (depth_factor < 2):
             msg = "`depth_factor` is outside the typical range. See docs."
@@ -273,30 +307,38 @@ class Target(CurveUncertain):
         return self.wavelength/depth_factor
 
     def pseudo_vs(self, velocity_factor=1.1):
-        """Estimates depth based on the experimental dispersion data.
+        """Estimate Vs based on the experimental dispersion data.
 
         This method, along with :meth: `pseudo-depth`, may be useful to
         create plots of pseudo-Vs vs pseudo-depth for selecting
-        approprate boundaries for parameter limits in the inverison
-        stage.
+        approprate boundaries for parameter limits.
 
         Parameters
         ----------
-        velocity_factor : float
+        velocity_factor : float, optional
             Factor by which the mean Rayleigh wave velocity is
             multiplied to produce an estimate of shear-wave
-            velocity. Typically between 1 and 1.2, and is dependent
-            upon the expected Poisson's ratio, default is 1.1.
+            velocity. Typically range between 1 and 1.2, and is
+            dependent upon the expected Poisson's ratio, default is 1.1.
 
         Returns
         -------
         ndarray
             Of pseudo-vs.
+
         """
         if (velocity_factor > 1.2) | (velocity_factor < 1):
             msg = "`velocity_factor` is outside the typical range. See documenation."
             warnings.warn(msg)
         return self.velocity*velocity_factor
+
+    def _set_domain(self, domain):
+        if domain == "wavelength":
+            return self.wavelength
+        elif domain == "frequency":
+            return self.frequency
+        else:
+            raise NotImplementedError(f"domain={domain}, not recognized.")
 
     def cut(self, pmin, pmax, domain="frequency"):
         """Remove data outside of the specified range.
@@ -306,7 +348,6 @@ class Target(CurveUncertain):
         pmin, pmax : float
             New minimum and maximum parameter value in the specified
             domain, respectively.
-
         domain : {'frequency', 'wavelength'}, optional
             Domain along which to perform the cut.
 
@@ -315,46 +356,52 @@ class Target(CurveUncertain):
         None
             May update attributes `frequency`, `velocity`, and
             `velstd`.
-        """
-        if domain == "wavelength":
-            x = self.wavelength
-        elif domain == "frequency":
-            x = self.frequency
-        else:
-            raise NotImplementedError(f"domain={domain}, not recognized.")
 
+        """
+        x = self._set_domain(domain)
         keep_ids = np.where((x >= pmin) & (x <= pmax))
-        self.frequency = self.frequency[keep_ids]
-        self.velocity = self.velocity[keep_ids]
-        self.velstd = self.velstd[keep_ids]
+        self._x = self.frequency[keep_ids]
+        self._y = self.velocity[keep_ids]
+        self._yerr = self.velstd[keep_ids]
 
     def _resample(self, xx, domain="wavelength", inplace=False):
-        if domain == "frequency":
-            x = self.frequency
-        elif domain == "wavelength":
-            x = self.wavelength
-        else:
-            msg = f"`domain`={domain}, has not been implemented."
-            raise NotImplementedError(msg)
+        """Hidden resample function for custom resampling.
 
-        # Define custom resampling functions
-        res_fxn = self.resample_function(x, self.velocity, kind="cubic")
+        Parameters
+        ----------
+        xx : ndarray, optional
+            Array of new values in the chosen domain.
+        domain : {'frequency','wavelength'}, optional
+            Resampling domain, default is wavelength.
+        inplace : bool, optional
+            Determine whether resample is done in place or if the values
+            are returned, default is False meaning resampled values are
+            returned.
+
+        Returns
+        -------
+        None or Tuple
+            `None` if `resample=False` otherwise returns a `tuple` of
+            the form `(frequency, velocity, velstd)`.
+
+        """
+        x = self._set_domain(domain)
+        res_fxn_y = self.resample_function(x, self.velocity, kind="cubic")
         res_fxn_yerr = self.resample_function(x, self.velstd, kind="cubic")
 
-        results = super().resample(xx=xx, inplace=False, res_fxn=res_fxn,
+        results = super().resample(xx=xx, inplace=False, res_fxn=res_fxn_y,
                                    res_fxn_yerr=res_fxn_yerr)
         xx, new_vel, new_velstd, = results
 
         if domain == "frequency":
             new_frq = xx
-        else:
+        elif domain == "wavelength":
             new_frq = new_vel/xx
 
-        # Update attributes or return new object.
         if inplace:
-            self.frequency = new_frq
-            self.velocity = new_vel
-            self.velstd = new_velstd
+            self._x = new_frq
+            self._y = new_vel
+            self._yerr = new_velstd
         else:
             return Target(new_frq, new_vel, new_velstd)
 
@@ -379,11 +426,6 @@ class Target(CurveUncertain):
         inplace : bool
             Indicating whether the resampling should be done in
             place or if a new `Target` object should be returned.
-        xx : ndarray, optional
-            Array of new values in the chosen domain, can be used
-            for any general form of resampling, default is `None`
-            indicating xx vector will be calculated from the
-            arguements `pmin`, `pmax`, `pn`, and `res_type`.
 
         Returns
         -------
@@ -397,18 +439,17 @@ class Target(CurveUncertain):
         NotImplementedError
             If `res_type` and/or `domain` are not amoung the options
             specified.
+
         """
         # Check input.
         if pmax < pmin:
             pmin, pmax = (pmax, pmin)
-        if type(pn) != int:
-            raise TypeError(f"`pn` must be an `int`, not {type(pn)}")
-        if pn <= 0:
-            raise ValueError(f"`pn` must be greater than zero.")
+        pn = int(pn)
+        if not pn > 0:
+            raise ValueError(f"`pn` must be greater than zero, not {pn}.")
 
-        # Set location of resampled values.
         if res_type == "log":
-            xx = np.logspace(np.log10(pmin), np.log10(pmax), pn)
+            xx = np.geomspace(pmin, pmax, pn)
         elif res_type == "linear":
             xx = np.linspace(pmin, pmax, pn)
         else:
@@ -422,7 +463,7 @@ class Target(CurveUncertain):
 
     @property
     def vr40(self):
-        """Estimate the Rayleigh wave velocity at a wavelength of 40m."""
+        """Estimate Rayleigh wave velocity at a wavelength of 40m."""
         wavelength = self.wavelength
         if (max(wavelength) > 40) & (min(wavelength) < 40):
             obj = self.resample(pmin=40, pmax=40, pn=1, res_type="linear",
@@ -433,8 +474,7 @@ class Target(CurveUncertain):
             return None
 
     def to_txt_dinver(self, fname, version="3"):
-        """Write `Target` to text format readily accepted by `Dinver's`
-        pre-processor.
+        """Write in text format accepted by `Dinver's` pre-processor.
 
         Parameters
         ----------
@@ -447,6 +487,7 @@ class Target(CurveUncertain):
         -------
         None
             Writes file to disk.
+
         """
         if version == "2":
             stddevs = self.slostd
@@ -461,7 +502,7 @@ class Target(CurveUncertain):
                 f.write(f"{frq}\t{slo}\t{std}\n")
 
     def to_txt_swipp(self, fname):
-        """Write `Target` to text format readily accepted by swipp.
+        """Write in text format readily accepted by `swipp`.
 
         Parameters
         ----------
@@ -470,8 +511,9 @@ class Target(CurveUncertain):
 
         Returns
         -------
-        None 
+        None
             Writes file to disk.
+
         """
         with open(fname, "w") as f:
             f.write("#Frequency,Velocity,Velstd\n")
@@ -479,8 +521,7 @@ class Target(CurveUncertain):
                 f.write(f"{c_frq},{c_vel},{c_velstd}\n")
 
     def to_target(self, fname_prefix, version="3"):
-        """Write `Target` to `.target` file format that can be imported
-        into `Dinver`.
+        """Write info to the .target file format used by `Dinver`.
 
         Parameters
         ----------
@@ -499,6 +540,7 @@ class Target(CurveUncertain):
         ------
         NotImplementedError
             If `version` does not match the options provided.
+
         """
 
         self._sort_data()
@@ -569,8 +611,6 @@ class Target(CurveUncertain):
                              f"          <weight>1</weight>",
                              f"          <valid>true</valid>",
                              f"        </RealStatisticalPoint>"]
-        else:
-            raise NotImplementedError
 
         contents += ["      </ModalCurve>"]
 
@@ -580,8 +620,6 @@ class Target(CurveUncertain):
         elif version in ["3"]:
             contents += ["    </DispersionTarget>"]
 
-        else:
-            raise NotImplementedError
 
         contents += ["    <AutocorrTarget>",
                      "      <selected>false</selected>",
@@ -622,8 +660,6 @@ class Target(CurveUncertain):
                          f"        <valid>{selected}</valid>",
                          f"      </RealStatisticalValue>",
                          f"    </ValueTarget>"]
-        else:
-            raise NotImplementedError
 
         contents += ["    <RefractionTarget type=\"Vp\">",
                      "      <selected>false</selected>",
@@ -659,18 +695,24 @@ class Target(CurveUncertain):
 
     @classmethod
     def from_target(cls, target_prefix, version="3"):
-        """Create Target object from target file.
+        """Create from target file.
 
-        Parameters----------
-            target_prefix : str
-                Name of target file to be opened without the '.target'
-                suffix, may include the relative or full path.
-            version : {'2', '3'}, optional
-                Major version of Geopsy used to write the target file,
-                default is '3'.
+        Note that this method is still largely experimental and may
+        not work for all cases.
 
-        Returns-------
+        Parameters
+        ----------
+        target_prefix : str
+            Name of target file to be opened excluding the `.target`
+            suffix, may include the relative or full path.
+        version : {'2', '3'}, optional
+            Major version of Geopsy that was used to write the target
+            file, default is '3'.
+
+        Returns
+        -------
             Instantiated `Target` object.
+
         """
         with tar.open(target_prefix+".target", "r:gz") as a:
             a.extractall()
@@ -716,6 +758,7 @@ class Target(CurveUncertain):
         return cls(frequency, velocity, velstd)
 
     def __eq__(self, obj):
+        """Check if two target objects are equal."""
         if self.frequency.size == obj.frequency.size:
             for attr in ["frequency", "velocity", "velstd"]:
                 for f1, f2 in zip(np.round(getattr(self, attr), 6), np.round(getattr(obj, attr), 6)):
@@ -726,79 +769,82 @@ class Target(CurveUncertain):
         return True
 
     def __repr__(self):
+        """Unambiguous representation of Target object."""
         frq_str = str(np.round(self.frequency, 2))
         vel_str = str(np.round(self.velocity, 2))
         std_str = str(np.round(self.velstd, 2))
         return f"Target(frequency={frq_str}, velocity={vel_str}, velstd={std_str})"
 
-    def plot(self, x="frequency", y="velocity", yerr="velstd", ax=None, **kwargs):
+    def __str__(self):
+        """Human readable represetnation of a Target object."""
+        return f"Target with {len(self.frequency)} frequency/wavelength points"
+
+    def plot(self, x="frequency", y="velocity", yerr="velstd", ax=None,
+             figkwargs=None, errorbarkwargs=None): # pragma: no cover
         """Plot `Target` information.
 
-        Parameters----------
-            x : {'frequency', 'wavelength'}, optional
-                Select what should be plotted along the x-axis, default
-                is 'frequency'.
-            y : {'velocity', 'slowness'}, optional
-                Select what should be plotted along the y-axis, default
-                is 'velocity'.
-            yerr : {'velstd', 'slostd'}, optional
-                Select what should be plotted as the y-error, default
-                is 'velstd'.
-            ax : Axis
-                Provide an axis on which to plot, default is `None`
-                meaning an axis will be created "on-the-fly".
-            kwargs : dict
-                Additional keyword arguments for plot.
+        Parameters
+        ----------
+        x : {'frequency', 'wavelength'}, optional
+            Select what should be plotted along the x-axis, default
+            is 'frequency'.
+        y : {'velocity', 'slowness'}, optional
+            Select what should be plotted along the y-axis, default
+            is 'velocity'.
+        yerr : {'velstd', 'slostd'}, optional
+            Select what should be plotted as the y-error, default
+            is 'velstd'.
+        ax : Axis, optional
+            Provide an axes on which to plot, default is `None`
+            meaning an axes will be created on-the-fly.
+        figkwargs : dict
+            Additional keyword arguments defining the `Figure`. Ignored
+            if `ax` is defined.
+        errorbarkwargs : dict
+            Additional keyword arguements defining the sytling of the
+            errorbar plot.
 
-        Returns-------
-            If 'ax=None':
-                Tuple of the form (fig, ax)
-            else:
-                Updated axes object.
+
+        Returns
+        -------
+        None or Tuple
+            If `ax` is defined this method returns returns `None`.
+            If `ax=None` this method returns a `tuple` of the form
+            `(fig, ax)` where `fig` is a `Figure` object and `ax` is an
+            `Axes` object.
+
         """
         ax_was_none = False
         if ax is None:
+            figdefaults = dict(figsize=(4, 3), dpi=150)
+            _figkwargs = {**figdefaults, **figkwargs}
+            fig, ax = plt.subplots(**_figkwargs)
             ax_was_none = True
-            fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(4, 3), dpi=150)
 
-        # Default color -> Black
-        if kwargs.get("color") is None:
-            kwargs["color"] = "#000000"
+        errorbardefaults = dict(color="#000000", label="Exp. Disp. Data",
+                                capsize=2, linestyle="" )
+        _errorbarkwargs = {**errorbardefaults, **errorbarkwargs}
 
-        # Default label -> Exp. DC
-        if kwargs.get("label") is None:
-            kwargs["label"] = "Exp. DC"
-
-        # Default capsize -> 1
-        if kwargs.get("capsize") is None:
-            kwargs["capsize"] = 2
-
-        # Define linestyle -> ""
-        if kwargs.get("linestyle") is None:
-            kwargs["linestyle"] = ""
-
-        ax.errorbar(x=getattr(self, x),
-                    y=getattr(self, y),
-                    yerr=getattr(self, yerr),
-                    **kwargs)
+        ax.errorbar(x=getattr(self, x), y=getattr(self, y), 
+                    yerr=getattr(self, yerr), **_errorbarkwargs)
 
         if x == "frequency":
-            ax.set_xlabel("Frequency, "+r"$f$"+" "+r"$(Hz)$")
+            xlabeltext = "Frequency, "+r"$f$"+" "+r"$(Hz)$"
         elif x == "wavelength":
-            ax.set_xlabel("Wavelength, "+r"$\lambda$"+" "+r"$(m)$")
+            xlabeltext = "Wavelength, "+r"$\lambda$"+" "+r"$(m)$"
         else:
-            pass
-
-        ax.set_xscale("log")
+            xlabeltext = ""
 
         if y == "velocity":
-            ax.set_ylabel("Rayleigh Phase-Velocity, "+r"$V_R$"+" "+r"$(m/s)$")
+            ylabeltext = "Rayleigh Phase-Velocity, "+r"$V_R$"+" "+r"$(m/s)$"
         elif y == "slowness":
-            ax.set_ylabel("Slowness, "+r"$p$"+" "+r"$(s/m)$")
+            ylabeltext = "Slowness, "+r"$p$"+" "+r"$(s/m)$"
         else:
-            pass
+            ylabeltext = ""
+
+        ax.set_xlabel(xlabeltext)
+        ax.set_xscale("log")
+        ax.set_ylabel(ylabeltext)
 
         if ax_was_none:
             return (fig, ax)
-        else:
-            return (ax)

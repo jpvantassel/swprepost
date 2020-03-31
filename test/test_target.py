@@ -4,13 +4,16 @@ from testtools import unittest, TestCase, get_full_path
 import swipp
 import numpy as np
 import os
+import warnings
+import nbformat
+from nbconvert.preprocessors import ExecutePreprocessor
 
 
 class Test_Target(TestCase):
 
     def setUp(self):
         self.full_path = get_full_path(__file__)
-        
+
     def test_init(self):
         # With standard deviation provided.
         frequency = np.array([1, 2, 3])
@@ -49,6 +52,23 @@ class Test_Target(TestCase):
         b = [1, 2]
         self.assertRaises(IndexError, swipp.Target, a, b, a)
 
+    def test_check_new_value(self):
+        x = [1, 3, 2]
+        tar = swipp.Target(x, x, velstd=x)
+
+        # Incorrect length
+        self.assertRaises(ValueError, tar._check_new_value, [1, 2])
+
+    def test_sort(self):
+        x = [1, 3, 2]
+        tar = swipp.Target(x, x, velstd=x)
+
+        # Check sort
+        expected = np.array([1, 2, 3])
+        for attr in ["frequency", "velocity", "velstd"]:
+            returned = getattr(tar, attr)
+            self.assertArrayEqual(expected, returned)
+
     def test_from_csv(self):
         # With standard deviation provided.
         tar = swipp.Target.from_csv(self.full_path+"data/test_tar_wstd.csv")
@@ -65,6 +85,10 @@ class Test_Target(TestCase):
         self.assertListEqual(tar.velstd.tolist(), [0, 0])
         self.assertListEqual(tar.wavelength.tolist(),
                              [200/1.55, 500.01245/2.00])
+
+        # With incorrect formatting
+        fname = self.full_path+"data/test_tar_bad.csv"
+        self.assertRaises(ValueError, swipp.Target.from_csv, fname)
 
     def test_setcov(self):
         frequency = [1, 2, 3]
@@ -83,16 +107,20 @@ class Test_Target(TestCase):
         tar.setmincov(cov)
         self.assertArrayEqual(tar.velstd, velocity*0.05)
 
+        # Bad cov
+        cov = -0.1
+        self.assertRaises(ValueError, tar.setmincov, cov)
+
     def test_is_vel_std(self):
         frequency = [0.1, 0.2, 0.3]
         velocity = [10., 20., 30.]
         velstd = None
         tar = swipp.Target(frequency, velocity, velstd)
-        self.assertTrue(tar.is_no_velstd())
+        self.assertTrue(tar.is_no_velstd)
 
         velstd = 0.1
         tar = swipp.Target(frequency, velocity, velstd)
-        self.assertFalse(tar.is_no_velstd())
+        self.assertFalse(tar.is_no_velstd)
 
     def test_pseudo_vs(self):
         frequency = [0.1, 0.2, 0.3]
@@ -113,6 +141,13 @@ class Test_Target(TestCase):
         self.assertArrayEqual(tar.pseudo_depth(depth_factor),
                               wavelength/depth_factor)
 
+        # Depth factor outside the typical range
+        depth_factor = 0.5
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            self.assertArrayEqual(tar.pseudo_depth(depth_factor),
+                                  wavelength/depth_factor)
+
     def test_cut(self):
         frequency = np.array([1, 2, 3, 4, 5])
         velocity = np.array([1, 2, 3, 4, 5])
@@ -124,6 +159,10 @@ class Test_Target(TestCase):
         self.assertListEqual(tar.frequency.tolist(), [2, 3, 4])
         self.assertListEqual(tar.velocity.tolist(), [2, 3, 4])
         self.assertListEqual(tar.velstd.tolist(), [2, 3, 4])
+
+        # Bad domain
+        self.assertRaises(NotImplementedError, tar.cut, pmin=2, pmax=4,
+                          domain="slowness")
 
     def test_resample(self):
         fname = self.full_path+"data/test_tar_wstd_linear.csv"
@@ -138,8 +177,8 @@ class Test_Target(TestCase):
         tar = swipp.Target.from_csv(fname)
         expected = np.array([2., 2.8, 4.0])
         returned = tar.resample(pmin=2, pmax=4, pn=3,
-                               res_type='log', domain="frequency",
-                               inplace=False).frequency
+                                res_type='log', domain="frequency",
+                                inplace=False).frequency
         self.assertArrayAlmostEqual(expected, returned, places=1)
 
         fname = self.full_path+"data/test_tar_wstd_nonlin_0.csv"
@@ -165,7 +204,7 @@ class Test_Target(TestCase):
         self.assertAlmostEqual(tar.vr40, 267.2, places=1)
 
     def test_to_target(self):
-        prefix = self.full_path+"data/test_tar_wstd_nonlin_1" 
+        prefix = self.full_path+"data/test_tar_wstd_nonlin_1"
         tar = swipp.Target.from_csv(prefix + ".csv")
         tar.to_target(fname_prefix=prefix+"_swipp_v3", version="3")
         tar.to_target(fname_prefix=prefix+"_swipp_v2", version="2")
@@ -179,6 +218,20 @@ class Test_Target(TestCase):
         tar_geopsy = swipp.Target.from_target(prefix+"_geopsy_v2", version="2")
         self.assertEqual(tar_geopsy, tar_swipp)
         os.remove(prefix+"_swipp_v2.target")
+
+    def test_notebook(self):
+        fname = "../examples/Targets.ipynb"
+        with open(self.full_path+fname) as f:
+            nb = nbformat.read(f, as_version=4)
+        
+        try:
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                ep = ExecutePreprocessor(timeout=600, kernel_name='python3')
+                ep.preprocess(nb, {'metadata':{'path':self.full_path+"../examples"}})
+        finally:
+            with open(self.full_path+fname, 'w', encoding='utf-8') as f:
+              nbformat.write(nb, f)
 
 
 if __name__ == '__main__':
