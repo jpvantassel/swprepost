@@ -52,12 +52,26 @@ class Test_Target(TestCase):
         b = [1, 2]
         self.assertRaises(IndexError, swipp.Target, a, b, a)
 
-    def test_check_new_value(self):
+    def test_setters(self):
         x = [1, 3, 2]
         tar = swipp.Target(x, x, velstd=x)
 
-        # Incorrect length
+        # Check _check_new_value
         self.assertRaises(ValueError, tar._check_new_value, [1, 2])
+
+        new = [1, 4, 5]
+        expected = np.array(new)
+        # Frequency
+        tar.frequency = new
+        self.assertArrayEqual(expected, tar.frequency)
+
+        # Velocity
+        tar.velocity = new
+        self.assertArrayEqual(expected, tar.velocity)
+
+        # VelStd
+        tar.velstd = new
+        self.assertArrayEqual(expected, tar.velstd)
 
     def test_sort(self):
         x = [1, 3, 2]
@@ -131,6 +145,13 @@ class Test_Target(TestCase):
         self.assertArrayEqual(tar.pseudo_vs(velocity_factor),
                               velocity*velocity_factor)
 
+        # Velocity factor outside the typical range
+        velocity_factor = 0.5
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            self.assertArrayEqual(tar.pseudo_vs(velocity_factor),
+                                  tar.velocity*velocity_factor)
+
     def test_pseudo_depth(self):
         frequency = np.array([0.1, 0.2, 0.3])
         velocity = np.array([10., 20., 30.])
@@ -165,6 +186,8 @@ class Test_Target(TestCase):
                           domain="slowness")
 
     def test_resample(self):
+        # Inplace=False
+        # Linear w/ VelStd
         fname = self.full_path+"data/test_tar_wstd_linear.csv"
         tar = swipp.Target.from_csv(fname)
         returned = tar.resample(pmin=0.5, pmax=4.5, pn=5,
@@ -173,6 +196,7 @@ class Test_Target(TestCase):
         expected = np.array([0.5, 1.5, 2.5, 3.5, 4.5])
         self.assertArrayAlmostEqual(expected, returned, places=1)
 
+        # Linear w/ VelStd
         fname = self.full_path+"data/test_tar_wstd_linear.csv"
         tar = swipp.Target.from_csv(fname)
         expected = np.array([2., 2.8, 4.0])
@@ -181,6 +205,7 @@ class Test_Target(TestCase):
                                 inplace=False).frequency
         self.assertArrayAlmostEqual(expected, returned, places=1)
 
+        # Non-linear w/ VelStd
         fname = self.full_path+"data/test_tar_wstd_nonlin_0.csv"
         tar = swipp.Target.from_csv(fname)
         new_tar = tar.resample(pmin=50, pmax=100, pn=5,
@@ -194,6 +219,26 @@ class Test_Target(TestCase):
         returned = new_tar.wavelength
         self.assertArrayAlmostEqual(expected, returned, places=1)
 
+        # Inplace=True
+        x = [0.1, 0.2, 0.4, 0.5]
+        tar = swipp.Target(x, x, x)
+
+        for pmin, pmax in [(0.1, 0.5), (0.5, 0.1)]:
+            tar.resample(pmin=pmin, pmax=pmax, pn=5, domain="frequency",
+                         res_type="linear", inplace=True)
+
+            expected = np.array([0.1, 0.2, 0.3, 0.4, 0.5])
+            for attr in ["frequency", "velocity", "velstd"]:
+                returned = getattr(tar, attr)
+                self.assertArrayAlmostEqual(expected, returned)
+
+        # Bad pn
+        self.assertRaises(ValueError, tar.resample, pmin=0.1, pmax=0.5, pn=-1)
+
+        # Bad res_type
+        self.assertRaises(NotImplementedError, tar.resample, pmin=0.1,
+                          pmax=0.5, pn=5, res_type="log-spiral")
+
     def test_vr40(self):
         fname = self.full_path+"data/test_tar_wstd_nonlin_0.csv"
         tar = swipp.Target.from_csv(fname)
@@ -202,6 +247,13 @@ class Test_Target(TestCase):
         fname = self.full_path+"data/test_tar_wstd_nonlin_1.csv"
         tar = swipp.Target.from_csv(fname)
         self.assertAlmostEqual(tar.vr40, 267.2, places=1)
+
+        # Vr40 out of range
+        x = [1, 2, 3]
+        tar = swipp.Target(x, x, x)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            self.assertTrue(tar.vr40 is None)
 
     def test_to_target(self):
         prefix = self.full_path+"data/test_tar_wstd_nonlin_1"
@@ -219,19 +271,49 @@ class Test_Target(TestCase):
         self.assertEqual(tar_geopsy, tar_swipp)
         os.remove(prefix+"_swipp_v2.target")
 
-    def test_notebook(self):
-        fname = "../examples/Targets.ipynb"
-        with open(self.full_path+fname) as f:
-            nb = nbformat.read(f, as_version=4)
-        
-        try:
-            with warnings.catch_warnings():
-                warnings.simplefilter("ignore")
-                ep = ExecutePreprocessor(timeout=600, kernel_name='python3')
-                ep.preprocess(nb, {'metadata':{'path':self.full_path+"../examples"}})
-        finally:
-            with open(self.full_path+fname, 'w', encoding='utf-8') as f:
-              nbformat.write(nb, f)
+        # Bad version
+        self.assertRaises(NotImplementedError, tar.to_target,
+                          fname_prefix="blahbal", version="12000")
+
+    def test_to_and_from_dinver_txt(self):
+        frq = [1, 3, 5, 7, 9, 15]
+        vel = [200, 150, 112, 95, 90, 85]
+        velstd = [10, 8, 6, 5, 5, 5]
+        tar = swipp.Target(frq, vel, velstd)
+
+        fname = self.full_path+"test_dinver_txt.txt"
+        for version in ["2", "3"]:
+            tar.to_txt_dinver(fname, version=version)
+            new = swipp.Target.from_txt_dinver(fname, version=version)
+
+            for attr in ["frequency", "velocity", "velstd"]:
+                expected = getattr(tar, attr)
+                returned = getattr(new, attr)
+                self.assertArrayAlmostEqual(expected, returned, places=0)
+
+        # Bad verison
+        version = "1245"
+        self.assertRaises(NotImplementedError, tar.to_txt_dinver,
+                          fname, version=version)
+        self.assertRaises(NotImplementedError, swipp.Target.from_txt_dinver,
+                          fname, version=version)
+
+        os.remove(fname)
+
+    # def test_notebook(self):
+    #     fname = "../examples/Targets.ipynb"
+    #     with open(self.full_path+fname) as f:
+    #         nb = nbformat.read(f, as_version=4)
+
+    #     try:
+    #         with warnings.catch_warnings():
+    #             warnings.simplefilter("ignore")
+    #             ep = ExecutePreprocessor(timeout=600, kernel_name='python3')
+    #             ep.preprocess(
+    #                 nb, {'metadata': {'path': self.full_path+"../examples"}})
+    #     finally:
+    #         with open(self.full_path+fname, 'w', encoding='utf-8') as f:
+    #             nbformat.write(nb, f)
 
 
 if __name__ == '__main__':

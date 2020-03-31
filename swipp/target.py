@@ -151,7 +151,8 @@ class Target(CurveUncertain):
         """Get slowness standard deviation."""
         upper = self.velocity+self.velstd
         lower = self.velocity-self.velstd
-        return 0.5*((1/lower - self.slowness) + (self.slowness - 1/upper))
+        # return 0.5*((1/lower - self.slowness) + (self.slowness - 1/upper))
+        return 0.5*(1/lower - 1/upper)
 
     @property
     def logstd(self):
@@ -471,7 +472,6 @@ class Target(CurveUncertain):
             return float(obj.velocity)
         else:
             warnings.warn("A wavelength of 40m is out of range.")
-            return None
 
     def to_txt_dinver(self, fname, version="3"):
         """Write in text format accepted by `Dinver's` pre-processor.
@@ -500,6 +500,51 @@ class Target(CurveUncertain):
         with open(fname, "w") as f:
             for frq, slo, std in zip(self.frequency, self.slowness, stddevs):
                 f.write(f"{frq}\t{slo}\t{std}\n")
+
+    @classmethod
+    def from_txt_dinver(cls, fname, version="3"):
+        """Create from text format accepted by `Dinver's` pre-processor.
+
+        Parameters
+        ----------
+        fname : str
+            Name of output file, may a relative or full path.
+        version : {'3', '2'}, optional
+            Major version of Geopsy, default is version 3.
+
+        Returns
+        -------
+        Target
+            Instantiated `Target` with information from file.
+
+        """
+        with open(fname, "r") as f:
+            lines = f.readlines()
+        
+        frqs, slos, stds = [], [], []
+        for line in lines:
+            frq, slo, std = line.split("\t")
+            frqs.append(frq)
+            slos.append(slo)
+            stds.append(std)
+
+
+        frq = np.array(frqs, dtype=np.double)
+        slo = np.array(slos, dtype=np.double)
+        vel = 1/slo
+        std = np.array(stds, dtype=np.double)
+
+        if version == "2":
+            velstd = (1 - np.sqrt(1 - 4*std*std*vel*vel))/(2*std)
+        elif version == "3":
+            cov = std - np.sqrt(std*std - 2*std + 2)
+            velstd = cov*vel
+        else:
+            msg = f"version={version} is not implemented, refer to documentation."
+            raise NotImplementedError(msg)
+
+        return cls(frq, vel, velstd)
+
 
     def to_txt_swipp(self, fname):
         """Write in text format readily accepted by `swipp`.
