@@ -1,4 +1,21 @@
-"""This file defines the class `GroundModelSuite`."""
+# This file is part of swipp, a Python package for surface-wave
+# inversion pre- and post-processing.
+# Copyright (C) 2019-2020 Joseph P. Vantassel (jvantassel@utexas.edu)
+#
+#     This program is free software: you can redistribute it and/or modify
+#     it under the terms of the GNU General Public License as published by
+#     the Free Software Foundation, either version 3 of the License, or
+#     (at your option) any later version.
+#
+#     This program is distributed in the hope that it will be useful,
+#     but WITHOUT ANY WARRANTY; without even the implied warranty of
+#     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#     GNU General Public License for more details.
+#
+#     You should have received a copy of the GNU General Public License
+#     along with this program.  If not, see <https: //www.gnu.org/licenses/>.
+
+"""GroundModelSuite class definition."""
 
 import scipy.io as sio
 import numpy as np
@@ -6,7 +23,7 @@ import warnings
 import os
 from swipp import GroundModel, Suite, DispersionSuite, regex
 import logging
-logging.Logger(name=__name__)
+logger = logging.getLogger(name=__name__)
 
 
 class GroundModelSuite(Suite):
@@ -20,15 +37,17 @@ class GroundModelSuite(Suite):
         List of identifiers, one per `GroundModel` in the suite.
     misfits : list
         List of misfits, one per `GroundModel` in the suite.
+
     """
     @staticmethod
     def check_type(groundmodel, identifier, misfit):
         """Check input to `GroundModelSuite`.
 
         Specifically:
-            1. `groundmodel` is of type `GroundModel`.
-            2. cast `identifier` to `str`.
-            3. cast `misfit` to `float`.
+        1. `groundmodel` is of type `GroundModel`.
+        2. cast `identifier` to `str`.
+        3. cast `misfit` to `float`.
+        
         """
         if not isinstance(groundmodel, GroundModel):
             msg = f"`groundmodel` must an instance of `GroundModel`, not {type(groundmodel)}."
@@ -59,7 +78,7 @@ class GroundModelSuite(Suite):
         self.misfits = [misfit]
 
     def append(self, groundmodel, identifier, misfit=0.0000, sort=True):
-        """Append `GroundModel` object to `DispersionSuite` object.
+        """Append `GroundModel` object to `GroundModelSuite` object.
 
         Parameters
         ----------
@@ -92,19 +111,30 @@ class GroundModelSuite(Suite):
         self.misfits.append(misfit)
 
         if sort:
-            self.gms = [cgm for _, cgm in sorted(zip(self.misfits, self.gms),
-                                                 key=lambda pair: pair[0])]
-            self.ids = [cid for _, cid in sorted(zip(self.misfits, self.ids),
-                                                 key=lambda pair: pair[0])]
-            self.misfits.sort()
-
-    @staticmethod
-    def mkgm(thk, vps, vss, rho):
-        return GroundModel(thickness=thk, vp=vps, vs=vss, density=rho)
+            for attr in ["gms", "ids", "misfits"]:
+                to_sort = getattr(self, attr)
+                values = [x for _, x in sorted(zip(self.misfits, to_sort),
+                                              key=lambda pair: pair[0])]
+                setattr(self, attr, values)
 
     def vs30(self, nbest="all"):
-        """Returns a `list` of the nbest Vs30 values,
-        refer to :meth: `vs30 <swipp.GroundModel.vs30>`."""
+        """Calculate Vs30 for `GroundModelSuite`.
+        
+        Parameters
+        ----------
+        nbest : {int, "all"}, optional
+            Number of lowest misfit profiles to return.
+
+        Returns
+        -------
+        list
+            Of the `nbest` Vs30 values.
+
+        See Also
+        --------
+        Refer to :meth: `vs30 <swipp.GroundModel.vs30>`.
+        
+        """
         if nbest == "all":
             gms = self.gms
         else:
@@ -115,31 +145,29 @@ class GroundModelSuite(Suite):
         return vs30
 
     def median_simple(self, nbest="all", parameter='vs'):
-        """Calculate the simplified, layer-by-layer median of a given
-        parameter.
+        """Calculate layer-by-layer median of a given parameter.
 
         Parameters
         ----------
-        nbest : int
-            Number of best models to consider.
+        nbest : {int, "all"}, optional
+            Number of best models to consider, default is 'all' so all
+            models will be used.
         parameter : {'depth', 'vs', 'vp', 'rho'}, optional
             Parameter along which to calculate the median, default
             is 'vs' for shear-wave velocity.
 
         Returns
         -------
-        Tuple
-            A `tuple` of the form
-            `([median_thickness], [median_parameter])`
+        tuple
+            Of the form `([median_thickness], [median_parameter])`
             where `[median_thickness]` is a `list` of the median
             thickness of each layer and `[median_parameter]` is a `list`
             of the median parameter of each layer.
+
         """
         if str(nbest) == "all":
-            nbest = len(self.gms)
-            gms = self.gms
-        else:
-            gms = self.gms[0:nbest]
+            nbest = len(self.gms)-1
+        gms = self.gms[:nbest]
 
         thk, par = self.gms[0].simplify(parameter)
         thks = np.zeros((len(thk), nbest))
@@ -158,9 +186,9 @@ class GroundModelSuite(Suite):
 
         Parameters
         ----------
-        nbest : int, optional
+        nbest : {int, 'all'}, optional
             Number of the best profiles to consider when calculating
-            the median profile, default is "all", meaning all
+            the median profile, default is 'all', meaning all
             available models will be used.
 
         Returns
@@ -176,8 +204,7 @@ class GroundModelSuite(Suite):
                                                med_rh_tk, med_rh)
 
     def write_to_txt(self, fname):
-        """Write `GroundModelSuite` to text file, following the Geopsy
-        format.
+        """Write to text file, following the Geopsy format.
 
         Parameters
         ----------
@@ -187,7 +214,8 @@ class GroundModelSuite(Suite):
         Returns
         -------
         None
-            Instead writes file to disk.
+            Writes file to disk.
+
         """
         with open(fname, "w") as f:
             for cid, cmf, cgm in zip(self.ids, self.misfits, self.gms):
@@ -263,11 +291,11 @@ class GroundModelSuite(Suite):
         """
         # Potential names for each parameter, from high to low priority.
         search_values = {"tk": [tk, "thickness"],
-                      "vs": [vs, "Vs1", "vs1"],
-                      "vp": [vp, "Vp1", "vp1"],
-                      "rh": [rh, "Rho1", "rho1", "density1"],
-                      "misfit": [misfit, "misfit"],
-                      "ids": [identifier, "indices"]}
+                         "vs": [vs, "Vs1", "vs1"],
+                         "vp": [vp, "Vp1", "vp1"],
+                         "rh": [rh, "Rho1", "rho1", "density1"],
+                         "misfit": [misfit, "misfit"],
+                         "ids": [identifier, "indices"]}
 
         # Load's matlab file as `dict`.
         data = sio.loadmat(fname)
@@ -282,7 +310,7 @@ class GroundModelSuite(Suite):
             else:
                 if par == "misfit":
                     msg = f"Cound not find {par}, using keys={keys}, ignoring."
-                    warnings.warn(msg)
+                    logging.warning(msg)
                 else:
                     msg = f"Could not find {par}, using keys={keys}."
                     raise KeyError(msg)
@@ -312,7 +340,7 @@ class GroundModelSuite(Suite):
         -------
         GroundModelSuite
             Instantiated `GroundModelSuite`.
-    
+
         Raises
         ------
         AssertionError
@@ -379,8 +407,8 @@ class GroundModelSuite(Suite):
             return self.gms[sliced]
         if isinstance(sliced, slice):
             return self._gm_suite().from_list(self.gms[sliced],
-                                            self.ids[sliced],
-                                            self.misfits[sliced])
+                                              self.ids[sliced],
+                                              self.misfits[sliced])
 
-    def __repr__(self):
+    def __str__(self):
         return f"GroundModelSuite with {len(self.gms)} GroundModels."

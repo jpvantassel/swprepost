@@ -1,14 +1,29 @@
-"""This file contains the class definiton for `GroundModel`."""
+# This file is part of swipp, a Python package for surface-wave
+# inversion pre- and post-processing.
+# Copyright (C) 2019-2020 Joseph P. Vantassel (jvantassel@utexas.edu)
+#
+#     This program is free software: you can redistribute it and/or modify
+#     it under the terms of the GNU General Public License as published by
+#     the Free Software Foundation, either version 3 of the License, or
+#     (at your option) any later version.
+#
+#     This program is distributed in the hope that it will be useful,
+#     but WITHOUT ANY WARRANTY; without even the implied warranty of
+#     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#     GNU General Public License for more details.
+#
+#     You should have received a copy of the GNU General Public License
+#     along with this program.  If not, see <https: //www.gnu.org/licenses/>.
 
-import scipy.io as sio
-import warnings
-import logging
-import subprocess
+"""GroundModel class definiton."""
+
+from scipy.io import savemat
 import numpy as np
-import re
 from swipp import DispersionSet, regex
 import os
-logging.Logger(name=__name__)
+import warnings
+import logging
+logger = logging.getLogger(name=__name__)
 
 
 class GroundModel():
@@ -19,7 +34,8 @@ class GroundModel():
     tk, vp, vs, rh : list
         Thickness, compression-wave velocity (Vp), shear-wave
         velcocity (Vs), and mass density defining each layer of the
-        ground model, respectively.
+        `GroundModel`, respectively.
+
     """
 
     @staticmethod
@@ -27,21 +43,23 @@ class GroundModel():
         """Check `values` are of the appropriate type.
 
         Specifically:
-            1. `values` is an interable.
-            2. Cast each value to a `list`.
-            3. Casst each value of value to `float`.
+        1. `values` is an interable.
+        2. Cast each value to a `list`.
+        3. Casst each value of value to `float`.
 
         Parameters
         ----------
-        values : list
-            Container of `list` one per parameter.
-        names : list
-            Container of `str` used for meaningful error messages.
+        values : array-like
+            Container of `list` objects one per parameter.
+        names : array-like
+            Container of `str` objects used to raise meaningful
+            exception messages.
 
         Raises
         ------
         TypeError
-            If `values` does not pass the aforementioned criteria.
+            If `values` do not pass the aforementioned criteria.
+
         """
         for cid, (value, name) in enumerate(zip(values, names)):
             try:
@@ -56,22 +74,23 @@ class GroundModel():
         """Check `values` have appropriate values.
 
         Specifically:
-            1. Check that all values are greater than zero.
-            2. Check that `vp` > `vs`.
+        1. Check that all values are greater than zero.
+        2. Check that `vp` > `vs`.
 
         Parameters
         ----------
         values : list
-            Container of `list` one per parameter.
+            Container of `list` objects one per parameter.
         names : list
-            Container of `str` used for meaningful error messages.
+            Container of `str` objects used to raise meaningful
+            exception messages.
 
         Raises
         ------
         ValueError
             If `values` does not pass the aforementioned criteria.
-        """
 
+        """
         tmp_len = len(values[0])
         for value, name in zip(values, names):
             for val in value:
@@ -113,6 +132,7 @@ class GroundModel():
             :meth: `check_input_type <GroundModel.check_input_type` and
             :meth: `check_input_value <GroundModel.check_input_value`
             for details.
+
         """
         tk, vp, vs, rh = self.check_input_type([thickness, vp, vs, density],
                                                ["thickness", "vp",
@@ -131,35 +151,35 @@ class GroundModel():
 
         Parameters
         ----------
-        vp, vs : iterable
-            Container of vp and vs values.
+        vp, vs : float, int, or iterable
+            Vp and Vs values, respectively
 
         Returns
         -------
-        list
+        float or list
             Poisson's ratio, calculated from each vp, vs pair.
 
         Raises
         ------
         ValueError
-            If vs>vp, or Poisson's ratio is negative
+            If vs>vp or Poisson's ratio is negative
             (i.e., vp/vs too close to 1).
+
         """
-        if type(vp) in [int, float]:
-            warnings.warn("`vp` should be an iterable type.")
-            vp = [vp]
-        if type(vs) in [int, float]:
-            warnings.warn("`vs` should be an iterable type.")
-            vs = [vs]
+        _vp = list(vp)
+        _vs = list(vs)
         pr = []
-        for vp, vs in zip(vp, vs):
+        for vp, vs in zip(_vp, _vs):
             if vp <= vs:
                 raise ValueError(f"`Vp` must be greater than `Vs`.")
             pr += [(2-(vp/vs)**2)/(2-2*(vp/vs)**2)]
             if pr[-1] <= 0:
                 msg = f"Poison's ratio cannot be negative. Vp/Vs={vp}/{vs} too close to unity."
                 raise ValueError(msg)
-        return pr
+        if len(pr) == 1:
+            return pr[0]
+        else:
+            return pr
 
     @classmethod
     def from_simple_profiles(cls, vp_tk, vp, vs_tk, vs, rh_tk, rh):
@@ -178,6 +198,7 @@ class GroundModel():
         -------
         GroundModel
             Instantiated `GroundModel` object.
+
         """
         new_depths = (cls.thick_to_depth(vp_tk) +
                       cls.thick_to_depth(vs_tk) +
@@ -203,7 +224,7 @@ class GroundModel():
         define_par(new_depths, new_vs, vs_tk, vs)
         define_par(new_depths, new_rh, rh_tk, rh)
         new_tk = cls.depth_to_thick(new_depths)
-        return cls.mkgm(new_tk, new_vp, new_vs, new_rh)
+        return cls._gm()(new_tk, new_vp, new_vs, new_rh)
 
     @property
     def thickness(self):
@@ -239,7 +260,7 @@ class GroundModel():
         return self.gm2(parameter="pr")
 
     def gm2(self, parameter):
-        """Return parameter of `GroundModel` in stair-step form.
+        """Parameter of `GroundModel` in stair-step form.
 
         Parameters
         ----------
@@ -358,18 +379,30 @@ class GroundModel():
 
         return (disc_depth, disc_par)
 
-    def simplify(self, param='vs'):
-        """Remove unecessary breaks due to those parameters other than
-        that specificed. This will typically be used for calculating the
-        median across many profiles."""
-        if param == 'vs':
-            par = self.vs
-        elif param == 'vp':
-            par = self.vp
-        elif param == 'rh' or param == "density":
-            par = self.rh
-        else:
-            raise NotImplementedError(f"param={param} is unkown.")
+    def simplify(self, parameter='vs'):
+        """Remove unecessary breaks in the parameter specified.
+        
+        This will typically be used for calculating the median across
+        many profiles.
+
+        Parameter
+        ---------
+        parameter : {'vs','vp','rh','density'}, optional
+            String denoting parameter to be simplified, default is 'vs'.
+
+        Returns
+        -------
+        tuple
+            Of the form `(thickness, parameter)` where `thickness` is a
+            `list` of simplified thicknesses and `parameter` is a `list`
+            of the simplified parameter.
+
+        """
+        try:
+            par = getattr(self, parameter)
+        except AttributeError as e:
+            msg = f"`parameter`={parameter} is an invalid, try: 'vs','vp','rh', or 'density'"
+            raise e(msg)
         tk = []
         spar = [par[0]]
         sum_ctk = self.tk[0]
@@ -385,13 +418,15 @@ class GroundModel():
 
     @property
     def vs30(self):
-        """Calcualte the time-averaged shear-wave velocity in the upper
-        30m (Vs30).
+        """Calcualte Vs30 of the `GroundModel`.
+        
+        Vs0 is the time-averaged shear-wave velocity in the upper 30m.
 
         Returns
         -------
         float
             Vs30 of `GroundModel`.
+
         """
         depth = 0
         travel_time = 0
@@ -412,29 +447,41 @@ class GroundModel():
         Parameters
         ----------
         fname_prefix : str
-            Name of file (excluding the `.mat` extension)
-            where the file should be saved, may be a relative or the
-            full path.
+            Name of file (excluding the `.mat` extension) where the file
+            should be saved, may be a relative or the full path.
 
         Returns
         -------
         None
-            Instead writes file to disk.
+            Writes file to disk.
+
         """
-        sio.savemat(fname_prefix+".mat", {"thickness": self.tk,
-                                          "vp1": self.vp,
-                                          "vs1": self.vs,
-                                          "rho1": self.rh,
-                                          "depth": self.depth,
-                                          "vp2": self.vp2,
-                                          "vs2": self.vs2,
-                                          "rho2": self.rh2,
-                                          })
+        savemat(fname_prefix+".mat", {"thickness": self.tk,
+                                      "vp1": self.vp,
+                                      "vs1": self.vs,
+                                      "rho1": self.rh,
+                                      "depth": self.depth,
+                                      "vp2": self.vp2,
+                                      "vs2": self.vs2,
+                                      "rho2": self.rh2,
+                                      })
 
     @staticmethod
     def depth_to_thick(depths):
-        """Return `list` of thicknesses from `list` of depths defined
-        at top of each layer."""
+        """Convert depths (top of each layer) to thicknesses
+        
+        Parameters
+        ----------
+        depth : list
+            List of consecutive depths.
+
+        Returns
+        -------
+        list
+            Thickness for each layer. Half-space is defined with zero
+            thickness.
+
+        """ 
         if depths[0] != 0:
             msg = "`depths` are defined from the top of each layer."
             raise ValueError(msg)
@@ -456,7 +503,19 @@ class GroundModel():
 
     @staticmethod
     def thick_to_depth(thicknesses):
-        """Return `list` of depths defined at the top of each layer."""
+        """Convert thickness to depth (at top of each layer).
+        
+        Parameters
+        ----------
+        thickness : list
+            List of thicknesses defining a ground model.
+        
+        Returns
+        -------
+        list
+            List of depths at the top of each layer.
+        
+        """
         depths = [0]
         for clayer in range(1, len(thicknesses)):
             depths.append(sum(thicknesses[:clayer]))
@@ -464,14 +523,14 @@ class GroundModel():
 
     @property
     def txt_repr(self):
+        """Text representation of the current `GroundModel`."""
         lines = f"{self.nlay}\n"
         for tk, vp, vs, rh in zip(self.tk, self.vp, self.vs, self.rh):
             lines += f"{tk} {vp} {vs} {rh}\n"
         return lines
 
-    def write_model(self, fobj, model_num=1, misfit=0.0000):
-        """Write `GroundModel` to open file object following `Geopsy`
-        format.
+    def write_model(self, fileobj, model_num=1, misfit=0.0000):
+        """Write model to open file object following `Geopsy` format.
 
         Parameters
         ----------
@@ -486,11 +545,13 @@ class GroundModel():
 
         Returns
         -------
-            `None`, writes file to disk.
+        None
+            Writes file to disk.
+
         """
-        fobj.write(f"# Layered model {model_num}: value={misfit}\n")
+        fileobj.write(f"# Layered model {model_num}: value={misfit}\n")
         for line in self.txt_repr:
-            fobj.write(line)
+            fileobj.write(line)
 
     def write_to_txt(self, fname, model_num=1, misfit=0.0000):
         """Write `GroundModel` to file that follows the `Geospy` format.
@@ -509,19 +570,17 @@ class GroundModel():
         Returns
         -------
         None
-            Instead writes file to disk.
+            Writes file to disk.
+
         """
         with open(fname, "w") as f:
             f.write(f"# Layered model {model_num}: value={misfit}\n")
             for line in self.txt_repr:
                 f.write(line)
 
-    @staticmethod
-    def mkgm(thk, vps, vss, rho):
-        return GroundModel(thickness=thk, vp=vps, vs=vss, density=rho)
-
     @classmethod
     def _gm(cls):
+        """Helper to allow conveinient subclassing."""
         return GroundModel
 
     @classmethod
@@ -531,10 +590,10 @@ class GroundModel():
         for gm in regex.gm_data.finditer(gm_data):
             tk, vp, vs, rh = gm.groups()
 
-            tks.append(float(tk))
-            vps.append(float(vp))
-            vss.append(float(vs))
-            rhs.append(float(rh))
+            tks.append(tk)
+            vps.append(vp)
+            vss.append(vs)
+            rhs.append(rh)
 
             if tk == "0":
                 break
@@ -577,13 +636,12 @@ class GroundModel():
             return True
 
     def __str__(self):
-        """Define un-official string representation of the object."""
+        """Human-reable representation of the `GroundModel`"""
         return self.txt_repr
 
     def __repr__(self):
-        """Define official representation of an instantiated object."""
-        return f"GroundModel(thickness={self.tk}, vp={self.vp}, vs={self.vs},\
-density={self.rh})"
+        """Unambiguous representation of the `GroundModel`."""
+        return f"GroundModel(thickness={self.tk}, vp={self.vp}, vs={self.vs}, density={self.rh})"
 
     def __eq__(self, other):
         for attr in ["tk", "vp", "vs", "rh"]:

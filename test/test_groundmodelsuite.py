@@ -1,3 +1,20 @@
+# This file is part of swipp, a Python package for surface-wave
+# inversion pre- and post-processing.
+# Copyright (C) 2019-2020 Joseph P. Vantassel (jvantassel@utexas.edu)
+#
+#     This program is free software: you can redistribute it and/or modify
+#     it under the terms of the GNU General Public License as published by
+#     the Free Software Foundation, either version 3 of the License, or
+#     (at your option) any later version.
+#
+#     This program is distributed in the hope that it will be useful,
+#     but WITHOUT ANY WARRANTY; without even the implied warranty of
+#     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#     GNU General Public License for more details.
+#
+#     You should have received a copy of the GNU General Public License
+#     along with this program.  If not, see <https: //www.gnu.org/licenses/>.
+
 """Tests for GroundModelSuite class."""
 
 from testtools import unittest, TestCase, get_full_path
@@ -5,7 +22,7 @@ import os
 import numpy as np
 import swipp
 import logging
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.ERROR)
 
 
 class Test_GroundModelSuite(TestCase):
@@ -57,8 +74,8 @@ class Test_GroundModelSuite(TestCase):
         vp1 = [196.7, 281.4, 1392.1, 1392.1, 1392.1, 4149.1, 4149.1]
         vs1 = [120.3, 120.3, 120.3, 225.1, 840.9, 840.9, 2202.1]
         rh1 = [2000.]*7
-        expected1 = swipp.GroundModel(thickness=tk1, vp=vp1, vs=vs1,
-                                      density=rh1)
+        expected1 = swipp.GroundModel(thickness=tk1, vp=vp1,
+                                      vs=vs1, density=rh1)
 
         fname = self.full_path+"data/test_gm_mod2.txt"
         returned = swipp.GroundModelSuite.from_geopsy(fname=fname)

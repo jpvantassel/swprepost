@@ -1,6 +1,23 @@
+# This file is part of swipp, a Python package for surface-wave
+# inversion pre- and post-processing.
+# Copyright (C) 2019-2020 Joseph P. Vantassel (jvantassel@utexas.edu)
+#
+#     This program is free software: you can redistribute it and/or modify
+#     it under the terms of the GNU General Public License as published by
+#     the Free Software Foundation, either version 3 of the License, or
+#     (at your option) any later version.
+#
+#     This program is distributed in the hope that it will be useful,
+#     but WITHOUT ANY WARRANTY; without even the implied warranty of
+#     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#     GNU General Public License for more details.
+#
+#     You should have received a copy of the GNU General Public License
+#     along with this program.  If not, see <https: //www.gnu.org/licenses/>.
+
 """Tests for GroundModel class."""
 
-import scipy.io as sio
+from scipy.io import savemat, loadmat
 import numpy as np
 import swipp
 from testtools import unittest, TestCase, get_full_path
@@ -170,7 +187,7 @@ class Test_GroundModel(TestCase):
         mygm = swipp.GroundModel(thick, vp, vs, density)
         fname = "test"
         mygm.write_to_mat(fname)
-        data = sio.loadmat(fname)
+        data = loadmat(fname)
         self.assertListEqual(data["thickness"].tolist()[0], thick)
         self.assertListEqual(data["vp1"].tolist()[0], vp)
         self.assertListEqual(data["vs1"].tolist()[0], vs)
@@ -288,15 +305,15 @@ class Test_GroundModel(TestCase):
         rh = [2000]*5
 
         mygm = swipp.GroundModel(tk, vp, vs, rh)
-        simp_tk, simp_vp = mygm.simplify(param='vp')
+        simp_tk, simp_vp = mygm.simplify(parameter='vp')
         self.assertListEqual(simp_tk, [4, 6, 0])
         self.assertListEqual(simp_vp, [200, 500, 600])
 
-        simp_tk, simp_vs = mygm.simplify(param='vs')
+        simp_tk, simp_vs = mygm.simplify(parameter='vs')
         self.assertListEqual(simp_tk, [5, 0])
         self.assertListEqual(simp_vs, [100, 300])
 
-        simp_tk, simp_rh = mygm.simplify(param='rh')
+        simp_tk, simp_rh = mygm.simplify(parameter='rh')
         self.assertListEqual(simp_tk, [0])
         self.assertListEqual(simp_rh, [2000])
 
@@ -414,9 +431,9 @@ class TestFromSimple(unittest.TestCase):
 
         mygm = swipp.GroundModel.from_simple_profiles(
             vp_tk+[0], vp, vs_tk+[0], vs, rh_tk+[0], rh)
-        self.assertEqual(mygm.simplify(param='vp'), (vp_tk+[0], vp))
-        self.assertEqual(mygm.simplify(param='vs'), (vs_tk+[0], vs))
-        self.assertEqual(mygm.simplify(param='rh'), (rh_tk+[0], rh))
+        self.assertEqual(mygm.simplify(parameter='vp'), (vp_tk+[0], vp))
+        self.assertEqual(mygm.simplify(parameter='vs'), (vs_tk+[0], vs))
+        self.assertEqual(mygm.simplify(parameter='rh'), (rh_tk+[0], rh))
 
 
 if __name__ == '__main__':
