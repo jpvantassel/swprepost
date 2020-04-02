@@ -79,7 +79,7 @@ class Test_GroundModel(TestCase):
         depth2 = mygm.gm2(parameter="depth")
         vp2 = mygm.gm2(parameter="vp")
         vs2 = mygm.gm2(parameter="vs")
-        rho2 = mygm.gm2(parameter="rho")
+        rho2 = mygm.gm2(parameter="rh")
 
         # True
         depth2_true = [0, 1, 1, 4, 4, 9, 9, 16, 16, 9999.]
