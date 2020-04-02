@@ -252,7 +252,7 @@ class GroundModel():
     @property
     def rh2(self):
         """Return stair-step version of density profile."""
-        return self.gm2(parameter="rho")
+        return self.gm2(parameter="rh")
 
     @property
     def pr2(self):
@@ -283,7 +283,7 @@ class GroundModel():
             return self.calc_pr(vp, vs)
 
         options = {"depth": self.tk, "vp": self.vp,
-                   "vs": self.vs, "rho": self.rh}
+                   "vs": self.vs, "rh": self.rh}
         par = options[parameter]
 
         if parameter == "depth":
@@ -326,7 +326,7 @@ class GroundModel():
         dy : float, optional
             Linear step of discretizaton in terms of depth, default
             is 0.5 meter.
-        parameter : {'vp', 'vs', 'rho', 'pr'}, optional
+        parameter : {'vp', 'vs', 'rh', 'pr'}, optional
             Parameter to be discretized, default is 'vs'.
 
         Returns
@@ -348,12 +348,11 @@ class GroundModel():
                                     self.discretize(dmax, dy, "vs")[1])
             return (disc_depth, disc_par)
 
-        options = {"vp": self.vp, "vs": self.vs, "rho": self.rh}
-        try:
-            par_to_disc = options[parameter]
-        except KeyError:
-            msg = f"Bad `parameter`={parameter}, use 'vp', 'vs', 'rho', or 'pr'."
-            raise KeyError(msg)
+        if parameter in ["vp", "vs", "rh"]:
+            par_to_disc = getattr(self, parameter)
+        else:
+            msg = f"Bad `parameter`={parameter}, use 'vp', 'vs', 'rh', or 'pr'."
+            raise ValueError(msg)
 
         # For each layer
         disc_par = [par_to_disc[0]]
@@ -381,7 +380,7 @@ class GroundModel():
 
     def simplify(self, parameter='vs'):
         """Remove unecessary breaks in the parameter specified.
-        
+
         This will typically be used for calculating the median across
         many profiles.
 
@@ -419,7 +418,7 @@ class GroundModel():
     @property
     def vs30(self):
         """Calcualte Vs30 of the `GroundModel`.
-        
+
         Vs0 is the time-averaged shear-wave velocity in the upper 30m.
 
         Returns
@@ -469,7 +468,7 @@ class GroundModel():
     @staticmethod
     def depth_to_thick(depths):
         """Convert depths (top of each layer) to thicknesses
-        
+
         Parameters
         ----------
         depth : list
@@ -481,7 +480,7 @@ class GroundModel():
             Thickness for each layer. Half-space is defined with zero
             thickness.
 
-        """ 
+        """
         if depths[0] != 0:
             msg = "`depths` are defined from the top of each layer."
             raise ValueError(msg)
@@ -504,17 +503,17 @@ class GroundModel():
     @staticmethod
     def thick_to_depth(thicknesses):
         """Convert thickness to depth (at top of each layer).
-        
+
         Parameters
         ----------
         thickness : list
             List of thicknesses defining a ground model.
-        
+
         Returns
         -------
         list
             List of depths at the top of each layer.
-        
+
         """
         depths = [0]
         for clayer in range(1, len(thicknesses)):
