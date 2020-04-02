@@ -22,11 +22,11 @@ import os
 import numpy as np
 import scipy.interpolate as sp
 import warnings
-import logging
 import re
 from swipp import CurveUncertain
 import matplotlib.pyplot as plt
-logging.Logger(name=__name__)
+import logging
+logger = logging.getLogger(name=__name__)
 
 
 class Target(CurveUncertain):
@@ -73,6 +73,7 @@ class Target(CurveUncertain):
             If `velstd` is `float` and the value is less than zero.
 
         """
+        logger.info("Howdy!")
         try:
             super().__init__(x=frequency, y=velocity, yerr=velstd, xerr=None)
         except IndexError as e:

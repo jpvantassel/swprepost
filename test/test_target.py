@@ -7,6 +7,8 @@ import os
 import warnings
 import nbformat
 from nbconvert.preprocessors import ExecutePreprocessor
+import logging
+logging.basicConfig(level=logging.ERROR)
 
 
 class Test_Target(TestCase):
