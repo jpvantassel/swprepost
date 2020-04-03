@@ -42,6 +42,9 @@ class Test_GroundModelSuite(TestCase):
         self.assertEqual("test", mysuite.ids[0])
         self.assertEqual(2, mysuite.misfits[0])
 
+        # Bad Value - Wrong Type
+        gm = ["GroundModel"]
+        self.assertRaises(TypeError, swipp.GroundModelSuite, gm, "test")
     def test_append(self):
         thk = [1, 3, 5, 7]
         vss = [100, 200, 300, 400]
@@ -87,7 +90,7 @@ class Test_GroundModelSuite(TestCase):
 
         # Randomly check the 10th profile (index=9)
         fname = self.full_path+"data/test_gm_mod100.txt"
-        suite = swipp.GroundModelSuite.from_geopsy(fname=fname)
+        suite = swipp.GroundModelSuite.from_geopsy(fname=fname, nmodels=10)
 
         tk = [0.77397930357999966677,
               9.4057659375340758601,
@@ -115,6 +118,7 @@ class Test_GroundModelSuite(TestCase):
         self.assertEqual(expected_9, suite[9])
 
     def test_vs30(self):
+        # nbest="all"
         thk = [5, 20, 0]
         vps = [300, 600, 800]
         vss = [150, 300, 400]
@@ -122,9 +126,12 @@ class Test_GroundModelSuite(TestCase):
         mygm = swipp.GroundModel(thk, vps, vss, rho)
 
         mysuite = swipp.GroundModelSuite(mygm, "test")
-        for _x in range(5):
+        for _ in range(5):
             mysuite.append(mygm, "test")
         self.assertListEqual(mysuite.vs30(), [266.6666666666666666666]*6)
+
+        # nbest=3
+        self.assertListEqual(mysuite.vs30(nbest=3), [266.6666666666666666666]*3)
 
     def test_median(self):
         tks = [[1, 5, 0], [2, 4, 0], [5, 10, 0]]
@@ -155,7 +162,7 @@ class Test_GroundModelSuite(TestCase):
         for tk, vs, vp, rh in zip(tks[1:], vss[1:], vps[1:], rhs[1:]):
             gm = swipp.GroundModel(tk, vp, vs, rh)
             suite.append(gm, "test")
-        calc_med_gm = suite.median(nbest=3)
+        calc_med_gm = suite.median(nbest="all")
         med_tks = [2., 5., 0.]
         med_vss = [100., 275., 300.]
         med_vps = [300., 700., 400.]
@@ -181,30 +188,6 @@ class Test_GroundModelSuite(TestCase):
         self.assertListEqual(sigln, ([np.std(np.log([100, 150, 100]), ddof=1)]*3 +
                                      [np.std(np.log([200, 275, 300]), ddof=1)]*10 +
                                      [np.std(np.log([300, 315, 200]), ddof=1)]*8))
-
-    def test_from_mat(self):
-        tk = np.array([2.2989, 2.2428, 1.8436, 5.3886, 3.2876, 5.7847, 5.6917,
-                       13.293, 3.2605, 16.71, 12.717, 19.439, 27.657, 7.7677,
-                       48.504, 31.019, 28.964, 62.739, 0])
-        vp = np.array([868.47, 1530.2, 1560.9, 1592.3, 1608.2, 1624.3, 1640.5,
-                       1690.2, 1724.2, 1885.7, 2001.8, 2418.3, 2698.1, 2779.8,
-                       2892.7, 3010.1, 3292.2, 3709.7, 3996.6])
-        vs = np.array([148.89, 169.45, 192.36, 239.44, 291.91, 319.25, 327.05,
-                       333.63, 534.27, 584.32, 748.7, 833.95, 847.23, 935.87,
-                       1134.3, 1513.7, 1757.4, 1801.5, 1912.3])
-        rh = np.array([2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000,
-                       2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000,
-                       2300])
-        mod0 = swipp.GroundModel(tk, vp, vs, rh)
-
-        fname = self.full_path + "data/test_gm_dpt_0.mat"
-        suite = swipp.GroundModelSuite.from_mat(fname)
-
-        attrs = ["vs", "vp", "thickness", "density"]
-        for attr in attrs:
-            expected = getattr(mod0, attr)
-            returned = getattr(suite[0], attr)
-            self.assertListAlmostEqual(expected, returned, places=1)
 
     def test_from_array(self):
         tks = np.array([[1, 2, 3], [0, 0, 0]])
@@ -250,6 +233,23 @@ class Test_GroundModelSuite(TestCase):
         for gm_a, gm_b in zip(suite.gms, mysuite.gms):
             self.assertEqual(gm_a, gm_b)
         os.remove(fname)
+
+    def test_str(self):
+        x = [1,2,3]
+        y = [2,4,5]
+        gm = swipp.GroundModel(x,y,x,x)
+        suite = swipp.GroundModelSuite(gm, "test")
+        for _ in range(3):
+            suite.append(gm, "test")
+        expected = "GroundModelSuite with 4 GroundModels."
+        returned = suite.__str__()
+        self.assertEqual(expected, returned)
+
+        # TODO (jpv): Add a more serious test for slice get_item
+        suite = suite[1:3]
+        expected = "GroundModelSuite with 2 GroundModels."
+        returned = suite.__str__()
+        self.assertEqual(expected, returned)
 
 
 if __name__ == "__main__":

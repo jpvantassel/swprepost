@@ -166,7 +166,7 @@ class GroundModelSuite(Suite):
 
         """
         if str(nbest) == "all":
-            nbest = len(self.gms)-1
+            nbest = len(self.gms)
         gms = self.gms[:nbest]
 
         thk, par = self.gms[0].simplify(parameter)
@@ -250,77 +250,6 @@ class GroundModelSuite(Suite):
                                      misfits[1:]):
                 obj.append(cgm, cid, cmf)
         return obj
-
-    @classmethod
-    def from_mat(cls, fname, tk="thickness", vs="vs", vp="vp", rh="rho",
-                 misfit="misfits", identifier="indices"):
-        """Instantiate a `GroundModelSuite` from a `.mat` file.
-
-        This method is still experimental and is not
-        guaranteed to work.
-
-        Parameters
-        ----------
-        fname : str
-            Name of file to be read, in general these files should
-            end with th `.mat` extension.
-        tk, vs, vp, rh, misfit, identifer : str, optional
-            Custom variable names, for which the program will search
-            to find the resulting values.
-
-            In addtion to these custom names (which are searched
-            first) the program will also fall back and search under
-            other common names:
-
-            thickness : [tk, "thickness"]
-            vs : [vs, "Vs1", "vs1"]
-            vp : [vp, "Vp1", "vp1"]
-            rh : [rh, "Rho1", "rho1", "density1"]
-            misfit : [misfit, "misfit"]
-            ids : [identifier, "indices"]
-
-        Returns
-        -------
-        GroundModelSuite
-            Instantiated `GroundModelSuite` object.
-
-        Raises
-        ------
-        KeyError
-            If required variables, can not be found in `.mat` file.
-        """
-        # Potential names for each parameter, from high to low priority.
-        search_values = {"tk": [tk, "thickness"],
-                         "vs": [vs, "Vs1", "vs1"],
-                         "vp": [vp, "Vp1", "vp1"],
-                         "rh": [rh, "Rho1", "rho1", "density1"],
-                         "misfit": [misfit, "misfit"],
-                         "ids": [identifier, "indices"]}
-
-        # Load's matlab file as `dict`.
-        data = sio.loadmat(fname)
-
-        results = {}
-        for par, keys in search_values.items():
-            for key in keys:
-                val = data.get(key)
-                if val is not None:
-                    results[par] = val
-                    break
-            else:
-                if par == "misfit":
-                    msg = f"Cound not find {par}, using keys={keys}, ignoring."
-                    logging.warning(msg)
-                else:
-                    msg = f"Could not find {par}, using keys={keys}."
-                    raise KeyError(msg)
-
-        if results.get("misfit") is None:
-            results["misfit"] = np.zeros(results["ids"].shape)
-
-        return cls.from_array(results["tk"], results["vp"],
-                              results["vs"], results["rh"],
-                              results["ids"][0], results["misfit"][0])
 
     @classmethod
     def from_array(cls, tks, vps, vss, rhs, ids, misfits):
