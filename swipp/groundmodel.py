@@ -99,10 +99,16 @@ class GroundModel():
             if tmp_len != len(value):
                 raise ValueError(f"All inputs must have the same length.")
 
-        for tmp_vp, tmp_vs in zip(values[names == "vp"], values[names == "vs"]):
-            if tmp_vs > tmp_vp:
-                msg = f"vp must be greater than vs, {tmp_vp}!>{tmp_vs}."
+        for _vp, _vs in zip(values[names.index("vp")], values[names.index("vs")]):
+            if _vp <= _vs:
+                msg = f"vp must be greater than vs, {_vp}!>{_vs}."
                 raise ValueError(msg)
+
+    def check_input(self, values, names):
+        """Check input values and types."""
+        values = self.check_input_type(values, names)
+        self.check_input_value(values, names)
+        return values
 
     def __init__(self, thickness, vp, vs, density):
         """Initialize a ground model object.
@@ -134,11 +140,8 @@ class GroundModel():
             for details.
 
         """
-        tk, vp, vs, rh = self.check_input_type([thickness, vp, vs, density],
-                                               ["thickness", "vp",
-                                                "vs", "density"])
-        self.check_input_value([tk, vp, vs, rh],
-                               ["thickness", "vp", "vs", "density"])
+        tk, vp, vs, rh = self.check_input([thickness, vp, vs, density],
+                                          ["thickness", "vp", "vs", "density"])
         self.nlay = len(tk)
         self.tk = tk
         self.vp = vp
@@ -166,15 +169,18 @@ class GroundModel():
             (i.e., vp/vs too close to 1).
 
         """
-        _vp = list(vp)
-        _vs = list(vs)
+        if isinstance(vp, (float, int)):
+            vp = [vp]
+            vs = [vs]
+
         pr = []
-        for vp, vs in zip(_vp, _vs):
-            if vp <= vs:
+        for _vp, _vs in zip(vp, vs):
+            if _vp <= _vs:
                 raise ValueError(f"`Vp` must be greater than `Vs`.")
-            pr += [(2-(vp/vs)**2)/(2-2*(vp/vs)**2)]
+            x = (_vp*_vp)/(_vs*_vs)
+            pr.append((2-x)/(2-2*x))
             if pr[-1] <= 0:
-                msg = f"Poison's ratio cannot be negative. Vp/Vs={vp}/{vs} too close to unity."
+                msg = f"Poison's ratio cannot be negative. Vp/Vs={_vp}/{_vs} too close to unity."
                 raise ValueError(msg)
         if len(pr) == 1:
             return pr[0]
@@ -259,12 +265,18 @@ class GroundModel():
         """Return stair-step version of Poisson's ratio profile."""
         return self.gm2(parameter="pr")
 
+    @staticmethod
+    def _validate_parameter(parameter, valid_parameters):
+        if parameter not in valid_parameters:
+            msg = f"parameter={parameter} is invalid, valid parameters include: {valid_parameters}."
+            raise ValueError(msg)
+
     def gm2(self, parameter):
         """Parameter of `GroundModel` in stair-step form.
 
         Parameters
         ----------
-        parameter : {'depth', 'vp', 'vs', 'rho', 'pr'}
+        parameter : {'depth', 'vp', 'vs', 'density', 'pr'}
             Desired parameter to transform to stair-step profile.
 
         Returns
@@ -276,15 +288,15 @@ class GroundModel():
         ------
         KeyError
             If `parameter` is not one of those specified.
+
         """
+        valid_parameters = ["depth", "vp", "vs", "rh", "density", "pr"]
+        self._validate_parameter(parameter, valid_parameters)
+
         if parameter == "pr":
             vp = self.gm2(parameter="vp")
             vs = self.gm2(parameter="vs")
             return self.calc_pr(vp, vs)
-
-        options = {"depth": self.tk, "vp": self.vp,
-                   "vs": self.vs, "rh": self.rh}
-        par = options[parameter]
 
         if parameter == "depth":
             gm2 = [0]
@@ -298,6 +310,7 @@ class GroundModel():
                     if pnt % 2 == 0:
                         lay += 1
         else:
+            par = getattr(self, parameter)
             gm2 = [par[0]]
             lay = 1
             for pnt in range(1, 2*self.nlay):
@@ -313,7 +326,7 @@ class GroundModel():
 
         The `GroundModel` is discretized in terms of depth from the
         surface to `dmax` by `dy` such that depth will be a `list` of
-        the forn `[0:dy:dmax]`. When the discretization encounters a
+        the form `[0:dy:dmax]`. When the discretization encounters a
         parameter boundary the velocity of the upper layer is assigned.
 
         Do not use these discretized models for plotting unless `dy` is
@@ -340,6 +353,7 @@ class GroundModel():
         ------
         KeyError
             If `parameter` is not one of those options specified.
+
         """
         disc_depth = np.linspace(0, dmax, int(dmax//dy)+1).tolist()
 
@@ -348,11 +362,9 @@ class GroundModel():
                                     self.discretize(dmax, dy, "vs")[1])
             return (disc_depth, disc_par)
 
-        if parameter in ["vp", "vs", "rh"]:
-            par_to_disc = getattr(self, parameter)
-        else:
-            msg = f"Bad `parameter`={parameter}, use 'vp', 'vs', 'rh', or 'pr'."
-            raise ValueError(msg)
+        valid_parameters = ["depth", "vp", "vs", "rh", "density", "pr"]
+        self._validate_parameter(parameter, valid_parameters)
+        par_to_disc = getattr(self, parameter)
 
         # For each layer
         disc_par = [par_to_disc[0]]
@@ -397,11 +409,9 @@ class GroundModel():
             of the simplified parameter.
 
         """
-        try:
-            par = getattr(self, parameter)
-        except AttributeError as e:
-            msg = f"`parameter`={parameter} is an invalid, try: 'vs','vp','rh', or 'density'"
-            raise e(msg)
+        valid_parameters = ["depth", "vp", "vs", "rh", "density", "pr"]
+        self._validate_parameter(parameter, valid_parameters)
+        par = getattr(self, parameter)
         tk = []
         spar = [par[0]]
         sum_ctk = self.tk[0]
@@ -584,7 +594,24 @@ class GroundModel():
 
     @classmethod
     def _parse_gm(cls, gm_data):
+        """Instantiate a `GroundModel` from lines of ground model text.
 
+        This method should not be accessed directly. Use `from_geopsy`
+        instead.
+
+        Paramters
+        ---------
+        gm_data : str
+            Text defining a GroundModel in the Geopsy format. If text
+            defining multiple GroundModels is provided only the first
+            one is parsed.
+
+        Returns
+        -------
+        GroundModel
+            Instantiated `GroundModel` object.
+
+        """
         tks, vps, vss, rhs = [], [], [], []
         for gm in regex.gm_data.finditer(gm_data):
             tk, vp, vs, rh = gm.groups()
@@ -601,8 +628,7 @@ class GroundModel():
 
     @classmethod
     def from_geopsy(cls, fname):
-        """Instantiate a `GroundModel` from a file following the
-        `Geopsy` format.
+        """Create from a text file following the `Geopsy` format.
 
         Parameters
         ----------
@@ -618,24 +644,14 @@ class GroundModel():
         ------
         Various
             If file does not follow the `Geopsy` format.
-            See example files for details.
+
         """
         with open(fname, "r") as f:
             lines = f.read()
         return cls._parse_gm(lines)
 
-    def __eq__(self, other):
-        """Define when two ground models are equivalent."""
-        vals1 = self.tk + self.vp + self.vs + self.rh
-        vals2 = other.tk + other.vp + other.vs + other.rh
-        for val1, val2 in zip(vals1, vals2):
-            if val1 != val2:
-                return False
-        else:
-            return True
-
     def __str__(self):
-        """Human-reable representation of the `GroundModel`"""
+        """Human-readable representation of the `GroundModel`"""
         return self.txt_repr
 
     def __repr__(self):
