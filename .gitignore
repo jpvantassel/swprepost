@@ -7,8 +7,10 @@ build
 doc
 scratch
 html
+test/htmlcov
 
 # File Types
+*.coverage
 *.xlsx
 *.docx
 *.pptx
