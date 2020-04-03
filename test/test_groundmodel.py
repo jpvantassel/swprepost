@@ -154,6 +154,18 @@ class Test_GroundModel(TestCase):
         for vp, vs in zip(vps, vss):
             self.assertRaises(ValueError, swipp.GroundModel.calc_pr, vp, vs)
 
+    def test_properties(self):
+        tk = [1,2,0]
+        vp = [100,200,300]
+        vs = [50,100,150]
+        rh = [2000]*3
+        gm = swipp.GroundModel(tk, vp, vs, rh)
+
+        self.assertListEqual(tk, gm.thickness)
+        self.assertListEqual(vp, gm.vp)
+        self.assertListEqual(vs, gm.vs)
+        self.assertListEqual(rh, gm.density)
+
     def test_vs30(self):
         # One thick layer
         thick = [50, 0]
