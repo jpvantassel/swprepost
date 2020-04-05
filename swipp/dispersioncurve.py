@@ -137,7 +137,7 @@ class DispersionCurve(Curve):
             if len(my_vals) != len(ur_vals):
                 return False
             for my, ur in zip(my_vals, ur_vals):
-                if my != ur:
+                if np.round(my,6) != np.round(ur,6):
                     return False
         return True
 

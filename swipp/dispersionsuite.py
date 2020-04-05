@@ -92,6 +92,10 @@ class DispersionSuite(Suite):
         self.sets.append(dispersionset)
 
     @property
+    def size(self):
+        return len(self.sets)
+
+    @property
     def ids(self):
         """Return the ids corresponding to `sets`."""
         ids = []
@@ -188,6 +192,15 @@ class DispersionSuite(Suite):
             for dc_set in dc_sets[1:]:
                 obj.append(dc_set)
         return obj
+
+    def __eq__(self, other):
+        """Define when two DispersionCurve objects are equal."""
+        if self.size != other.size:
+            return False
+        for my, ur in zip(self.sets, other.sets):
+            if my != ur:
+                return False
+        return True
 
     def __getitem__(self, slce):
         """Define slicing behavior"""

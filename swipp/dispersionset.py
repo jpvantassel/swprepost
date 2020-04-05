@@ -186,6 +186,16 @@ class DispersionSet():
             data = f.read()
         return cls._from_full_file(data, nrayleigh=nrayleigh, nlove=nlove)
 
+    def __eq__(self, other):
+        """Define when two DispersionSet objects are equal."""
+        for attr in ["misfit", "identifier", "love", "rayleigh"]:
+            my_attr = getattr(self, attr)
+            ur_attr = getattr(other, attr)
+            if my_attr != ur_attr:
+                return False
+        return True
+
+
     def __repr__(self):
         """Unambiguous representation of a `DispersionSet` object."""
         return f"DispersionSet(identifier={self.identifier}, rayleigh={self.rayleigh}, love={self.love}, misfit={self.misfit})"
