@@ -48,14 +48,24 @@ class Suite(ABC):
             warnings.warn(msg, DeprecationWarning)
             nbest = "all"
 
+        max_avail = self.size
+
         if nbest == "all":
-            return self.size
+            return max_avail
         else:
             try:
-                return int(nbest)
+                nbest = int(nbest)
             except ValueError as e:
                 msg = "`nbest` must be cast-able to `int`."
                 raise ValueError(msg) from e
+
+            if nbest > max_avail:
+                msg = f"Requested ({nbest}) > Available ({max_avail})"
+                msg += f", setting requested to available."
+                warnings.warn(msg)
+                return max_avail
+            else:
+                return nbest
 
     def misfit_range(self, nmodels="all"):
         """Return range of misfits for nmodels.
