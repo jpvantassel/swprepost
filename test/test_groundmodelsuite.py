@@ -183,7 +183,7 @@ class Test_GroundModelSuite(TestCase):
             suite.append(gm, "test")
         dmax = 10
         dy = 0.5
-        depth, sigln = suite.sigma_ln(nbest=3, dmax=dmax, dy=dy, param='vs')
+        depth, sigln = suite.sigma_ln(nbest=3, dmax=dmax, dy=dy, parameter='vs')
         self.assertListEqual(depth, list(np.arange(0, dmax+dy, dy)))
         self.assertListEqual(sigln, ([np.std(np.log([100, 150, 100]), ddof=1)]*3 +
                                      [np.std(np.log([200, 275, 300]), ddof=1)]*10 +

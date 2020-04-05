@@ -17,6 +17,7 @@
 
 """Suite class definition."""
 
+import warnings
 
 __all__ = ["Suite"]
 
@@ -25,6 +26,22 @@ class Suite():
 
     def __init__():
         pass
+
+    def _handle_nbest(self, nbest):
+        """Accept common `nbest` values and return the logical result."""
+        if nbest is None:
+            msg = "nbest=None is deprecated, use 'all' instead."
+            warnings.warn(msg, DeprecationWarning)
+            nbest = "all"
+
+        if nbest == "all":
+            return self.size
+        else:
+            try:
+                return int(nbest)
+            except ValueError as e:
+                msg = "`nbest` must be cast-able to `int`."
+                raise e(msg)
 
     def misfit_range(self, nmodels="all"):
         """Return range of misfits for nmodels.
@@ -48,7 +65,7 @@ class Suite():
         elif nmodels == 1:
             return self.misfits[0]
         else:
-            return (self.misfits[0], self.misfits[nmodels-1])
+            return (self.misfits[0], self.misfits[nmodels])
 
     def misfit_repr(self, nmodels="all"):
         """Return string representation of misfit [min-max] or [min]."""

@@ -21,7 +21,7 @@ from testtools import unittest, TestCase, get_full_path
 import swipp
 import numpy as np
 import logging
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.CRITICAL)
 
 
 class Test_DispersionCurve(TestCase):

@@ -70,12 +70,18 @@ class GroundModelSuite(Suite):
         -------
         GroundModelSuite
             Initialized `GroundModelSuite`.
+
         """
+        logger.info("Howdy!")
         gm, identifier, misfit = self.check_type(groundmodel, identifier,
                                                  misfit)
         self.gms = [gm]
         self.ids = [identifier]
         self.misfits = [misfit]
+
+    @property
+    def size(self):
+        return len(self.gms)
 
     def append(self, groundmodel, identifier, misfit=0.0000, sort=True):
         """Append `GroundModel` object to `GroundModelSuite` object.
@@ -103,6 +109,7 @@ class GroundModelSuite(Suite):
         -------
         None
             Instead updates the attributes `gms`, `ids`, and `misfits`.
+
         """
         gm, identifier, misfit = self.check_type(groundmodel, identifier,
                                                  misfit)
@@ -135,10 +142,8 @@ class GroundModelSuite(Suite):
         Refer to :meth: `vs30 <swipp.GroundModel.vs30>`.
         
         """
-        if nbest == "all":
-            gms = self.gms
-        else:
-            gms = self.gms[:nbest]
+        nbest = self._handle_nbest(nbest)
+        gms = self.gms[:nbest]
         vs30 = []
         for gm in gms:
             vs30.append(gm.vs30)
@@ -159,17 +164,16 @@ class GroundModelSuite(Suite):
         Returns
         -------
         tuple
-            Of the form `([median_thickness], [median_parameter])`
-            where `[median_thickness]` is a `list` of the median
-            thickness of each layer and `[median_parameter]` is a `list`
+            Of the form `(median_thickness, median_parameter)`
+            where `median_thickness` is a `list` of the median
+            thickness of each layer and `median_parameter` is a `list`
             of the median parameter of each layer.
 
         """
-        if str(nbest) == "all":
-            nbest = len(self.gms)
+        nbest = self._handle_nbest(nbest)
         gms = self.gms[:nbest]
 
-        thk, par = self.gms[0].simplify(parameter)
+        thk, par = gms[0].simplify(parameter)
         thks = np.zeros((len(thk), nbest))
         pars = np.zeros((len(par), nbest))
 
@@ -195,6 +199,7 @@ class GroundModelSuite(Suite):
         -------
         GroundModel
             Initialized `GroundModel` object.
+        
         """
         med_vp_tk, med_vp = self.median_simple(nbest=nbest, parameter='vp')
         med_vs_tk, med_vs = self.median_simple(nbest=nbest, parameter='vs')
@@ -203,13 +208,16 @@ class GroundModelSuite(Suite):
                                                med_vs_tk, med_vs,
                                                med_rh_tk, med_rh)
 
-    def write_to_txt(self, fname):
+    def write_to_txt(self, fname, nbest="all"):
         """Write to text file, following the Geopsy format.
 
         Parameters
         ----------
         fname : str
             Name of file, may be a relative or the full path.
+        nbest : {int, 'all'}, optional
+            Number of best models to write to file, default is 'all'
+            indicating all models will be written.
 
         Returns
         -------
@@ -217,33 +225,54 @@ class GroundModelSuite(Suite):
             Writes file to disk.
 
         """
+        nbest = self._handle_nbest(nbest)
         with open(fname, "w") as f:
-            for cid, cmf, cgm in zip(self.ids, self.misfits, self.gms):
+            for cid, cmf, cgm in zip(self.ids[:nbest], self.misfits[:nbest], self.gms[:nbest]):
                 cgm.write_model(f, cid, cmf)
 
-    def sigma_ln(self, nbest, dmax, dy=0.5, param='vs'):
-        """Return sigma_ln of the nbest discretized profiles."""
-        NVs = np.zeros((int(dmax/dy)+1, nbest))
+    def sigma_ln(self, dmax=50, dy=0.5, nbest='all', parameter='vs'):
+        """Lognormal standard deviation of a parameter.
+        
+        Parameters
+        ----------
+        dmax : float, optional
+            Depth to which to discretize the parameter profiles in
+            meters, default is 50.
+        dy : float, optional
+            Linear-spacing of depth samples in meters, default is 0.5.
+        nbest : {int, 'all'}, optional
+            Number of best profiles to consider for calculation, default
+            is 'all'.
+        parameter : {'vs', 'vp', 'rh', 'density', 'pr'}, optional
+            Parameter to be used for the calculation, default is 'vs'.
+        
+        Returns
+        -------
+        Lognormal standard deviation of the nbest discretized profiles.
+        
+        """
+        nbest = self._handle_nbest(nbest)        
+        npar = np.empty((int(dmax/dy)+1, nbest))
         for ncol, gm in enumerate(self.gms[:nbest]):
             disc_depth, disc_par = gm.discretize(dmax=dmax, dy=dy,
-                                                 parameter=param)
-            NVs[:, ncol] = disc_par
-        sigma_ln = np.std(np.log(NVs), axis=1, ddof=1)
+                                                 parameter=parameter)
+            npar[:, ncol] = disc_par
+        sigma_ln = np.std(np.log(npar), axis=1, ddof=1)
         return (disc_depth, sigma_ln.tolist())
 
     @classmethod
     def _gm(cls):
+        logger.info("Using swipp, GroundModel.")
         return GroundModel
 
     @classmethod
     def _gm_suite(cls):
+        logger.info("Using swipp, GroundModelSuite.")
         return GroundModelSuite
 
     @classmethod
     def from_list(cls, groundmodels, identifiers, misfits):
-        """Instantiate `GroundModelSuite` from `list` of `GroundModel`
-        objects.
-        """
+        """Create from a `list` of `GroundModel` objects."""
         obj = cls._gm_suite()(groundmodels[0], identifiers[0], misfits[0])
         if len(groundmodels) > 1:
             for cgm, cid, cmf in zip(groundmodels[1:], identifiers[1:],
@@ -253,7 +282,7 @@ class GroundModelSuite(Suite):
 
     @classmethod
     def from_array(cls, tks, vps, vss, rhs, ids, misfits):
-        """Instantiate `GroundModelSuite` from an array of values.
+        """Create from an array of values.
 
         Parameters
         ----------
@@ -261,7 +290,6 @@ class GroundModelSuite(Suite):
             2D array representation of the ground models composing
             the suite. Each column represents a particular
             groundmodel and each row a layer in that ground model.
-
         ids, misfits : ndarray
             1D array where each entry corresponds to a ground model.
 
@@ -272,14 +300,15 @@ class GroundModelSuite(Suite):
 
         Raises
         ------
-        AssertionError
+        ValueError
             If the size of the arrays are inconsistent.
+
         """
 
         cols = tks.shape[1]
-        for other in (vps.shape[1], vss.shape[1], rhs.shape[1],
-                      ids.size, misfits.size):
-            assert(cols == other)
+        for other in (vps.shape[1], vss.shape[1], rhs.shape[1], ids.size, misfits.size):
+            if cols != other:
+                raise ValueError("Array sizes must be consistent.")
 
         for col in range(cols):
             tk = tks[:, col]
@@ -300,19 +329,25 @@ class GroundModelSuite(Suite):
 
     @classmethod
     def from_geopsy(cls, fname, nmodels="all"):
-        """Instantiate a `GroundModelSuite` from a file following the
-        `Geopsy` format.
+        """Create from a file following the `Geopsy` format.
 
         Parameters
         ----------
         fname : str
             Name of file, may contain a relative or the full path.
+        nmodels : {int, 'all'}, optional
+            Number of `GroundModels` to extract from file, default is
+            `all`.
 
         Returns
         -------
         GroundModelSuite
             Initialized `GroundModelSuite`.
+
         """
+        if nmodels == "all":
+            nmodels = 1E9
+
         with open(fname, "r") as f:
             lines = f.read()
 
@@ -340,4 +375,5 @@ class GroundModelSuite(Suite):
                                               self.misfits[sliced])
 
     def __str__(self):
+        """Human-readable representation of a `GroundModelSuite`."""
         return f"GroundModelSuite with {len(self.gms)} GroundModels."
