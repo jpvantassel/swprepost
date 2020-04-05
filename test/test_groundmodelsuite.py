@@ -35,7 +35,7 @@ class Test_GroundModelSuite(TestCase):
         thk = [1, 3, 5, 7]
         vss = [100, 200, 300, 400]
         vps = [200, 400, 600, 800]
-        rho = [2000, 2000, 2000, 2000]
+        rho = [2000]*4
         mygm = swipp.GroundModel(thk, vps, vss, rho)
         mysuite = swipp.GroundModelSuite(mygm, "test", misfit=2)
         self.assertEqual(mygm, mysuite[0])
@@ -45,6 +45,7 @@ class Test_GroundModelSuite(TestCase):
         # Bad Value - Wrong Type
         gm = ["GroundModel"]
         self.assertRaises(TypeError, swipp.GroundModelSuite, gm, "test")
+
     def test_append(self):
         thk = [1, 3, 5, 7]
         vss = [100, 200, 300, 400]
@@ -131,7 +132,8 @@ class Test_GroundModelSuite(TestCase):
         self.assertListEqual(mysuite.vs30(), [266.6666666666666666666]*6)
 
         # nbest=3
-        self.assertListEqual(mysuite.vs30(nbest=3), [266.6666666666666666666]*3)
+        self.assertListEqual(mysuite.vs30(nbest=3), [
+                             266.6666666666666666666]*3)
 
     def test_median(self):
         tks = [[1, 5, 0], [2, 4, 0], [5, 10, 0]]
@@ -183,7 +185,8 @@ class Test_GroundModelSuite(TestCase):
             suite.append(gm, "test")
         dmax = 10
         dy = 0.5
-        depth, sigln = suite.sigma_ln(nbest=3, dmax=dmax, dy=dy, parameter='vs')
+        depth, sigln = suite.sigma_ln(
+            nbest=3, dmax=dmax, dy=dy, parameter='vs')
         self.assertListEqual(depth, list(np.arange(0, dmax+dy, dy)))
         self.assertListEqual(sigln, ([np.std(np.log([100, 150, 100]), ddof=1)]*3 +
                                      [np.std(np.log([200, 275, 300]), ddof=1)]*10 +
@@ -235,9 +238,9 @@ class Test_GroundModelSuite(TestCase):
         os.remove(fname)
 
     def test_str(self):
-        x = [1,2,3]
-        y = [2,4,5]
-        gm = swipp.GroundModel(x,y,x,x)
+        x = [1, 2, 3]
+        y = [2, 4, 5]
+        gm = swipp.GroundModel(x, y, x, x)
         suite = swipp.GroundModelSuite(gm, "test")
         for _ in range(3):
             suite.append(gm, "test")

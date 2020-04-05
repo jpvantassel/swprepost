@@ -73,11 +73,11 @@ class GroundModelSuite(Suite):
 
         """
         logger.info("Howdy!")
-        gm, identifier, misfit = self.check_type(groundmodel, identifier,
-                                                 misfit)
-        self.gms = [gm]
-        self.ids = [identifier]
-        self.misfits = [misfit]
+        super().__init__(*self.check_type(groundmodel, identifier, misfit))
+    
+    @property
+    def gms(self):
+        return self._items
 
     @property
     def size(self):
@@ -111,18 +111,15 @@ class GroundModelSuite(Suite):
             Instead updates the attributes `gms`, `ids`, and `misfits`.
 
         """
-        gm, identifier, misfit = self.check_type(groundmodel, identifier,
-                                                 misfit)
-        self.gms.append(gm)
-        self.ids.append(identifier)
-        self.misfits.append(misfit)
+        super().append(*self.check_type(groundmodel, identifier, misfit), sort) 
 
-        if sort:
-            for attr in ["gms", "ids", "misfits"]:
-                to_sort = getattr(self, attr)
-                values = [x for _, x in sorted(zip(self.misfits, to_sort),
-                                              key=lambda pair: pair[0])]
-                setattr(self, attr, values)
+    def _sort(self):
+        """Define how to sort `GroundModelSuite`."""
+        for attr in ["_items", "ids", "misfits"]:
+            to_sort = getattr(self, attr)
+            values = [x for _, x in sorted(zip(self.misfits, to_sort),
+                                            key=lambda pair: pair[0])]
+            setattr(self, attr, values)
 
     def vs30(self, nbest="all"):
         """Calculate Vs30 for `GroundModelSuite`.
