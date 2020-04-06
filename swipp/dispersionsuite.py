@@ -96,7 +96,7 @@ class DispersionSuite(Suite):
     @property
     def ids(self):
         """Return the ids corresponding to `sets`."""
-        return [cset.identifer for cset in self.sets]
+        return [cset.identifier for cset in self.sets]
 
     @property
     def misfits(self):
@@ -204,9 +204,9 @@ class DispersionSuite(Suite):
         """
         nbest = self._handle_nbest(nbest)
         with open(fname, "w") as f:
-            f.write("# File written by swipp")
-            for cid, cmf, cit in zip(self.ids[:nbest], self.misfits[:nbest], self._items[:nbest]):
-                cit.write_set(f, cid, cmf)
+            f.write("# File written by swipp\n")
+            for cit in self.sets[:nbest]:
+                cit.write_set(f)
 
     def __eq__(self, other):
         """Define when two DispersionCurve objects are equal."""

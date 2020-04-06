@@ -17,11 +17,15 @@
 
 """Tests for DispersionSuite."""
 
+import os
+import logging
+
+import numpy as np
+
 from testtools import unittest, TestCase, get_full_path
 import swipp
-import numpy as np
-import logging
-logging.basicConfig(level=logging.DEBUG)
+
+logging.basicConfig(level=logging.CRITICAL)
 
 
 class Test_DispersionSuite(TestCase):
@@ -315,6 +319,39 @@ class Test_DispersionSuite(TestCase):
                                             0.00835691356059072]}}}
         models = [e1]
         compare(fname, models, nsets=20)
+
+    def test_write_to_txt(self):
+        dc_0 = swipp.DispersionCurve([1, 5, 10, 15], [100, 200, 300, 400])
+        dc_1 = swipp.DispersionCurve([1, 5, 12, 15], [100, 180, 300, 400])
+        dc_set_0 = swipp.DispersionSet(0, misfit=0.0,
+                                       rayleigh={0: dc_0, 1: dc_1},
+                                       love={0: dc_1, 1: dc_0})
+        dc_set_1 = swipp.DispersionSet(1, misfit=0.0,
+                                       rayleigh={0: dc_1, 1: dc_0},
+                                       love={0: dc_0, 1: dc_1})
+        set_list = [dc_set_0, dc_set_1]
+        expected = swipp.DispersionSuite.from_list(set_list)
+
+        fname = "dc_suite_expected.dc"
+        expected.write_to_txt(fname)
+        returned = swipp.DispersionSuite.from_geopsy(fname)
+        os.remove(fname)
+
+        self.assertEqual(expected, returned)
+
+    def test_eq(self):
+        dc = swipp.DispersionCurve([1,2,3],[10,20,30])
+        dc_set = swipp.DispersionSet("0", rayleigh={0:dc})
+        expected = swipp.DispersionSuite.from_list([dc_set, dc_set])
+
+        # Bad length
+        returned = swipp.DispersionSuite.from_list([dc_set])
+        self.assertNotEqual(expected, returned)
+
+        # Bad Value
+        dc_set = swipp.DispersionSet("1", rayleigh={0:dc})
+        returned = swipp.DispersionSuite.from_list([dc_set, dc_set])
+        self.assertNotEqual(expected, returned)
 
 
 if __name__ == "__main__":

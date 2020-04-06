@@ -1,12 +1,45 @@
-"""Tests for `DispersionSet` class."""
+# This file is part of swipp, a Python package for surface-wave
+# inversion pre- and post-processing.
+# Copyright (C) 2019-2020 Joseph P. Vantassel (jvantassel@utexas.edu)
+#
+#     This program is free software: you can redistribute it and/or modify
+#     it under the terms of the GNU General Public License as published by
+#     the Free Software Foundation, either version 3 of the License, or
+#     (at your option) any later version.
+#
+#     This program is distributed in the hope that it will be useful,
+#     but WITHOUT ANY WARRANTY; without even the implied warranty of
+#     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#     GNU General Public License for more details.
+#
+#     You should have received a copy of the GNU General Public License
+#     along with this program.  If not, see <https: //www.gnu.org/licenses/>.
+
+"""Tests for DispersionSet class."""
+
+import os
+import logging
 
 from testtools import unittest, TestCase, get_full_path
 import swipp
-import logging
-logging.basicConfig(level=logging.DEBUG)
+
+logging.basicConfig(level=logging.CRITICAL)
 
 
 class Test_DispersionSet(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        cls.ray = {0: swipp.DispersionCurve([0.1, 0.2], [200, 100]),
+                    1: swipp.DispersionCurve([0.1, 0.2], [400, 200])}
+        cls.lov = {0: swipp.DispersionCurve([0.15, 0.2], [200, 150]),
+                    1: swipp.DispersionCurve([0.1, 0.22], [410, 200])}
+        cls.identifier = 0
+        cls.misfit = 0.
+        cls.dc_set = swipp.DispersionSet(cls.identifier, cls.misfit,
+                                          rayleigh=cls.ray,
+                                          love=cls.lov)
+
 
     def setUp(self):
         self.full_path = get_full_path(__file__)
@@ -98,15 +131,36 @@ class Test_DispersionSet(TestCase):
         self.assertRaises(ValueError, swipp.DispersionSet.from_geopsy,
                           fname=fname, nrayleigh=0, nlove=0)
 
-    def test_str(self):
-        # Quick test -> Full test in DispersionSuite
-        fname = self.full_path+"data/test_dc_mod2_ray2_lov2_shrt.txt"
+    def test_write_to_txt(self):
+        fname = "dc_set_expected.dc"
+        self.dc_set.write_to_txt(fname)
+        expected = self.dc_set
+        returned = swipp.DispersionSet.from_geopsy(fname)
+        self.assertEqual(expected, returned)
+        os.remove(fname)
+
+    def test_str_and_repr(self):
         a_set = {0: swipp.DispersionCurve([0.1, 0.2], [200, 100]),
                  1: swipp.DispersionCurve([0.1, 0.2], [400, 200])}
         dc_set = swipp.DispersionSet(0, rayleigh=a_set, love=a_set)
+
+        # __str__
         expected = "DispersionSet with 2 Rayleigh and 2 Love modes"
         returned = dc_set.__str__()
         self.assertEqual(expected, returned)
+
+        # __repr__
+        expected = f"DispersionSet(identifier={0}, rayleigh={a_set}, love={a_set}, misfit=None)"
+        returned = dc_set.__repr__()
+        self.assertEqual(expected, returned)
+
+    def test_eq(self):
+        dc = swipp.DispersionCurve([1,2], [3,4])
+        dc_set = swipp.DispersionSet(0, rayleigh={0:dc})
+        
+        # Not Equal
+        self.assertFalse(self.dc_set == dc_set)
+
 
 
 if __name__ == "__main__":

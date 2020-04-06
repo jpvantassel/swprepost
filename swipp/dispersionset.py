@@ -185,24 +185,13 @@ class DispersionSet():
             data = f.read()
         return cls._from_full_file(data, nrayleigh=nrayleigh, nlove=nlove)
 
-    @property
-    def txt_repr(self):
-        """Text representation of `DispersionSet`."""
-
-    def write_set(self, fileobj, identifier=1, misfit=0.0000):
+    def write_set(self, fileobj):
         """Write `DispersionSet` to current file.
         
         Parameters
         ----------
         fname : str
             Name of file, may be a relative or the full path.
-        identifier : int, optional
-            Model number, required to be consistent with `Geopsy`
-            format, default is 1.
-        misfit : float, optional
-            Misfit, required to be consistent with `Geopsy`
-            format, default is 0.0000.
-
 
         Returns
         -------
@@ -210,14 +199,16 @@ class DispersionSet():
             Writes file to disk.
 
         """
-        fileobj.write(f"# Layered model {identifier}: value={misfit}\n")
-        if len(self.rayeigh):
+        misfit = 0.0 if self.misfit is None else self.misfit
+        if self.rayleigh is not None:
+            fileobj.write(f"# Layered model {self.identifier}: value={misfit}\n")
             fileobj.write(f"# {len(self.rayleigh)} Rayleigh dispersion mode(s)\n")
             fileobj.write(f"# CPU Time = 0 ms\n")
             for key, value in self.rayleigh.items():
                 fileobj.write(f"# Mode {key}\n")
                 value.write_curve(fileobj)
-        if len(self.love):
+        if self.love is not None:
+            fileobj.write(f"# Layered model {self.identifier}: value={misfit}\n")
             fileobj.write(f"# {len(self.love)} Love dispersion mode(s)\n")
             fileobj.write(f"# CPU Time = 0 ms\n")
             for key, value in self.love.items():
@@ -239,8 +230,8 @@ class DispersionSet():
 
         """
         with open(fname, "w") as f:
-            f.write("# File written by swipp")
-            f.write(self.txt_repr)
+            f.write("# File written by swipp\n")
+            self.write_set(f)
 
     def __eq__(self, other):
         """Define when two DispersionSet objects are equal."""

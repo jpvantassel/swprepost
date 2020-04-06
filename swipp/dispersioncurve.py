@@ -185,13 +185,13 @@ class DispersionCurve(Curve):
 
         """
         with open(fname, "w") as f:
-            f.write( "# File written by swipp")
+            f.write( "# File written by swipp\n")
             f.write(f"# Layered model {identifier}: value={misfit}\n")
-            f.write(f"# 1 {wavetype.capitalize} dispersion mode(s)\n")
+            f.write(f"# 1 {wavetype.capitalize()} dispersion mode(s)\n")
             f.write(f"# CPU Time = 0 ms\n")
             f.write(f"# Mode {mode}\n")
             self.write_curve(f)
-            
+
     def __eq__(self, other):
         """Define when two `GroundModel` are equal."""
         for attr in ["frequency", "velocity"]:

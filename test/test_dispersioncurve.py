@@ -17,10 +17,14 @@
 
 """Tests for DispersionCurve class."""
 
+import os
+import logging
+
+import numpy as np
+
 from testtools import unittest, TestCase, get_full_path
 import swipp
-import numpy as np
-import logging
+
 logging.basicConfig(level=logging.CRITICAL)
 
 
@@ -78,6 +82,31 @@ class Test_DispersionCurve(TestCase):
         self.assertTrue(dc_a != dc_d)
         self.assertTrue(dc_c != dc_d)
         self.assertTrue(dc_e != dc_a)
+
+    def test_write_to_txt(self):
+        frequency = [1,3,5,7,9]
+        velocity = [100,200,300,400,500]
+        expected = swipp.DispersionCurve(frequency, velocity)
+        fname = "test.dc"
+        expected.write_to_txt(fname)
+        returned = swipp.DispersionCurve.from_geopsy(fname)
+        self.assertEqual(expected, returned)
+        os.remove(fname)
+
+    def test_repr_and_str(self):
+        frequency = [5, 3, 1]
+        velocity = [100, 300, 500]
+        dc = swipp.DispersionCurve(frequency, velocity)
+
+        # __repr__
+        returned = dc.__repr__()
+        expected = f"DispersionCurve(frequency={np.array(frequency, dtype=float)}, velocity={np.array(velocity, dtype=float)})"
+        self.assertEqual(expected, returned)
+
+        # __str__
+        returned = dc.__str__()
+        expected = f"DispersionCurve with 3 points"
+        self.assertEqual(expected, returned)
 
 
 if __name__ == "__main__":
