@@ -15,16 +15,15 @@
 #     You should have received a copy of the GNU General Public License
 #     along with this program.  If not, see <https: //www.gnu.org/licenses/>.
 
-"""The DispersionSuite class definition."""
+"""DispersionSuite class definition."""
+
+import logging
 
 from swipp import DispersionSet, Suite, regex
-import logging
-logging.Logger(name=__name__)
 
-__all__ = ["DispersionSuite", "Suite"]
+logger = logging.getLogger(name=__name__)
 
-# TODO (jpv): Write DispersionSuite to file.
-
+__all__ = ["DispersionSuite"]
 
 class DispersionSuite(Suite):
     """Container for instantiated `DispersionSet` objects.
@@ -48,8 +47,7 @@ class DispersionSuite(Suite):
             raise TypeError(msg)
 
     def __init__(self, dispersionset):
-        """Initialize a `DispersionSuite` object, from a `DispersionSet`
-        object.
+        """Initialize a `DispersionSuite`, from a `DispersionSet`.
 
         Parameters
         ----------
@@ -98,18 +96,12 @@ class DispersionSuite(Suite):
     @property
     def ids(self):
         """Return the ids corresponding to `sets`."""
-        ids = []
-        for cset in self.sets:
-            ids.append(cset.identifier)
-        return ids
+        return [cset.identifer for cset in self.sets]
 
     @property
     def misfits(self):
         """Return the misfits corresponding to `sets`."""
-        msft = []
-        for cset in self.sets:
-            msft.append(cset.misfit)
-        return msft
+        return [cset.misfit for cset in self.sets]
 
     @classmethod
     def from_geopsy(cls, fname, nsets="all", nrayleigh="all", nlove="all"):
@@ -192,6 +184,29 @@ class DispersionSuite(Suite):
             for dc_set in dc_sets[1:]:
                 obj.append(dc_set)
         return obj
+    
+    def write_to_txt(self, fname, nbest="all"):
+        """Write to text file, following the Geopsy format.
+
+        Parameters
+        ----------
+        fname : str
+            Name of file, may be a relative or the full path.
+        nbest : {int, 'all'}, optional
+            Number of best models to write to file, default is 'all'
+            indicating all models will be written.
+
+        Returns
+        -------
+        None
+            Writes file to disk.
+
+        """
+        nbest = self._handle_nbest(nbest)
+        with open(fname, "w") as f:
+            f.write("# File written by swipp")
+            for cid, cmf, cit in zip(self.ids[:nbest], self.misfits[:nbest], self._items[:nbest]):
+                cit.write_set(f, cid, cmf)
 
     def __eq__(self, other):
         """Define when two DispersionCurve objects are equal."""

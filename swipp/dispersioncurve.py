@@ -15,10 +15,17 @@
 #     You should have received a copy of the GNU General Public License
 #     along with this program.  If not, see <https: //www.gnu.org/licenses/>.
 
-"""The DispersionCurve class definition."""
+"""DispersionCurve class definition."""
+
+import logging
+
+import numpy as np
 
 from swipp import Curve, regex
-import numpy as np
+
+logger = logging.getLogger(name=__name__)
+
+__all__ = ['DispersionCurve']
 
 
 class DispersionCurve(Curve):
@@ -45,7 +52,9 @@ class DispersionCurve(Curve):
         -------
         DispersionCurve
             Initialized `DispersionCurve` object.
+
         """
+        logger.info("Howdy!")
         super().__init__(x=frequency, y=velocity)
 
     @property
@@ -67,13 +76,13 @@ class DispersionCurve(Curve):
     @classmethod
     def _parse_dc(cls, dc_data):
         """Parse a single `DispersionCurve` from dispersion data.
-        
+
         Parameters
         ----------
         dc_data : str
             Dispersion curve data of the form `frequency, slowness`.
             It is assumed that frequencies increases monitonically. If
-            this assumption is not true, incorrect results may result.
+            this assumption is not true, incorrect results will result.
             See example below.
 
         Returns
@@ -111,12 +120,12 @@ class DispersionCurve(Curve):
 
     @classmethod
     def from_geopsy(cls, fname):
-        """Create `DispersionCurve` from text file in the Geopsy format.
+        """Create from text file following the Geopsy format.
 
         Parameters
         ----------
         fname : str
-            Name of file to be read, may be a relative or full path.
+            Name of file to be read, may be a relative or the full path.
 
         Returns
         -------
@@ -128,16 +137,70 @@ class DispersionCurve(Curve):
             lines = f.read()
         return cls._parse_dc(lines)
 
+    @property
+    def txt_repr(self):
+        """Text representation following the Geopsy format."""
+        lines = ""
+        for f, p in zip(self.frequency, self.slowness):
+            lines += f"{f} {p}\n"
+        return lines
+
+    def write_curve(self, fileobj):
+        """Append `DispersionCurve` to open file object.
+
+        Parameters
+        ----------
+        fname : str
+            Name of file, may be a relative or the full path.
+
+        Returns
+        -------
+        None
+            Writes file to disk.
+
+        """
+        fileobj.write(self.txt_repr)
+
+    def write_to_txt(self, fname, wavetype="rayleigh", mode=0,
+                     identifier=0, misfit=0.0000):
+        """Write `DispersionCurve` to Geopsy formated file.
+
+        Parameters
+        ----------
+        fname : str
+            Name of file, may be a relative or the full path.
+        wavetype : {"rayleigh", "love"}, optional
+            Surface-wave dispersion wavetype, default is "rayleigh".
+        mode : int, optional
+            Mode integer (numbered from zero), default is 0.
+        identifier : int, optional
+            Model identifier, default is 0.
+        misfit : float, optional
+            Dispersion misfit of profile, default is 0.0000.
+
+        Returns
+        -------
+        None
+            Write text representation to disk.
+
+        """
+        with open(fname, "w") as f:
+            f.write( "# File written by swipp")
+            f.write(f"# Layered model {identifier}: value={misfit}\n")
+            f.write(f"# 1 {wavetype.capitalize} dispersion mode(s)\n")
+            f.write(f"# CPU Time = 0 ms\n")
+            f.write(f"# Mode {mode}\n")
+            self.write_curve(f)
+            
     def __eq__(self, other):
-        """Check if the current and `other` object are equal."""
-        attrs = ["frequency", "velocity"]
-        for attr in attrs:
+        """Define when two `GroundModel` are equal."""
+        for attr in ["frequency", "velocity"]:
             my_vals = getattr(self, attr)
             ur_vals = getattr(other, attr)
             if len(my_vals) != len(ur_vals):
                 return False
             for my, ur in zip(my_vals, ur_vals):
-                if np.round(my,6) != np.round(ur,6):
+                if np.round(my, 6) != np.round(ur, 6):
                     return False
         return True
 

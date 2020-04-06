@@ -15,7 +15,7 @@
 #     You should have received a copy of the GNU General Public License
 #     along with this program.  If not, see <https: //www.gnu.org/licenses/>.
 
-"""The DispersionSet class definition."""
+"""DispersionSet class definition."""
 
 from swipp import DispersionCurve, regex
 
@@ -66,8 +66,7 @@ class DispersionSet():
         return 0
 
     def __init__(self, identifier, misfit=None, rayleigh=None, love=None):
-        """Initialize a `DispersionSet` from `dict`(s) of
-        `DispersionCurve` objects.
+        """Create a `DispersionCurveSet` object.
 
         Parameters
         ----------
@@ -186,6 +185,63 @@ class DispersionSet():
             data = f.read()
         return cls._from_full_file(data, nrayleigh=nrayleigh, nlove=nlove)
 
+    @property
+    def txt_repr(self):
+        """Text representation of `DispersionSet`."""
+
+    def write_set(self, fileobj, identifier=1, misfit=0.0000):
+        """Write `DispersionSet` to current file.
+        
+        Parameters
+        ----------
+        fname : str
+            Name of file, may be a relative or the full path.
+        identifier : int, optional
+            Model number, required to be consistent with `Geopsy`
+            format, default is 1.
+        misfit : float, optional
+            Misfit, required to be consistent with `Geopsy`
+            format, default is 0.0000.
+
+
+        Returns
+        -------
+        None
+            Writes file to disk.
+
+        """
+        fileobj.write(f"# Layered model {identifier}: value={misfit}\n")
+        if len(self.rayeigh):
+            fileobj.write(f"# {len(self.rayleigh)} Rayleigh dispersion mode(s)\n")
+            fileobj.write(f"# CPU Time = 0 ms\n")
+            for key, value in self.rayleigh.items():
+                fileobj.write(f"# Mode {key}\n")
+                value.write_curve(fileobj)
+        if len(self.love):
+            fileobj.write(f"# {len(self.love)} Love dispersion mode(s)\n")
+            fileobj.write(f"# CPU Time = 0 ms\n")
+            for key, value in self.love.items():
+                fileobj.write(f"# Mode {key}\n")
+                value.write_curve(fileobj)
+    
+    def write_to_txt(self, fname):
+        """Write `DispersionSet` to Geopsy formated file.
+
+        Parameters
+        ----------
+        fname : str
+            Name of file, may be a relative or the full path.
+
+        Returns
+        -------
+        None
+            Writes text representation to disk.
+
+        """
+        with open(fname, "w") as f:
+            f.write("# File written by swipp")
+            f.write(self.txt_repr)
+
     def __eq__(self, other):
         """Define when two DispersionSet objects are equal."""
         for attr in ["misfit", "identifier", "love", "rayleigh"]:
@@ -194,7 +250,6 @@ class DispersionSet():
             if my_attr != ur_attr:
                 return False
         return True
-
 
     def __repr__(self):
         """Unambiguous representation of a `DispersionSet` object."""
