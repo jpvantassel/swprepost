@@ -559,8 +559,7 @@ class GroundModel():
 
         """
         fileobj.write(f"# Layered model {model_num}: value={misfit}\n")
-        for line in self.txt_repr:
-            fileobj.write(line)
+        fileobj.write(self.txt_repr)
 
     def write_to_txt(self, fname, model_num=1, misfit=0.0000):
         """Write `GroundModel` to file that follows the `Geospy` format.
