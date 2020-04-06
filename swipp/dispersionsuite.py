@@ -67,7 +67,7 @@ class DispersionSuite(Suite):
 
         """
         self.check_input(dispersionset, DispersionSet)
-        super().__init__(dispersionset, dispersionset.identifier, dispersionset.misfit)
+        super().__init__(dispersionset)
 
     @property
     def sets(self):
@@ -92,7 +92,7 @@ class DispersionSuite(Suite):
 
         """
         self.check_input(dispersionset, DispersionSet)
-        super().append(dispersionset, dispersionset.identifier, dispersionset.misfit, sort=sort)
+        super().append(dispersionset, sort=sort)
 
     @property
     def size(self):
@@ -221,15 +221,6 @@ class DispersionSuite(Suite):
             f.write("# File written by swipp\n")
             for cit in self.sets[:nbest]:
                 cit.write_set(f)
-
-    def __eq__(self, other):
-        """Define when two DispersionCurve objects are equal."""
-        if self.size != other.size:
-            return False
-        for my, ur in zip(self.sets, other.sets):
-            if my != ur:
-                return False
-        return True
 
     def __getitem__(self, slce):
         """Define slicing behavior"""

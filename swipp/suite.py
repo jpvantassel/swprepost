@@ -28,26 +28,28 @@ __all__ = ["Suite"]
 class Suite(ABC):
 
     @abstractmethod
-    def __init__(self, item, identifier, misfit):
+    def __init__(self, item):
+        """Create `Suite` from `item`."""
         self._items = [item]
-        self.ids = [identifier]
-        self.misfits = [misfit]
 
-    def append(self, item, identifier, misfit, sort):
+    def append(self, item, sort=True):
+        """Append item to `Suite`."""
         self._items.append(item)
-        self.ids.append(identifier)
-        self.misfits.append(misfit)
-
         if sort:
             self._sort()
 
     def _sort(self):
-        """Define how to sort `GroundModelSuite`."""
-        for attr in ["_items", "ids", "misfits"]:
-            to_sort = getattr(self, attr)
-            values = [x for _, x in sorted(zip(self.misfits, to_sort),
+        """Define how to sort `Suite`."""
+        self._items = [x for _, x in sorted(zip(self.misfits, self._items),
                                             key=lambda pair: pair[0])]
-            setattr(self, attr, values)
+
+    @property
+    def misfits(self):
+        return [_items.misfit for _items in self._items]
+
+    @property
+    def identifiers(self):
+        return [_items.identifier for _items in self._items]
 
     def _handle_nbest(self, nbest):
         """Accept common `nbest` values and return the logical result."""
@@ -101,7 +103,7 @@ class Suite(ABC):
 
     def misfit_repr(self, nmodels="all", **kwargs):
         """String representation of misfit [min-max] or [min].
-        
+
         Parameters
         ----------
         nmodels : {int, "all"}, optional
@@ -117,12 +119,23 @@ class Suite(ABC):
             Representation of the misfit values for the selected suite.
 
         """
-        format_kwargs = {"unique":False, "precision":2, "fractional":True}
+        format_kwargs = {"unique": False, "precision": 2, "fractional": True}
         for key, value in kwargs.items():
-            format_kwargs[key]=value
-        prep = lambda x: np.format_float_positional(x,  **format_kwargs)
+            format_kwargs[key] = value
+
+        def prep(x): return np.format_float_positional(x,  **format_kwargs)
         if nmodels == 1:
             return f"[{prep(self.misfit_range(nmodels=1))}]"
         else:
             min_msft, max_msft = self.misfit_range(nmodels=nmodels)
             return f"[{prep(min_msft)}-{prep(max_msft)}]"
+
+    def __eq__(self, other):
+        """Define when two Suite objects are equal."""
+        if self.size != other.size:
+            return False
+        for my, ur in zip(self._items, other._items):
+            if my != ur:
+                return False
+        return True
+        

@@ -17,12 +17,15 @@
 
 """GroundModel class definiton."""
 
-from scipy.io import savemat
-import numpy as np
-from swipp import DispersionSet, regex
 import os
 import warnings
 import logging
+
+from scipy.io import savemat
+import numpy as np
+
+from swipp import DispersionSet, regex
+
 logger = logging.getLogger(name=__name__)
 
 
@@ -35,25 +38,26 @@ class GroundModel():
         Thickness, compression-wave velocity (Vp), shear-wave
         velcocity (Vs), and mass density defining each layer of the
         `GroundModel`, respectively.
+    identifier : int, optional
+        Model numeric identifier, default is 0.
+    misfit : float, optional
+        Model misfit, default is 0.0.
 
     """
 
     @staticmethod
-    def check_input_type(values, names):
-        """Check `values` are of the appropriate type.
+    def check_input_type(**kwargs):
+        """Check inputs are of the appropriate type.
 
         Specifically:
-        1. `values` is an interable.
-        2. Cast each value to a `list`.
-        3. Casst each value of value to `float`.
+        1. Cast `GroundModel` input to a `list` of `float`.
+        2. Cast meta-information (identifier and misfit to `int` and
+        `float`).
 
         Parameters
         ----------
-        values : array-like
-            Container of `list` objects one per parameter.
-        names : array-like
-            Container of `str` objects used to raise meaningful
-            exception messages.
+        **kwargs
+            Keyword arguements containing name and value pairs.
 
         Raises
         ------
@@ -61,57 +65,69 @@ class GroundModel():
             If `values` do not pass the aforementioned criteria.
 
         """
-        for cid, (value, name) in enumerate(zip(values, names)):
-            try:
-                values[cid] = [float(val) for val in value]
-            except:
-                msg = f"{name} must be castable to float."
-                raise TypeError(msg)
-        return values
+        for key, value in kwargs.items():
+            if key in ["thickness", "vp", "vs", "density"]:
+                try:
+                    kwargs[key] = [float(val) for val in value]
+                except ValueError as e:
+                    raise TypeError(f"{key} must be castable to float.", e)
+            elif key in ["identifier"]:
+                kwargs[key] = int(value)
+            elif key in ["misfit"]:
+                kwargs[key] = float(value)
+            else:
+                msg = f"Input arguement {key} not recognized."
+                raise NotImplementedError(msg)
+        return kwargs
 
     @staticmethod
-    def check_input_value(values, names):
+    def check_input_value(**kwargs):
         """Check `values` have appropriate values.
 
         Specifically:
-        1. Check that all values are greater than zero.
-        2. Check that `vp` > `vs`.
+        1. Check that all `GroundModel` parameters are greater than
+        zero.
+        2. Check that identifer and misfit are greater than zero.
+        3. Check that `vp` > `vs`.
 
         Parameters
         ----------
-        values : list
-            Container of `list` objects one per parameter.
-        names : list
-            Container of `str` objects used to raise meaningful
-            exception messages.
+        **kwargs
+            Keyword arguements containing name and value pairs.
 
         Raises
         ------
         ValueError
-            If `values` does not pass the aforementioned criteria.
+            If inputs does not pass the aforementioned criteria.
 
         """
-        tmp_len = len(values[0])
-        for value, name in zip(values, names):
-            for val in value:
-                if val < 0:
-                    raise ValueError(f"{name} must always be >= 0.")
+        tmp_len = len(kwargs["thickness"])
+        for key in ["thickness", "vp", "vs", "density"]:
+            value = kwargs[key]
             if tmp_len != len(value):
                 raise ValueError(f"All inputs must have the same length.")
+            for _val in value:
+                if _val < 0:
+                    raise ValueError(f"{key} must always be >= 0.")
 
-        for _vp, _vs in zip(values[names.index("vp")], values[names.index("vs")]):
+        for key in ["identifier", "misfit"]:
+            value = kwargs[key]
+            if value < 0:
+                raise ValueError(f"{key} must always be >= 0.")
+
+        for _vp, _vs in zip(kwargs["vp"], kwargs["vs"]):
             if _vp <= _vs:
                 msg = f"vp must be greater than vs, {_vp}!>{_vs}."
                 raise ValueError(msg)
 
-    def check_input(self, values, names):
+    def check_input(self, **kwargs):
         """Check input values and types."""
-        values = self.check_input_type(values, names)
-        self.check_input_value(values, names)
-        return values
+        kwargs = self.check_input_type(**kwargs)
+        self.check_input_value(**kwargs)
+        return kwargs
 
-    def __init__(self, thickness, vp, vs, density):
-        """Initialize a ground model object.
+    def __init__(self, thickness, vp, vs, density, identifier=0, misfit=0.0):
+        """Initialize a `GroundModel` object.
 
         Parameters
         ----------
@@ -125,6 +141,10 @@ class GroundModel():
         density : iterable 
             Container of `float` or `int` denoting the mass density
             of each layer in kg/m3.
+        identifier : int, optional
+            Model numeric identifier, default is 0.
+        misfit : float, optional
+            Model misfit, default is 0.0.
 
         Returns
         -------
@@ -140,13 +160,23 @@ class GroundModel():
             for details.
 
         """
-        tk, vp, vs, rh = self.check_input([thickness, vp, vs, density],
-                                          ["thickness", "vp", "vs", "density"])
-        self.nlay = len(tk)
-        self.tk = tk
-        self.vp = vp
-        self.vs = vs
-        self.rh = rh
+        kwargs = self.check_input(thickness=thickness, vp=vp, vs=vs,
+                                  density=density, identifier=identifier,
+                                  misfit=misfit)
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+
+    @property
+    def tk(self):
+        return self.thickness
+
+    @property
+    def rh(self):
+        return self.density
+
+    @property
+    def nlay(self):
+        return len(self.tk)
 
     @staticmethod
     def calc_pr(vp, vs):
@@ -231,14 +261,6 @@ class GroundModel():
         define_par(new_depths, new_rh, rh_tk, rh)
         new_tk = cls.depth_to_thick(new_depths)
         return cls._gm()(new_tk, new_vp, new_vs, new_rh)
-
-    @property
-    def thickness(self):
-        return self.tk
-
-    @property
-    def density(self):
-        return self.rh
 
     @property
     def depth(self):
@@ -538,19 +560,13 @@ class GroundModel():
             lines += f"{tk} {vp} {vs} {rh}\n"
         return lines
 
-    def write_model(self, fileobj, model_num=1, misfit=0.0000):
+    def write_model(self, fileobj):
         """Write model to open file object following `Geopsy` format.
 
         Parameters
         ----------
         fileobj : _io.TextIOWrapper
             Name of file, may be a relative or the full path.
-        model_num : int, optional
-            Model number, required to be consistent with `Geopsy`
-            format, default is 1.
-        misfit : float, optional
-            Misfit, required to be consistent with `Geopsy`
-            format, default is 0.0000.
 
         Returns
         -------
@@ -558,22 +574,16 @@ class GroundModel():
             Writes file to disk.
 
         """
-        fileobj.write(f"# Layered model {model_num}: value={misfit}\n")
+        fileobj.write(f"# Layered model {self.identifier}: value={self.misfit}\n")
         fileobj.write(self.txt_repr)
 
-    def write_to_txt(self, fname, model_num=1, misfit=0.0000):
+    def write_to_txt(self, fname):
         """Write `GroundModel` to file that follows the `Geospy` format.
 
         Parameters
         ----------
         fname : str
             Name of file, may contain a relative or the full path.
-        model_num : int, optional
-            Model number, required to be consistent with `Geopsy`
-            format, default is 1.
-        misfit : float, optional
-            Misfit, required to be consistent with `Geopsy`
-            format, default is 0.0000.
 
         Returns
         -------
@@ -582,7 +592,7 @@ class GroundModel():
 
         """
         with open(fname, "w") as f:
-            f.write(f"# Layered model {model_num}: value={misfit}\n")
+            f.write(f"# Layered model {self.identifier}: value={self.misfit}\n")
             for line in self.txt_repr:
                 f.write(line)
 
@@ -592,7 +602,7 @@ class GroundModel():
         return GroundModel
 
     @classmethod
-    def _parse_gm(cls, gm_data):
+    def _parse_gm(cls, gm_data, identifier, misfit):
         """Instantiate a `GroundModel` from lines of ground model text.
 
         This method should not be accessed directly. Use `from_geopsy`
@@ -604,6 +614,10 @@ class GroundModel():
             Text defining a GroundModel in the Geopsy format. If text
             defining multiple GroundModels is provided only the first
             one is parsed.
+        identifier : str
+            Indentifier string.
+        misfit : str
+            Misfit string.
 
         Returns
         -------
@@ -623,7 +637,7 @@ class GroundModel():
             if tk == "0":
                 break
 
-        return cls._gm()(tks, vps, vss, rhs)
+        return cls._gm()(tks, vps, vss, rhs, identifier=identifier, misfit=misfit)
 
     @classmethod
     def from_geopsy(cls, fname):
@@ -647,7 +661,12 @@ class GroundModel():
         """
         with open(fname, "r") as f:
             lines = f.read()
-        return cls._parse_gm(lines)
+
+        for model_info in regex.gm.finditer(lines):
+            identifier, misfit, data = model_info.groups()
+            break
+
+        return cls._parse_gm(data, identifier, misfit)
 
     def __str__(self):
         """Human-readable representation of the `GroundModel`"""
@@ -658,6 +677,16 @@ class GroundModel():
         return f"GroundModel(thickness={self.tk}, vp={self.vp}, vs={self.vs}, density={self.rh})"
 
     def __eq__(self, other):
+        """Define when GroundModel is equal to another object."""
+        if not isinstance(self, GroundModel) or not isinstance(other, GroundModel):
+            return False
+
+        for attr in ["identifier", "misfit"]:
+            my_val = getattr(self, attr)
+            ur_val = getattr(other, attr)
+            if my_val != ur_val:
+                return False
+
         for attr in ["tk", "vp", "vs", "rh"]:
             my_vals = getattr(self, attr)
             ur_vals = getattr(other, attr)

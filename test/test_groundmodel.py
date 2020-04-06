@@ -330,23 +330,25 @@ class Test_GroundModel(TestCase):
         self.assertRaises(ValueError, swipp.GroundModel.depth_to_thick, depth)
 
     def test_from_geopsy(self):
-        mygm = swipp.GroundModel.from_geopsy(
-            self.full_path+"data/test_gm_mod1_self.txt")
-        self.assertListEqual(mygm.tk, [2., 4., 0.])
-        self.assertListEqual(mygm.vp, [300, 700, 400])
-        self.assertListEqual(mygm.vs, [100, 275, 300])
-        self.assertListEqual(mygm.rh, [2200]*3)
+        fname = self.full_path+"data/test_gm_mod1_self.txt"
+        gm = swipp.GroundModel.from_geopsy(fname)
+        self.assertListEqual([2., 4., 0.], gm.tk)
+        self.assertListEqual([300., 700., 400.], gm.vp)
+        self.assertListEqual([100., 275., 300.], gm.vs)
+        self.assertListEqual([2200.]*3, gm.rh)
+        self.assertEqual(1, gm.identifier)
+        self.assertEqual(0.0, gm.misfit)
 
     def test_write_to_txt(self):
         tk = [2, 4, 0]
         vp = [100, 200, 300]
         vs = [50, 100, 200]
         rh = [2000]*3
-        obj1 = swipp.GroundModel(tk, vp, vs, rh)
+        expected = swipp.GroundModel(tk, vp, vs, rh)
         fname = "test_write_to_txt"
-        obj1.write_to_txt(fname)
-        obj2 = swipp.GroundModel.from_geopsy(fname)
-        self.assertEqual(obj1, obj2)
+        expected.write_to_txt(fname)
+        returned = swipp.GroundModel.from_geopsy(fname)
+        self.assertEqual(expected, returned)
         os.remove(fname)
 
     def test_write_model(self):
@@ -354,12 +356,12 @@ class Test_GroundModel(TestCase):
         vp = [100, 200, 300]
         vs = [50, 100, 200]
         rh = [2000]*3
-        obj1 = swipp.GroundModel(tk, vp, vs, rh)
+        expected = swipp.GroundModel(tk, vp, vs, rh)
         fname = "test_write_model"
         with open(fname, "w") as f:
-            obj1.write_model(f)
-        obj2 = swipp.GroundModel.from_geopsy(fname)
-        self.assertEqual(obj1, obj2)
+            expected.write_model(f)
+        returned = swipp.GroundModel.from_geopsy(fname)
+        self.assertEqual(expected, returned)
         os.remove(fname)
 
     def test_simplify(self):

@@ -65,7 +65,7 @@ class DispersionSet():
                 raise TypeError(msg)
         return 0
 
-    def __init__(self, identifier, misfit=0.0, rayleigh=None, love=None):
+    def __init__(self, identifier=0, misfit=0.0, rayleigh=None, love=None):
         """Create a `DispersionCurveSet` object.
 
         Parameters

@@ -36,25 +36,18 @@ class Test_DispersionSuite(TestCase):
     def test_check_input(self):
         # DispersionSuite to be instantiated with only a DispersionSet object.
         for test in [[1, 2, 3], (1, 2, 3), True, "DC"]:
-            self.assertRaises(TypeError, swipp.DispersionSuite, test, "Test")
+            self.assertRaises(TypeError, swipp.DispersionSuite, test)
 
     def test_init(self):
         # Manual instantiation
         frequency = np.array([1, 2, 3])
         velocity = np.array([4, 5, 6])
         dc = swipp.DispersionCurve(frequency=frequency, velocity=velocity)
-        dc_set = swipp.DispersionSet(identifier=5, misfit=15,
+        expected = swipp.DispersionSet(identifier=5, misfit=15.,
                                      rayleigh={0: dc}, love=None)
-        dc_suite = swipp.DispersionSuite(dispersionset=dc_set)
-
-        # Compare the Result
-        expected = frequency
-        returned = dc_suite[0].rayleigh[0].frequency
-        self.assertArrayEqual(expected, returned)
-
-        expected = velocity
-        returned = dc_suite[0].rayleigh[0].velocity
-        self.assertArrayEqual(expected, returned)
+        dc_suite = swipp.DispersionSuite(dispersionset=expected)
+        returned = dc_suite[0]
+        self.assertEqual(expected, returned)
 
         # Invalid type
         self.assertRaises(TypeError, swipp.DispersionSuite, ["bad dc_set"])
@@ -77,7 +70,7 @@ class Test_DispersionSuite(TestCase):
         for dc_set in dc_suite:
             self.assertArrayEqual(frequency, dc_set.rayleigh[0].frequency)
             self.assertArrayEqual(velocity, dc_set.rayleigh[0].velocity)
-        self.assertListEqual([0, 2], dc_suite.ids)
+        self.assertListEqual([0, 2], dc_suite.identifiers)
         self.assertListEqual([2.1, 1.1], dc_suite.misfits)
 
     def test_str(self):
@@ -94,7 +87,7 @@ class Test_DispersionSuite(TestCase):
 
             for model in models:
                 # Use identifier to select the appropriate DispersionSet
-                set_id = dc_suite.ids.index(model["identifier"])
+                set_id = dc_suite.identifiers.index(model["identifier"])
                 dc_set = dc_suite[set_id]
 
                 # Single-valued Attributes

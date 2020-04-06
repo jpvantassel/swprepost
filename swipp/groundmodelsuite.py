@@ -17,12 +17,15 @@
 
 """GroundModelSuite class definition."""
 
-import scipy.io as sio
-import numpy as np
 import warnings
 import os
-from swipp import GroundModel, Suite, DispersionSuite, regex
 import logging
+
+import scipy.io as sio
+import numpy as np
+
+from swipp import GroundModel, Suite, DispersionSuite, regex
+
 logger = logging.getLogger(name=__name__)
 
 
@@ -33,38 +36,28 @@ class GroundModelSuite(Suite):
     ----------
     gms : list
         List of `GroundModel` objects, composing the suite.
-    ids : list
-        List of identifiers, one per `GroundModel` in the suite.
-    misfits : list
-        List of misfits, one per `GroundModel` in the suite.
 
     """
     @staticmethod
-    def check_type(groundmodel, identifier, misfit):
+    def check_type(groundmodel):
         """Check input to `GroundModelSuite`.
 
         Specifically:
         1. `groundmodel` is of type `GroundModel`.
-        2. cast `identifier` to `str`.
-        3. cast `misfit` to `float`.
-        
+
         """
         if not isinstance(groundmodel, GroundModel):
             msg = f"`groundmodel` must an instance of `GroundModel`, not {type(groundmodel)}."
             raise TypeError(msg)
-        return (groundmodel, int(identifier), float(misfit))
+        return groundmodel
 
-    def __init__(self, groundmodel, identifier, misfit=0.0000):
+    def __init__(self, groundmodel):
         """Initialize a `GroundModelSuite` from a `GroundModelObject`.
 
         Parameters
         ----------
         groundmodel : GroundModel
             Instantiated `GroundModel` object.
-        identifier : int
-            Model identification number.
-        misfit : [float, int], optional
-            Misfit associated with `groundmodel`, default is 0.0000.
 
         Returns
         -------
@@ -73,8 +66,8 @@ class GroundModelSuite(Suite):
 
         """
         logger.info("Howdy!")
-        super().__init__(*self.check_type(groundmodel, identifier, misfit))
-    
+        super().__init__(self.check_type(groundmodel))
+
     @property
     def gms(self):
         return self._items
@@ -83,19 +76,13 @@ class GroundModelSuite(Suite):
     def size(self):
         return len(self.gms)
 
-    def append(self, groundmodel, identifier, misfit=0.0000, sort=True):
+    def append(self, groundmodel, sort=True):
         """Append `GroundModel` object to `GroundModelSuite` object.
 
         Parameters
         ----------
         groundmodel : GroundModel
             refer to 
-            :meth: `__init__ <swipp.GroundModelSuite.__init__>`.
-        identifier : str
-            refer to
-            :meth: `__init__ <swipp.GroundModelSuite.__init__>`.
-        misfit : [float, int], optional
-            refer to
             :meth: `__init__ <swipp.GroundModelSuite.__init__>`.
         sort : bool
             Sort models according to misfit (smallest to largest),
@@ -108,14 +95,14 @@ class GroundModelSuite(Suite):
         Returns
         -------
         None
-            Instead updates the attributes `gms`, `ids`, and `misfits`.
+            Instead updates the attributes `gms`.
 
         """
-        super().append(*self.check_type(groundmodel, identifier, misfit), sort) 
+        super().append(self.check_type(groundmodel), sort=sort)
 
     def vs30(self, nbest="all"):
         """Calculate Vs30 for `GroundModelSuite`.
-        
+
         Parameters
         ----------
         nbest : {int, "all"}, optional
@@ -129,7 +116,7 @@ class GroundModelSuite(Suite):
         See Also
         --------
         Refer to :meth: `vs30 <swipp.GroundModel.vs30>`.
-        
+
         """
         nbest = self._handle_nbest(nbest)
         gms = self.gms[:nbest]
@@ -188,7 +175,7 @@ class GroundModelSuite(Suite):
         -------
         GroundModel
             Initialized `GroundModel` object.
-        
+
         """
         med_vp_tk, med_vp = self.median_simple(nbest=nbest, parameter='vp')
         med_vs_tk, med_vs = self.median_simple(nbest=nbest, parameter='vs')
@@ -216,12 +203,12 @@ class GroundModelSuite(Suite):
         """
         nbest = self._handle_nbest(nbest)
         with open(fname, "w") as f:
-            for cid, cmf, cgm in zip(self.ids[:nbest], self.misfits[:nbest], self.gms[:nbest]):
-                cgm.write_model(f, cid, cmf)
+            for cgm in self.gms[:nbest]:
+                cgm.write_model(f)
 
     def sigma_ln(self, dmax=50, dy=0.5, nbest='all', parameter='vs'):
         """Lognormal standard deviation of a parameter.
-        
+
         Parameters
         ----------
         dmax : float, optional
@@ -234,13 +221,13 @@ class GroundModelSuite(Suite):
             is 'all'.
         parameter : {'vs', 'vp', 'rh', 'density', 'pr'}, optional
             Parameter to be used for the calculation, default is 'vs'.
-        
+
         Returns
         -------
         Lognormal standard deviation of the nbest discretized profiles.
-        
+
         """
-        nbest = self._handle_nbest(nbest)        
+        nbest = self._handle_nbest(nbest)
         npar = np.empty((int(dmax/dy)+1, nbest))
         for ncol, gm in enumerate(self.gms[:nbest]):
             disc_depth, disc_par = gm.discretize(dmax=dmax, dy=dy,
@@ -260,13 +247,12 @@ class GroundModelSuite(Suite):
         return GroundModelSuite
 
     @classmethod
-    def from_list(cls, groundmodels, identifiers, misfits, sort=True):
+    def from_list(cls, groundmodels, sort=True):
         """Create from a `list` of `GroundModel` objects."""
-        obj = cls._gm_suite()(groundmodels[0], identifiers[0], misfits[0])
+        obj = cls._gm_suite()(groundmodels[0])
         if len(groundmodels) > 1:
-            for cgm, cid, cmf in zip(groundmodels[1:], identifiers[1:],
-                                     misfits[1:]):
-                obj.append(cgm, cid, cmf, sort=sort)
+            for cgm in groundmodels[1:]:
+                obj.append(cgm, sort=sort)
         return obj
 
     @classmethod
@@ -293,7 +279,6 @@ class GroundModelSuite(Suite):
             If the size of the arrays are inconsistent.
 
         """
-
         cols = tks.shape[1]
         for other in (vps.shape[1], vss.shape[1], rhs.shape[1], ids.size, misfits.size):
             if cols != other:
@@ -307,12 +292,12 @@ class GroundModelSuite(Suite):
             _id = ids[col]
             msf = misfits[col]
 
-            obj = cls._gm()(tk, vp, vs, rh)
+            obj = cls._gm()(tk, vp, vs, rh, identifier=_id, misfit=msf)
 
             if col == 0:
-                suite = cls._gm_suite()(obj, _id, msf)
+                suite = cls._gm_suite()(obj)
             else:
-                suite.append(obj, _id, msf)
+                suite.append(obj)
 
         return suite
 
@@ -344,29 +329,29 @@ class GroundModelSuite(Suite):
         with open(fname, "r") as f:
             lines = f.read()
 
-        identifiers, misfits, gms = [], [], []
+        gms = []
         model_count = 0
         for model_info in regex.gm.finditer(lines):
             identifier, misfit, data = model_info.groups()
-
-            identifiers.append(identifier)
-            misfits.append(float(misfit))
-            gms.append(cls._gm()._parse_gm(data))
+            gms.append(cls._gm()._parse_gm(data, identifier, misfit))
 
             model_count += 1
             if model_count == nmodels:
                 break
 
-        return cls.from_list(gms, identifiers, misfits, sort=sort)
+        return cls.from_list(gms, sort=sort)
 
     def __getitem__(self, sliced):
         if isinstance(sliced, int):
             return self.gms[sliced]
         if isinstance(sliced, slice):
-            return self._gm_suite().from_list(self.gms[sliced],
-                                              self.ids[sliced],
-                                              self.misfits[sliced])
+            return self._gm_suite().from_list(self.gms[sliced])
 
     def __str__(self):
         """Human-readable representation of a `GroundModelSuite`."""
         return f"GroundModelSuite with {len(self.gms)} GroundModels."
+
+    def __repr__(self):
+        """Unambiguos representation of a `GroundModelSuite`."""
+        return f"GroundModelSuite at {id(self)}."
+    

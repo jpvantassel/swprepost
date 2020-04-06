@@ -34,14 +34,11 @@ class Test_Suite(TestCase):
         vs = [100, 200, 300]
         vp = [200, 400, 600]
         rh = [2000]*3
-        gm = swipp.GroundModel(tk, vp, vs, rh)
         gms = []
-        n = 10
-        for _ in range(n):
-            gms.append(gm)
-        ids = [1]*n
-        misfits = [0.5, 0.8, 1, 0.3, 0.4, 0.6, 0.7, 0.1, 0.2, 0.1]
-        self.gm_suite = swipp.GroundModelSuite.from_list(gms, ids, misfits)
+        for _id, _mf in enumerate([0.5, 0.8, 1, 0.3, 0.4, 0.6, 0.7, 0.1, 0.2, 0.1]):
+            gms.append(swipp.GroundModel(tk, vp, vs, rh,
+                                         identifier=_id, misfit=_mf))
+        self.gm_suite = swipp.GroundModelSuite.from_list(gms)
 
     def test_handle_nbest(self):
         # GroundModelSuite
@@ -52,7 +49,8 @@ class Test_Suite(TestCase):
             self.assertEqual(expected, returned)
 
         # Bad value
-        self.assertRaises(ValueError, self.gm_suite._handle_nbest, nbest="tada")
+        self.assertRaises(
+            ValueError, self.gm_suite._handle_nbest, nbest="tada")
 
     def test_misfit_range(self):
         # GroundModelSuite
