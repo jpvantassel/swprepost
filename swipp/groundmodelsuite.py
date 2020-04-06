@@ -52,7 +52,7 @@ class GroundModelSuite(Suite):
         if not isinstance(groundmodel, GroundModel):
             msg = f"`groundmodel` must an instance of `GroundModel`, not {type(groundmodel)}."
             raise TypeError(msg)
-        return (groundmodel, str(identifier), float(misfit))
+        return (groundmodel, int(identifier), float(misfit))
 
     def __init__(self, groundmodel, identifier, misfit=0.0000):
         """Initialize a `GroundModelSuite` from a `GroundModelObject`.
@@ -61,8 +61,8 @@ class GroundModelSuite(Suite):
         ----------
         groundmodel : GroundModel
             Instantiated `GroundModel` object.
-        identifier : str
-            Human-readable, unique identifier for `groundmodel`.
+        identifier : int
+            Model identification number.
         misfit : [float, int], optional
             Misfit associated with `groundmodel`, default is 0.0000.
 
@@ -112,14 +112,6 @@ class GroundModelSuite(Suite):
 
         """
         super().append(*self.check_type(groundmodel, identifier, misfit), sort) 
-
-    def _sort(self):
-        """Define how to sort `GroundModelSuite`."""
-        for attr in ["_items", "ids", "misfits"]:
-            to_sort = getattr(self, attr)
-            values = [x for _, x in sorted(zip(self.misfits, to_sort),
-                                            key=lambda pair: pair[0])]
-            setattr(self, attr, values)
 
     def vs30(self, nbest="all"):
         """Calculate Vs30 for `GroundModelSuite`.
@@ -268,13 +260,13 @@ class GroundModelSuite(Suite):
         return GroundModelSuite
 
     @classmethod
-    def from_list(cls, groundmodels, identifiers, misfits):
+    def from_list(cls, groundmodels, identifiers, misfits, sort=True):
         """Create from a `list` of `GroundModel` objects."""
         obj = cls._gm_suite()(groundmodels[0], identifiers[0], misfits[0])
         if len(groundmodels) > 1:
             for cgm, cid, cmf in zip(groundmodels[1:], identifiers[1:],
                                      misfits[1:]):
-                obj.append(cgm, cid, cmf)
+                obj.append(cgm, cid, cmf, sort=sort)
         return obj
 
     @classmethod
@@ -325,7 +317,7 @@ class GroundModelSuite(Suite):
         return suite
 
     @classmethod
-    def from_geopsy(cls, fname, nmodels="all"):
+    def from_geopsy(cls, fname, nmodels="all", sort=False):
         """Create from a file following the `Geopsy` format.
 
         Parameters
@@ -335,6 +327,10 @@ class GroundModelSuite(Suite):
         nmodels : {int, 'all'}, optional
             Number of `GroundModels` to extract from file, default is
             `all`.
+        sort : bool, optional
+            Indicates whether the imported data should be sorted from
+            lowest to highest misfit, default is `False` indicating no
+            sorting is performed.  
 
         Returns
         -------
@@ -361,7 +357,7 @@ class GroundModelSuite(Suite):
             if model_count == nmodels:
                 break
 
-        return cls.from_list(gms, identifiers, misfits)
+        return cls.from_list(gms, identifiers, misfits, sort=sort)
 
     def __getitem__(self, sliced):
         if isinstance(sliced, int):

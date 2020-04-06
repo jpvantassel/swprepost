@@ -43,7 +43,7 @@ class Test_DispersionSuite(TestCase):
         frequency = np.array([1, 2, 3])
         velocity = np.array([4, 5, 6])
         dc = swipp.DispersionCurve(frequency=frequency, velocity=velocity)
-        dc_set = swipp.DispersionSet(identifier="Test", misfit=None,
+        dc_set = swipp.DispersionSet(identifier=5, misfit=15,
                                      rayleigh={0: dc}, love=None)
         dc_suite = swipp.DispersionSuite(dispersionset=dc_set)
 
@@ -57,29 +57,28 @@ class Test_DispersionSuite(TestCase):
         self.assertArrayEqual(expected, returned)
 
         # Invalid type
-        self.assertRaises(TypeError, swipp.DispersionSuite,
-                          ["this isnt a dispersionset"])
+        self.assertRaises(TypeError, swipp.DispersionSuite, ["bad dc_set"])
 
     def test_append(self):
         # Manual instantiation
         frequency = np.array([1, 2, 3])
         velocity = np.array([4, 5, 6])
         dc = swipp.DispersionCurve(frequency=frequency, velocity=velocity)
-        dc_set_0 = swipp.DispersionSet(identifier="Test_0", misfit=None,
+        dc_set_0 = swipp.DispersionSet(identifier=0, misfit=2.1,
                                        rayleigh={0: dc}, love=None)
         dc_suite = swipp.DispersionSuite(dispersionset=dc_set_0)
 
         # Manual Append
-        dc_set_1 = swipp.DispersionSet(identifier="Test_1", misfit=None,
+        dc_set_1 = swipp.DispersionSet(identifier=2, misfit=1.1,
                                        rayleigh={0: dc}, love=None)
-        dc_suite.append(dispersionset=dc_set_1)
+        dc_suite.append(dispersionset=dc_set_1, sort=False)
 
         # Compare the Result
         for dc_set in dc_suite:
             self.assertArrayEqual(frequency, dc_set.rayleigh[0].frequency)
             self.assertArrayEqual(velocity, dc_set.rayleigh[0].velocity)
-        self.assertListEqual(["Test_0", "Test_1"], dc_suite.ids)
-        self.assertListEqual([None, None], dc_suite.misfits)
+        self.assertListEqual([0, 2], dc_suite.ids)
+        self.assertListEqual([2.1, 1.1], dc_suite.misfits)
 
     def test_str(self):
         fname = "data/test_dc_mod2_ray2_lov0_shrt.txt"
@@ -116,7 +115,7 @@ class Test_DispersionSuite(TestCase):
 
         # One Set with Two Rayleigh and Two Love Modes
         fname = self.full_path+"data/test_dc_mod1_ray2_lov2_shrt.txt"
-        e1 = {"identifier": "149641",
+        e1 = {"identifier": 149641,
               "misfit": 1.08851,
               "love": {0: {"frequency": [0.11, 61],
                            "velocity": [1/0.0003055565316784,
@@ -135,7 +134,7 @@ class Test_DispersionSuite(TestCase):
 
         # Two Sets with Two Rayleigh Modes Each
         fname = self.full_path+"data/test_dc_mod2_ray2_lov0_shrt.txt"
-        e1 = {"identifier": "149641",
+        e1 = {"identifier": 149641,
               "misfit": 1.08851,
               "rayleigh": {0: {"frequency": [0.15, 64],
                                "velocity": [1/0.000334532972901842,
@@ -144,7 +143,7 @@ class Test_DispersionSuite(TestCase):
                                "velocity":  [1/0.000323646256288129,
                                              1/0.00832719612771301]}},
               "love": None}
-        e2 = {"identifier": "143539",
+        e2 = {"identifier": 143539,
               "misfit": 1.0948,
               "rayleigh": {0: {"frequency": [0.1, 61.5],
                                "velocity": [1/0.000324619882942684,
@@ -158,7 +157,7 @@ class Test_DispersionSuite(TestCase):
 
         # Two Sets with Two Love Modes Each
         fname = self.full_path+"data/test_dc_mod2_ray0_lov2_shrt.txt"
-        e1 = {"identifier": "149641",
+        e1 = {"identifier": 149641,
               "misfit": 1.08851,
               "love": {0: {"frequency": [0.11, 61],
                            "velocity": [1/0.0003055565316784,
@@ -167,7 +166,7 @@ class Test_DispersionSuite(TestCase):
                            "velocity":  [1/0.000305221889470528,
                                          1/0.00828240730448549]}},
               "rayleigh": None}
-        e2 = {"identifier": "143539",
+        e2 = {"identifier": 143539,
               "misfit": 1.0948,
               "love": {0: {"frequency": [0.15, 64],
                            "velocity": [1/0.000293577212739142,
@@ -181,7 +180,7 @@ class Test_DispersionSuite(TestCase):
 
         # Two Sets with Two Rayleigh and Love Modes Each
         fname = self.full_path+"data/test_dc_mod2_ray2_lov2_shrt.txt"
-        e1 = {"identifier": "149641",
+        e1 = {"identifier": 149641,
               "misfit": 1.08851,
               "love": {0: {"frequency": [0.11, 61],
                            "velocity": [1/0.0003055565316784,
@@ -195,7 +194,7 @@ class Test_DispersionSuite(TestCase):
                            1: {"frequency": [0.479030947360446, 68],
                                "velocity":  [1/0.000323646256288129,
                                              1/0.00832719612771301]}}}
-        e2 = {"identifier": "143539",
+        e2 = {"identifier": 143539,
               "misfit": 1.0948,
               "love": {0: {"frequency": [0.15, 64],
                            "velocity": [1/0.000293577212739142,
@@ -234,7 +233,7 @@ class Test_DispersionSuite(TestCase):
 
         # Large File
         fname = self.full_path+"data/test_dc_mod100_ray2_lov2_full.txt"
-        e1 = {"identifier": "146980",
+        e1 = {"identifier": 146980,
               "misfit": 1.12243,
               "love": None,
               "rayleigh": {1: {"frequency": [0.368951808039113,
@@ -341,7 +340,7 @@ class Test_DispersionSuite(TestCase):
 
     def test_eq(self):
         dc = swipp.DispersionCurve([1,2,3],[10,20,30])
-        dc_set = swipp.DispersionSet("0", rayleigh={0:dc})
+        dc_set = swipp.DispersionSet(0, rayleigh={0:dc})
         expected = swipp.DispersionSuite.from_list([dc_set, dc_set])
 
         # Bad length
@@ -349,7 +348,7 @@ class Test_DispersionSuite(TestCase):
         self.assertNotEqual(expected, returned)
 
         # Bad Value
-        dc_set = swipp.DispersionSet("1", rayleigh={0:dc})
+        dc_set = swipp.DispersionSet(1, rayleigh={0:dc})
         returned = swipp.DispersionSuite.from_list([dc_set, dc_set])
         self.assertNotEqual(expected, returned)
 

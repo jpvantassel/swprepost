@@ -41,6 +41,14 @@ class Suite(ABC):
         if sort:
             self._sort()
 
+    def _sort(self):
+        """Define how to sort `GroundModelSuite`."""
+        for attr in ["_items", "ids", "misfits"]:
+            to_sort = getattr(self, attr)
+            values = [x for _, x in sorted(zip(self.misfits, to_sort),
+                                            key=lambda pair: pair[0])]
+            setattr(self, attr, values)
+
     def _handle_nbest(self, nbest):
         """Accept common `nbest` values and return the logical result."""
         if nbest is None:

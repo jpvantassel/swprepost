@@ -37,9 +37,9 @@ class Test_GroundModelSuite(TestCase):
         vps = [200, 400, 600, 800]
         rho = [2000]*4
         mygm = swipp.GroundModel(thk, vps, vss, rho)
-        mysuite = swipp.GroundModelSuite(mygm, "test", misfit=2)
+        mysuite = swipp.GroundModelSuite(mygm, 5, misfit=2)
         self.assertEqual(mygm, mysuite[0])
-        self.assertEqual("test", mysuite.ids[0])
+        self.assertEqual(5, mysuite.ids[0])
         self.assertEqual(2, mysuite.misfits[0])
 
         # Bad Value - Wrong Type
@@ -54,11 +54,11 @@ class Test_GroundModelSuite(TestCase):
         mygm = swipp.GroundModel(thk, vps, vss, rho)
 
         # Two GroundModels
-        mysuite = swipp.GroundModelSuite(mygm, "test1", misfit=1)
-        mysuite.append(mygm, "test2", misfit=1.1)
+        mysuite = swipp.GroundModelSuite(mygm, 2, misfit=1)
+        mysuite.append(mygm, 7, misfit=1.1)
         for gm in mysuite:
             self.assertEqual(mygm, gm)
-        self.assertListEqual(["test1", "test2"], mysuite.ids)
+        self.assertListEqual([2, 7], mysuite.ids)
         self.assertListEqual([1.0, 1.1], mysuite.misfits)
 
     def test_from_geopsy(self):
@@ -87,7 +87,7 @@ class Test_GroundModelSuite(TestCase):
         self.assertEqual(expected1, returned[1])
 
         self.assertListEqual([0.766485, 0.767484], returned.misfits)
-        self.assertListEqual(["149698", "147185"], returned.ids)
+        self.assertListEqual([149698, 147185], returned.ids)
 
         # Randomly check the 10th profile (index=9)
         fname = self.full_path+"data/test_gm_mod100.txt"
@@ -126,9 +126,9 @@ class Test_GroundModelSuite(TestCase):
         rho = [2000]*3
         mygm = swipp.GroundModel(thk, vps, vss, rho)
 
-        mysuite = swipp.GroundModelSuite(mygm, "test")
-        for _ in range(5):
-            mysuite.append(mygm, "test")
+        mysuite = swipp.GroundModelSuite(mygm, 1)
+        for x in range(5):
+            mysuite.append(mygm, x)
         self.assertListEqual(mysuite.vs30(), [266.6666666666666666666]*6)
 
         # nbest=3
@@ -142,10 +142,10 @@ class Test_GroundModelSuite(TestCase):
         rhs = [[2000]*3, [2300]*3, [2200]*3]
 
         gm = swipp.GroundModel(tks[0], vps[0], vss[0], rhs[0])
-        suite = swipp.GroundModelSuite(gm, "test")
+        suite = swipp.GroundModelSuite(gm, 1)
         for tk, vs, vp, rh in zip(tks[1:], vss[1:], vps[1:], rhs[1:]):
             gm = swipp.GroundModel(tk, vp, vs, rh)
-            suite.append(gm, "test")
+            suite.append(gm, 0)
         calc_med_gm = suite.median(nbest=3)
         med_tks = [2., 5., 0.]
         med_vss = [100., 275., 300.]
@@ -160,10 +160,10 @@ class Test_GroundModelSuite(TestCase):
         rhs = [[2000]*4, [2300]*3, [2200]*3]
 
         gm = swipp.GroundModel(tks[0], vps[0], vss[0], rhs[0])
-        suite = swipp.GroundModelSuite(gm, "test")
+        suite = swipp.GroundModelSuite(gm, 30)
         for tk, vs, vp, rh in zip(tks[1:], vss[1:], vps[1:], rhs[1:]):
             gm = swipp.GroundModel(tk, vp, vs, rh)
-            suite.append(gm, "test")
+            suite.append(gm, 15)
         calc_med_gm = suite.median(nbest="all")
         med_tks = [2., 5., 0.]
         med_vss = [100., 275., 300.]
@@ -179,10 +179,10 @@ class Test_GroundModelSuite(TestCase):
         rh = [2000]*3
 
         gm = swipp.GroundModel(tk, vp, vss[0], rh)
-        suite = swipp.GroundModelSuite(gm, "test")
+        suite = swipp.GroundModelSuite(gm, 10)
         for vs in vss[1:]:
             gm = swipp.GroundModel(tk, vp, vs, rh)
-            suite.append(gm, "test")
+            suite.append(gm, 40)
         dmax = 10
         dy = 0.5
         depth, sigln = suite.sigma_ln(
@@ -198,7 +198,7 @@ class Test_GroundModelSuite(TestCase):
         vss = np.array([[50, 75, 100], [100, 200, 300]])
         rhs = np.array([[2000, 2200, 2250], [2100, 2300, 2300]])
         misfits = np.array([1, 2, 3])
-        ids = np.array(["1", "2", "3"])
+        ids = np.array([2, 7, 9])
 
         gms = []
         for col in range(tks.shape[1]):
@@ -220,7 +220,7 @@ class Test_GroundModelSuite(TestCase):
         vps = [[300, 400, 500], [300, 600], [600, 1000], [800, 1000]]
         vss = [[100, 200, 300], [200, 300], [300, 500], [400, 600]]
         rhs = [[2000]*3, [2000]*2, [2000]*2, [2000]*2]
-        ids = ["1", "2", "3"]
+        ids = [1, 2, 3]
         misfits = [1, 0.5, 0.3]
 
         gm = swipp.GroundModel(tks[0], vps[0], vss[0], rhs[0])
@@ -241,9 +241,9 @@ class Test_GroundModelSuite(TestCase):
         x = [1, 2, 3]
         y = [2, 4, 5]
         gm = swipp.GroundModel(x, y, x, x)
-        suite = swipp.GroundModelSuite(gm, "test")
+        suite = swipp.GroundModelSuite(gm, 0)
         for _ in range(3):
-            suite.append(gm, "test")
+            suite.append(gm, 15)
         expected = "GroundModelSuite with 4 GroundModels."
         returned = suite.__str__()
         self.assertEqual(expected, returned)

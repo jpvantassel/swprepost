@@ -39,7 +39,7 @@ class Test_Suite(TestCase):
         n = 10
         for _ in range(n):
             gms.append(gm)
-        ids = ["test"]*n
+        ids = [1]*n
         misfits = [0.5, 0.8, 1, 0.3, 0.4, 0.6, 0.7, 0.1, 0.2, 0.1]
         self.gm_suite = swipp.GroundModelSuite.from_list(gms, ids, misfits)
 

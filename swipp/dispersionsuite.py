@@ -25,6 +25,7 @@ logger = logging.getLogger(name=__name__)
 
 __all__ = ["DispersionSuite"]
 
+
 class DispersionSuite(Suite):
     """Container for instantiated `DispersionSet` objects.
 
@@ -66,9 +67,13 @@ class DispersionSuite(Suite):
 
         """
         self.check_input(dispersionset, DispersionSet)
-        self.sets = [dispersionset]
+        super().__init__(dispersionset, dispersionset.identifier, dispersionset.misfit)
 
-    def append(self, dispersionset):
+    @property
+    def sets(self):
+        return self._items
+
+    def append(self, dispersionset, sort=True):
         """Append `DispersionSet` object to `DispersionSuite`.
 
         Parameters
@@ -87,24 +92,25 @@ class DispersionSuite(Suite):
 
         """
         self.check_input(dispersionset, DispersionSet)
-        self.sets.append(dispersionset)
+        super().append(dispersionset, dispersionset.identifier, dispersionset.misfit, sort=sort)
 
     @property
     def size(self):
-        return len(self.sets)
+        return len(self._items)
 
-    @property
-    def ids(self):
-        """Return the ids corresponding to `sets`."""
-        return [cset.identifier for cset in self.sets]
+    # @property
+    # def ids(self):
+    #     """Return the ids corresponding to `sets`."""
+    #     return [cset.identifier for cset in self.sets]
 
-    @property
-    def misfits(self):
-        """Return the misfits corresponding to `sets`."""
-        return [cset.misfit for cset in self.sets]
+    # @property
+    # def misfits(self):
+    #     """Return the misfits corresponding to `sets`."""
+    #     return [cset.misfit for cset in self.sets]
 
     @classmethod
-    def from_geopsy(cls, fname, nsets="all", nrayleigh="all", nlove="all"):
+    def from_geopsy(cls, fname, nsets="all", nrayleigh="all", nlove="all",
+                    sort=False):
         """Instantiate from a text file following the Geopsy format.
 
         Parameters
@@ -117,6 +123,10 @@ class DispersionSuite(Suite):
         nrayleigh, nlove : int, optional
             Number of Rayleigh and Love modes respectively, default
             is "all" so all available modes will be extracted.
+        sort : bool, optional
+            Indicates whether the imported data should be sorted from
+            lowest to highest misfit, default is `False` indicating no
+            sorting is performed.
 
         Returns
         -------
@@ -157,7 +167,7 @@ class DispersionSuite(Suite):
         dc_sets.append(cls._dcset()(previous_id,
                                     float(previous_misfit),
                                     rayleigh=rayleigh, love=love))
-        return cls.from_list(dc_sets)
+        return cls.from_list(dc_sets, sort=sort)
 
     @classmethod
     def _dcset(cls):
@@ -165,13 +175,17 @@ class DispersionSuite(Suite):
         return DispersionSet
 
     @classmethod
-    def from_list(cls, dc_sets):
+    def from_list(cls, dc_sets, sort=True):
         """Instantiate from a list of `DispersionSet` objects.
 
         Parameters
         ----------
         dc_sets : list
             List of `DispersionSet` objects.
+        sort : bool, optional
+            Indicates whether the imported data should be sorted from
+            lowest to highest misfit, default is `False` indicating no
+            sorting is performed.  
 
         Returns
         -------
@@ -182,9 +196,9 @@ class DispersionSuite(Suite):
         obj = cls(dc_sets[0])
         if len(dc_sets) > 1:
             for dc_set in dc_sets[1:]:
-                obj.append(dc_set)
+                obj.append(dc_set, sort=sort)
         return obj
-    
+
     def write_to_txt(self, fname, nbest="all"):
         """Write to text file, following the Geopsy format.
 

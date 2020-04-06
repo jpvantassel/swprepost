@@ -33,9 +33,9 @@ class DispersionSet():
         `{0:DispersionCurve0, ... N:DispersionCurveN}`
         where each key is the mode number and the value is the
         corresponding instantiated `DispersionCurve` object.
-    identifier : str
-        Meaningful identifier of the `DispersionSet`.
-    misfit : float or None
+    identifier : int
+        Model identifier of the `DispersionSet`.
+    misfit : float
         Value of dispersion misfit if provided, `None` otherwise.
 
     """
@@ -65,15 +65,15 @@ class DispersionSet():
                 raise TypeError(msg)
         return 0
 
-    def __init__(self, identifier, misfit=None, rayleigh=None, love=None):
+    def __init__(self, identifier, misfit=0.0, rayleigh=None, love=None):
         """Create a `DispersionCurveSet` object.
 
         Parameters
         ----------
         identifier : str
             Unique identifier of the `DispersionSet`.
-        misfit : float or None, optional
-            `DispersionSet` misfit or `None`.
+        misfit : float, optional
+            `DispersionSet` misfit, default is 0.0.
         rayleigh, love : dict
             Container for `DispersionCurve` objects of the form
             `{0:disp_curve_obj0, ... N:disp_curve_objN}` where each
@@ -97,8 +97,8 @@ class DispersionSet():
         self.rayleigh = None if rayleigh is None else dict(rayleigh)
         self.love = None if love is None else dict(love)
 
-        self.identifier = str(identifier)
-        self.misfit = None if misfit is None else float(misfit)
+        self.identifier = int(identifier)
+        self.misfit = float(misfit)
 
     @classmethod
     def _parse_dcs(cls, dcs_data, nmodes="all"):

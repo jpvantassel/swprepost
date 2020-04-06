@@ -66,19 +66,19 @@ class Test_DispersionSet(TestCase):
         lov = swipp.DispersionCurve(frequency=frequency, velocity=velocity)
 
         # Rayleigh Alone
-        ex_a = swipp.DispersionSet(identifier="Test", misfit=None,
+        ex_a = swipp.DispersionSet(identifier=1, misfit=1.2,
                                    rayleigh={0: ray}, love=None)
         self.assertListEqual(velocity, ex_a.rayleigh[0].velocity.tolist())
-        self.assertEqual("Test", ex_a.identifier)
-        self.assertEqual(None, ex_a.misfit)
+        self.assertEqual(1, ex_a.identifier)
+        self.assertEqual(1.2, ex_a.misfit)
 
         # Love Alone
-        ex_b = swipp.DispersionSet(identifier="Test", misfit=None,
+        ex_b = swipp.DispersionSet(identifier=2, misfit=3.4,
                                    rayleigh=None, love={0: lov})
         self.assertListEqual(velocity, ex_b.love[0].velocity.tolist())
 
         # Rayleigh and Love
-        ex_c = swipp.DispersionSet(identifier="Test", misfit=None,
+        ex_c = swipp.DispersionSet(identifier=3, misfit=5.7,
                                    rayleigh={0: ray}, love={0: lov})
         self.assertListEqual(velocity, ex_c.rayleigh[0].velocity.tolist())
         self.assertListEqual(velocity, ex_c.love[0].velocity.tolist())
@@ -101,7 +101,7 @@ class Test_DispersionSet(TestCase):
                 1: swipp.DispersionCurve([0.920128309893243, 69],
                                          [1/0.000305221889470528,
                                           1/0.00828240730448549])}
-        expected_id = "149641"
+        expected_id = 149641
         expected_misfit = 1.08851
 
         # Both Rayleigh and Love
@@ -150,7 +150,7 @@ class Test_DispersionSet(TestCase):
         self.assertEqual(expected, returned)
 
         # __repr__
-        expected = f"DispersionSet(identifier={0}, rayleigh={a_set}, love={a_set}, misfit=None)"
+        expected = f"DispersionSet(identifier={0}, rayleigh={a_set}, love={a_set}, misfit=0.0)"
         returned = dc_set.__repr__()
         self.assertEqual(expected, returned)
 
