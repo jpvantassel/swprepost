@@ -18,8 +18,9 @@ jobs:
           command: |
             virtualenv venv
             . venv/bin/activate
+            mkdir test-results
       - run:
-          name: Install swipp and dependencies
+          name: Install swprepost and dependencies
           command: |
             . venv/bin/activate
             pip install -e .[dev]
@@ -28,7 +29,24 @@ jobs:
           command: |
             . venv/bin/activate
             cd test
-            python -m unittest
+            coverage run --source=../swprepost -m unittest
+      - run:
+          name: Create coverage xml
+          command: |
+            . venv/bin/activate
+            mv test/.coverage test-results
+            cd test-results
+            coverage xml -o coverage.xml
+      - store_test_results:
+          path: test-results
+      - store_artifacts:
+          path: test-results
+      - run:
+          name: Call Codecov
+          command: |
+            . venv/bin/activate
+            pip install codecov
+            codecov
 
   test-3.7:
     <<: *test-template
