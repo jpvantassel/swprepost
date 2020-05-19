@@ -1,6 +1,6 @@
-This license applies to SWIPP a Python package for Surface-Wave Inversion Pre-
-and Post-processing.
-Copyright (C) 2019 Joseph P. Vantassel (jvantassel@utexas.edu)
+This license applies to SWprepost a Python package for Surface-Wave
+Inversion Pre- and Post-processing.
+Copyright (C) 2019-2020 Joseph P. Vantassel (jvantassel@utexas.edu)
 
                     GNU GENERAL PUBLIC LICENSE
                        Version 3, 29 June 2007
