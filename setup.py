@@ -1,4 +1,3 @@
-
 """A setuptools based setup module."""
 
 from setuptools import setup, find_packages
@@ -7,12 +6,12 @@ with open('README.md', "r", encoding="utf-8") as f:
     long_description = f.read()
 
 setup(
-    name='swipp',
-    version='0.2.1',
+    name='swprepost',
+    version='0.3.0',
     description='A Python Package for Surface-Wave Inversion Pre- and Post-Processing',
     long_description=long_description,
     long_description_content_type='text/markdown',
-    url='https://github.com/jpvantassel/swipp',
+    url='https://github.com/jpvantassel/swprepost',
     author='Joseph P. Vantassel',
     author_email='jvantassel@utexas.edu',
     classifiers=[
@@ -32,7 +31,7 @@ setup(
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
     ],
-    keywords='surface-wave geopsy pre-processor post-processor',
+    keywords='surface-wave inversion geopsy pre-process post-process',
     packages=find_packages(),
     python_requires = '>3.6',
     install_requires=["numpy", "scipy", "matplotlib"],
