@@ -1,4 +1,4 @@
-# This file is part of swipp, a Python package for surface-wave
+# This file is part of swprepost, a Python package for surface-wave
 # inversion pre- and post-processing.
 # Copyright (C) 2019-2020 Joseph P. Vantassel (jvantassel@utexas.edu)
 #
@@ -23,7 +23,7 @@ import logging
 import numpy as np
 
 from testtools import unittest, TestCase, get_full_path
-import swipp
+import swprepost
 
 logging.basicConfig(level=logging.CRITICAL)
 
@@ -37,21 +37,21 @@ class Test_DispersionCurve(TestCase):
         # list
         frequency = [1, 2, 3, 4.5, 6.7]
         velocity = [4, 5, 6., 8.5, 2.2]
-        dc = swipp.DispersionCurve(frequency=frequency, velocity=velocity)
+        dc = swprepost.DispersionCurve(frequency=frequency, velocity=velocity)
         self.assertArrayEqual(np.array(frequency), dc.frequency)
         self.assertArrayEqual(np.array(velocity), dc.velocity)
 
         # ndarray
         frequency = np.array([1, 2, 3, 4.5, 6.7])
         velocity = np.array([4, 5, 6., 8.5, 2.2])
-        dc = swipp.DispersionCurve(frequency=frequency, velocity=velocity)
+        dc = swprepost.DispersionCurve(frequency=frequency, velocity=velocity)
         self.assertArrayEqual(frequency, dc.frequency)
         self.assertArrayEqual(velocity, dc.velocity)
 
     def test_properties(self):
         frequency = np.array([1, 1.5, 2, 2.5, 3.5, 5])
         velocity = np.array([100, 200, 400, 100, 500, 1000])
-        dc = swipp.DispersionCurve(frequency=frequency,
+        dc = swprepost.DispersionCurve(frequency=frequency,
                                    velocity=velocity)
 
         expecteds = [frequency, velocity, velocity/frequency, 1/velocity]
@@ -63,7 +63,7 @@ class Test_DispersionCurve(TestCase):
     def test_from_geopsy(self):
         # Quick test -> Full test in DispersionSuite
         fname = self.full_path + "data/test_dc_mod2_ray2_lov0_shrt.txt"
-        dc = swipp.DispersionCurve.from_geopsy(fname)
+        dc = swprepost.DispersionCurve.from_geopsy(fname)
         expected_frequency = np.array([0.15, 64])
         expected_slowness = np.array([0.000334532972901842,
                                       0.00917746839997367])
@@ -71,11 +71,11 @@ class Test_DispersionCurve(TestCase):
         self.assertArrayEqual(expected_slowness, dc.slowness)
 
     def test_equal(self):
-        dc_a = swipp.DispersionCurve([1, 2, 3], [4, 5, 6])
-        dc_b = swipp.DispersionCurve([1, 2, 3], [4, 5, 6])
-        dc_c = swipp.DispersionCurve([4, 5, 6], [4, 5, 6])
-        dc_d = swipp.DispersionCurve([1, 2, 3], [1, 2, 3])
-        dc_e = swipp.DispersionCurve([1, 2], [1, 2])
+        dc_a = swprepost.DispersionCurve([1, 2, 3], [4, 5, 6])
+        dc_b = swprepost.DispersionCurve([1, 2, 3], [4, 5, 6])
+        dc_c = swprepost.DispersionCurve([4, 5, 6], [4, 5, 6])
+        dc_d = swprepost.DispersionCurve([1, 2, 3], [1, 2, 3])
+        dc_e = swprepost.DispersionCurve([1, 2], [1, 2])
 
         self.assertTrue(dc_a == dc_b)
         self.assertTrue(dc_a != dc_c)
@@ -86,17 +86,17 @@ class Test_DispersionCurve(TestCase):
     def test_write_to_txt(self):
         frequency = [1,3,5,7,9]
         velocity = [100,200,300,400,500]
-        expected = swipp.DispersionCurve(frequency, velocity)
+        expected = swprepost.DispersionCurve(frequency, velocity)
         fname = "test.dc"
         expected.write_to_txt(fname)
-        returned = swipp.DispersionCurve.from_geopsy(fname)
+        returned = swprepost.DispersionCurve.from_geopsy(fname)
         self.assertEqual(expected, returned)
         os.remove(fname)
 
     def test_repr_and_str(self):
         frequency = [5, 3, 1]
         velocity = [100, 300, 500]
-        dc = swipp.DispersionCurve(frequency, velocity)
+        dc = swprepost.DispersionCurve(frequency, velocity)
 
         # __repr__
         returned = dc.__repr__()

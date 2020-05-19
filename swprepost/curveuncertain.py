@@ -1,4 +1,4 @@
-# This file is part of swipp, a Python package for surface-wave
+# This file is part of swprepost, a Python package for surface-wave
 # inversion pre- and post-processing.
 # Copyright (C) 2019-2020 Joseph P. Vantassel (jvantassel@utexas.edu)
 #
@@ -18,7 +18,8 @@
 """Definition of CurveUncertain."""
 
 import numpy as np
-from swipp import Curve
+
+from swprepost import Curve
 
 
 class CurveUncertain(Curve):

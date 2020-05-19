@@ -1,4 +1,4 @@
-# This file is part of swipp, a Python package for surface-wave
+# This file is part of swprepost, a Python package for surface-wave
 # inversion pre- and post-processing.
 # Copyright (C) 2019-2020 Joseph P. Vantassel (jvantassel@utexas.edu)
 #
@@ -19,13 +19,16 @@
 
 import tarfile as tar
 import os
-import numpy as np
-import scipy.interpolate as sp
 import warnings
 import re
-from swipp import CurveUncertain
-import matplotlib.pyplot as plt
 import logging
+
+import matplotlib.pyplot as plt
+import numpy as np
+import scipy.interpolate as sp
+
+from swprepost import CurveUncertain
+
 logger = logging.getLogger(name=__name__)
 
 
@@ -245,6 +248,7 @@ class Target(CurveUncertain):
         """
         self._is_valid_cov(cov)
         self.velstd = self.velocity*cov
+        self._isyerr = True
 
     @staticmethod
     def _is_valid_cov(cov):
@@ -281,6 +285,7 @@ class Target(CurveUncertain):
         self._is_valid_cov(cov)
         update_ids = np.where(self.cov < cov)
         self.velstd[update_ids] = self.velocity[update_ids]*cov
+        self._isyerr = True
 
     def pseudo_depth(self, depth_factor=2.5):
         """Estimate depth based on the experimental dispersion data.
@@ -547,7 +552,7 @@ class Target(CurveUncertain):
         return cls(frq, vel, velstd)
 
     def to_csv(self, fname):
-        """Write in text format readily accepted by `swipp`.
+        """Write in text format readily accepted by `swprepost`.
 
         Parameters
         ----------
@@ -567,7 +572,7 @@ class Target(CurveUncertain):
 
 
     def to_txt_swipp(self, fname):
-        """Write in text format readily accepted by `swipp`.
+        """Write in text format readily accepted by `swprepost`.
 
         Parameters
         ----------
@@ -627,8 +632,8 @@ class Target(CurveUncertain):
                          f"      <minimumMisfit>0</minimumMisfit>",
                          f"      <misfitType>L2_Normalized</misfitType>",
                          f"      <ModalCurve>",
-                         f"        <name>SWIPP</name>",
-                         f"        <log>SWIPP by Joseph P. Vantassel</log>",
+                         f"        <name>swprepost</name>",
+                         f"        <log>swprepost by Joseph P. Vantassel</log>",
                          f"        <Mode>",
                          f"          <slowness>Phase</slowness>",
                          f"          <polarisation>Rayleigh</polarisation>",
@@ -644,8 +649,8 @@ class Target(CurveUncertain):
                          f"      <minimumMisfit>0</minimumMisfit>",
                          f"      <misfitType>L2_LogNormalized</misfitType>",
                          f"      <ModalCurve>",
-                         f"        <name>SWIPP</name>",
-                         f"        <log>SWIPP written by J. Vantassel</log>",
+                         f"        <name>swprepost</name>",
+                         f"        <log>swprepost written by J. Vantassel</log>",
                          f"        <enabled>true</enabled>",
                          f"        <Mode>",
                          f"          <slowness>Phase</slowness>",

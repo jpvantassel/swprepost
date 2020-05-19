@@ -1,4 +1,4 @@
-# This file is part of swipp, a Python package for surface-wave
+# This file is part of swprepost, a Python package for surface-wave
 # inversion pre- and post-processing.
 # Copyright (C) 2019-2020 Joseph P. Vantassel (jvantassel@utexas.edu)
 #
@@ -17,14 +17,17 @@
 
 """Tests for GroundModel class."""
 
-from scipy.io import savemat, loadmat
-import numpy as np
-import swipp
-from testtools import unittest, TestCase, get_full_path
 import os
+import logging
+
+from scipy.io import savemat, loadmat
 from hypothesis import given, settings
 import hypothesis.strategies as st
-import logging
+import numpy as np
+
+import swprepost
+from testtools import unittest, TestCase, get_full_path
+
 logging.basicConfig(level=logging.WARN)
 
 
@@ -39,7 +42,7 @@ class Test_GroundModel(TestCase):
         vps = [300, 450, 1500.1, 2000.1]
         vss = [100, 150, 201., 300]
         rho = [2000, 3000, 2250., 2300.]
-        mygm = swipp.GroundModel(thickness=thk, vp=vps, vs=vss, density=rho)
+        mygm = swprepost.GroundModel(thickness=thk, vp=vps, vs=vss, density=rho)
 
         self.assertListEqual(mygm.tk, thk)
         self.assertListEqual(mygm.vp, vps)
@@ -51,7 +54,7 @@ class Test_GroundModel(TestCase):
         vps = np.array([300, 450, 1500.1, 2000.1])
         vss = np.array([100, 150, 201., 300])
         rho = np.array([2000, 3000, 2250., 2300.])
-        mygm = swipp.GroundModel(thickness=thk, vp=vps, vs=vss, density=rho)
+        mygm = swprepost.GroundModel(thickness=thk, vp=vps, vs=vss, density=rho)
 
         self.assertListEqual(thk.tolist(), mygm.tk)
         self.assertListEqual(vps.tolist(), mygm.vp)
@@ -60,23 +63,23 @@ class Test_GroundModel(TestCase):
 
         # Bad Type
         x = ["this", "that", "these", "those"]
-        self.assertRaises(TypeError, swipp.GroundModel, x, x, x, x)
+        self.assertRaises(TypeError, swprepost.GroundModel, x, x, x, x)
 
         # Bad Value - Less than zero
         x = [-1]*3
-        self.assertRaises(ValueError, swipp.GroundModel, x, x, x, x)
+        self.assertRaises(ValueError, swprepost.GroundModel, x, x, x, x)
 
         # Bad Value - Length
         x = [1]*3
         y = [1]*4
-        self.assertRaises(ValueError, swipp.GroundModel, x, x, x, y)
+        self.assertRaises(ValueError, swprepost.GroundModel, x, x, x, y)
 
         # Bad Value - Vp < Vs
         tk = [1]*2
         vp = [100, 200]
         vs = [200, 300]
         rh = [2000]*2
-        self.assertRaises(ValueError, swipp.GroundModel, tk, vp, vs, rh)
+        self.assertRaises(ValueError, swprepost.GroundModel, tk, vp, vs, rh)
 
     def test_gm2(self):
         # Simple Test
@@ -84,7 +87,7 @@ class Test_GroundModel(TestCase):
         vp1 = [200, 250]
         vs1 = [100, 125]
         rh1 = [2000]*2
-        mygm = swipp.GroundModel(thickness=tk1, vp=vp1, vs=vs1, density=rh1)
+        mygm = swprepost.GroundModel(thickness=tk1, vp=vp1, vs=vs1, density=rh1)
         self.assertListEqual([0, 5, 5, 9999.0], mygm.depth)
         self.assertListEqual([200, 200, 250, 250], mygm.vp2)
         self.assertListEqual([100, 100, 125, 125], mygm.vs2)
@@ -95,7 +98,7 @@ class Test_GroundModel(TestCase):
         vss = [100, 300, 500, 700, 900]
         vps = [200, 600, 1000, 1400, 1800]
         rho = [2000]*5
-        mygm = swipp.GroundModel(thks, vps, vss, rho)
+        mygm = swprepost.GroundModel(thks, vps, vss, rho)
         depth2 = mygm.gm2(parameter="depth")
         vp2 = mygm.gm2(parameter="vp")
         vs2 = mygm.gm2(parameter="vs")
@@ -127,14 +130,14 @@ class Test_GroundModel(TestCase):
 
         # Check Poisson's Ratio
         returned = mygm.pr2
-        expected = swipp.GroundModel.calc_pr(vp2, vs2)
+        expected = swprepost.GroundModel.calc_pr(vp2, vs2)
         self.assertListEqual(expected, returned)
 
     def test_calcpr(self):
         # "Good" inputs.
         vp = [6000, 5000, 4000, 3000, 2000, 1000, 500, 400, 300, 200]
         vs = [100, 200, 300, 500, 750, 500, 300, 120, 210, 110]
-        trials = swipp.GroundModel.calc_pr(vp=vp, vs=vs)
+        trials = swprepost.GroundModel.calc_pr(vp=vp, vs=vs)
 
         trues = [0.499861072520145, 0.499198717948718,
                  0.49717159, 0.485714285714286, 0.418181818181818,
@@ -146,20 +149,20 @@ class Test_GroundModel(TestCase):
         # Single Value
         vp = 300
         vs = 150
-        self.assertEqual(1/3, swipp.GroundModel.calc_pr(vp, vs))
+        self.assertEqual(1/3, swprepost.GroundModel.calc_pr(vp, vs))
 
         # "Bad" inputs.
         vps = [150, 150, 150]
         vss = [151, 150, 149]
         for vp, vs in zip(vps, vss):
-            self.assertRaises(ValueError, swipp.GroundModel.calc_pr, vp, vs)
+            self.assertRaises(ValueError, swprepost.GroundModel.calc_pr, vp, vs)
 
     def test_properties(self):
         tk = [1,2,0]
         vp = [100,200,300]
         vs = [50,100,150]
         rh = [2000]*3
-        gm = swipp.GroundModel(tk, vp, vs, rh)
+        gm = swprepost.GroundModel(tk, vp, vs, rh)
 
         self.assertListEqual(tk, gm.thickness)
         self.assertListEqual(vp, gm.vp)
@@ -172,7 +175,7 @@ class Test_GroundModel(TestCase):
         vp = [600]*len(thick)
         vs = [100, 100]
         density = [0]*len(thick)
-        test_val = swipp.GroundModel(thick, vp, vs, density).vs30
+        test_val = swprepost.GroundModel(thick, vp, vs, density).vs30
         know_val = 100
         self.assertEqual(test_val, know_val)
 
@@ -181,7 +184,7 @@ class Test_GroundModel(TestCase):
         vp = [600]*len(thick)
         vs = [100, 100, 0]
         density = [0]*len(thick)
-        test_val = swipp.GroundModel(thick, vp, vs, density).vs30
+        test_val = swprepost.GroundModel(thick, vp, vs, density).vs30
         know_val = 100
         self.assertEqual(test_val, know_val)
 
@@ -190,7 +193,7 @@ class Test_GroundModel(TestCase):
         vp = [600]*len(thick)
         vs = [100, 200]
         density = [0]*len(thick)
-        test_val = swipp.GroundModel(thick, vp, vs, density).vs30
+        test_val = swprepost.GroundModel(thick, vp, vs, density).vs30
         know_val = 100
         self.assertEqual(test_val, know_val)
 
@@ -199,7 +202,7 @@ class Test_GroundModel(TestCase):
         vp = [600]*len(thick)
         vs = [100, 200, 300]
         density = [0]*len(thick)
-        test_val = swipp.GroundModel(thick, vp, vs, density).vs30
+        test_val = swprepost.GroundModel(thick, vp, vs, density).vs30
         know_val = 133.33
         self.assertAlmostEqual(test_val, know_val, places=2)
 
@@ -208,7 +211,7 @@ class Test_GroundModel(TestCase):
         vp = [600]*len(thick)
         vs = [100, 200, 300]
         density = [0]*len(thick)
-        test_val = swipp.GroundModel(thick, vp, vs, density).vs30
+        test_val = swprepost.GroundModel(thick, vp, vs, density).vs30
         know_val = 200.
         self.assertAlmostEqual(test_val, know_val, places=2)
 
@@ -217,7 +220,7 @@ class Test_GroundModel(TestCase):
         vp = [600]*len(thick)
         vs = [200, 50, 300]
         density = [0]*len(thick)
-        test_val = swipp.GroundModel(thick, vp, vs, density).vs30
+        test_val = swprepost.GroundModel(thick, vp, vs, density).vs30
         know_val = 105.88
         self.assertAlmostEqual(test_val, know_val, places=2)
 
@@ -226,7 +229,7 @@ class Test_GroundModel(TestCase):
         vp = [1500.]*len(thick)
         vs = [100., 200., 300., 400., 500., 600.]
         density = [2000.]*len(thick)
-        mygm = swipp.GroundModel(thick, vp, vs, density)
+        mygm = swprepost.GroundModel(thick, vp, vs, density)
         fname = "test"
         mygm.write_to_mat(fname)
         data = loadmat(fname)
@@ -241,7 +244,7 @@ class Test_GroundModel(TestCase):
         vp = [1500.]*len(thick)
         vs = [100., 200., 300.]
         density = [2000.]*len(thick)
-        mygm = swipp.GroundModel(thick, vp, vs, density)
+        mygm = swprepost.GroundModel(thick, vp, vs, density)
         disc_depth, disc_par = mygm.discretize(5, dy=1.25)
         self.assertListEqual([0., 1.25, 2.5, 3.75, 5.], disc_depth)
         self.assertListEqual([100., 100., 200., 200., 300.], disc_par)
@@ -250,7 +253,7 @@ class Test_GroundModel(TestCase):
         vp = [1500.]*len(thick)
         vs = [100., 200., 300.]
         density = [2000.]*len(thick)
-        mygm = swipp.GroundModel(thick, vp, vs, density)
+        mygm = swprepost.GroundModel(thick, vp, vs, density)
         disc_depth, disc_par = mygm.discretize(5, dy=1)
         self.assertListEqual([0., 1., 2., 3., 4., 5.], disc_depth)
         self.assertListEqual([100., 100., 100., 200., 200., 300.], disc_par)
@@ -259,7 +262,7 @@ class Test_GroundModel(TestCase):
         vp = [1500.]*len(thick)
         vs = [100., 200., 300.]
         density = [2000.]*len(thick)
-        mygm = swipp.GroundModel(thick, vp, vs, density)
+        mygm = swprepost.GroundModel(thick, vp, vs, density)
         disc_depth, disc_par = mygm.discretize(5, dy=1)
         self.assertListEqual([0., 1., 2., 3., 4., 5.], disc_depth)
         self.assertListEqual([100., 100., 200., 200., 300., 300.], disc_par)
@@ -268,7 +271,7 @@ class Test_GroundModel(TestCase):
         vp = [1500.]*len(thick)
         vs = [100., 200., 300.]
         density = [2000.]*len(thick)
-        mygm = swipp.GroundModel(thick, vp, vs, density)
+        mygm = swprepost.GroundModel(thick, vp, vs, density)
         disc_depth, disc_par = mygm.discretize(3, dy=0.5)
         self.assertListEqual([0., 0.5, 1., 1.5, 2., 2.5, 3.], disc_depth)
         self.assertListEqual([100., 100., 100., 200., 200., 300., 300.],
@@ -278,7 +281,7 @@ class Test_GroundModel(TestCase):
         vp = [1500.]*len(thick)
         vs = [100., 200., 300.]
         density = [2000.]*len(thick)
-        mygm = swipp.GroundModel(thick, vp, vs, density)
+        mygm = swprepost.GroundModel(thick, vp, vs, density)
         disc_depth, disc_par = mygm.discretize(3, dy=0.25)
         expected = [0., 0.25, 0.5, 0.75, 1., 1.25,
                     1.5, 1.75, 2., 2.25, 2.5, 2.75, 3.]
@@ -292,7 +295,7 @@ class Test_GroundModel(TestCase):
         vp = [200, 400]
         vs = [100, 200]
         density = [2000]*2
-        mygm = swipp.GroundModel(thick, vp, vs, density)
+        mygm = swprepost.GroundModel(thick, vp, vs, density)
         disc_depth, disc_par = mygm.discretize(1.5, dy=0.5, parameter="pr")
         self.assertListEqual([0., 0.5, 1., 1.5], disc_depth)
         self.assertListEqual([0.3333333333333333]*4, disc_par)
@@ -302,7 +305,7 @@ class Test_GroundModel(TestCase):
         vp = [1500]
         vs = [100]
         rh = [2000]
-        gm = swipp.GroundModel(tk, vp, vs, rh)
+        gm = swprepost.GroundModel(tk, vp, vs, rh)
         disc_depth, disc_vs = gm.discretize(dmax=5, dy=1)
         expected = [0,1,2,3,4,5]
         self.assertListEqual(expected, disc_depth)
@@ -312,26 +315,26 @@ class Test_GroundModel(TestCase):
     def test_validate_parameter(self):
         # Bad Values
         valid_parameters = ["vs", "vp", "density", "pr"]
-        self.assertRaises(ValueError, swipp.GroundModel._validate_parameter,
+        self.assertRaises(ValueError, swprepost.GroundModel._validate_parameter,
                           "hopscotch", valid_parameters)
 
     def test_depth_to_thick(self):
         depth = [0, 1, 3, 5, 8]
-        thk = swipp.GroundModel.depth_to_thick(depth)
+        thk = swprepost.GroundModel.depth_to_thick(depth)
         self.assertListEqual(thk, [1, 2, 2, 3, 0])
 
         depth = [0, 0.5, 1.1, 3.5, 5.5]
-        thk = swipp.GroundModel.depth_to_thick(depth)
+        thk = swprepost.GroundModel.depth_to_thick(depth)
         for test, known in zip(thk, [0.5, 0.6, 2.4, 2., 0]):
             self.assertAlmostEqual(test, known)
 
         # Bad Value
         depth = [1,2,3]
-        self.assertRaises(ValueError, swipp.GroundModel.depth_to_thick, depth)
+        self.assertRaises(ValueError, swprepost.GroundModel.depth_to_thick, depth)
 
     def test_from_geopsy(self):
         fname = self.full_path+"data/test_gm_mod1_self.txt"
-        gm = swipp.GroundModel.from_geopsy(fname)
+        gm = swprepost.GroundModel.from_geopsy(fname)
         self.assertListEqual([2., 4., 0.], gm.tk)
         self.assertListEqual([300., 700., 400.], gm.vp)
         self.assertListEqual([100., 275., 300.], gm.vs)
@@ -344,10 +347,10 @@ class Test_GroundModel(TestCase):
         vp = [100, 200, 300]
         vs = [50, 100, 200]
         rh = [2000]*3
-        expected = swipp.GroundModel(tk, vp, vs, rh)
+        expected = swprepost.GroundModel(tk, vp, vs, rh)
         fname = "test_write_to_txt"
         expected.write_to_txt(fname)
-        returned = swipp.GroundModel.from_geopsy(fname)
+        returned = swprepost.GroundModel.from_geopsy(fname)
         self.assertEqual(expected, returned)
         os.remove(fname)
 
@@ -356,11 +359,11 @@ class Test_GroundModel(TestCase):
         vp = [100, 200, 300]
         vs = [50, 100, 200]
         rh = [2000]*3
-        expected = swipp.GroundModel(tk, vp, vs, rh)
+        expected = swprepost.GroundModel(tk, vp, vs, rh)
         fname = "test_write_model"
         with open(fname, "w") as f:
             expected.write_model(f)
-        returned = swipp.GroundModel.from_geopsy(fname)
+        returned = swprepost.GroundModel.from_geopsy(fname)
         self.assertEqual(expected, returned)
         os.remove(fname)
 
@@ -370,7 +373,7 @@ class Test_GroundModel(TestCase):
         vs = [100, 100, 100, 300, 300]
         rh = [2000]*5
 
-        mygm = swipp.GroundModel(tk, vp, vs, rh)
+        mygm = swprepost.GroundModel(tk, vp, vs, rh)
         simp_tk, simp_vp = mygm.simplify(parameter='vp')
         self.assertListEqual(simp_tk, [4, 6, 0])
         self.assertListEqual(simp_vp, [200, 500, 600])
@@ -390,7 +393,7 @@ class Test_GroundModel(TestCase):
         vs = [200]
         rh_tk = [0]
         rh = [2000]
-        mygm = swipp.GroundModel.from_simple_profiles(vp_tk, vp,
+        mygm = swprepost.GroundModel.from_simple_profiles(vp_tk, vp,
                                                       vs_tk, vs,
                                                       rh_tk, rh)
         self.assertListEqual(mygm.tk, [0])
@@ -404,7 +407,7 @@ class Test_GroundModel(TestCase):
         vs = [100, 200]
         rh_tk = [0]
         rh = [2000]
-        mygm = swipp.GroundModel.from_simple_profiles(vp_tk, vp,
+        mygm = swprepost.GroundModel.from_simple_profiles(vp_tk, vp,
                                                       vs_tk, vs,
                                                       rh_tk, rh)
         self.assertListEqual(mygm.tk, [4, 1, 5, 0])
@@ -418,7 +421,7 @@ class Test_GroundModel(TestCase):
         vs = [100, 200, 300]
         rh_tk = [0]
         rh = [2000]
-        mygm = swipp.GroundModel.from_simple_profiles(
+        mygm = swprepost.GroundModel.from_simple_profiles(
             vp_tk, vp, vs_tk, vs, rh_tk, rh)
         self.assertListEqual(mygm.tk, [3, 1, 1, 5, 0])
         self.assertListEqual(mygm.vp, [250, 250, 500, 500, 600])
@@ -431,7 +434,7 @@ class Test_GroundModel(TestCase):
         vs = [50, 75, 85, 100, 200, 300, 100, 200]
         rh_tk = [0]
         rh = [2000]
-        mygm = swipp.GroundModel.from_simple_profiles(vp_tk, vp,
+        mygm = swprepost.GroundModel.from_simple_profiles(vp_tk, vp,
                                                       vs_tk, vs,
                                                       rh_tk, rh)
         self.assertListEqual(mygm.tk, [1, 1, 2, 2, 3, 4, 1, 2, 2, 4, 6, 0])
@@ -447,7 +450,7 @@ class Test_GroundModel(TestCase):
         vs = [100, 101, 102, 103, 104, 105]
         rh_tk = [0]
         rh = [2000]
-        mygm = swipp.GroundModel.from_simple_profiles(vp_tk, vp,
+        mygm = swprepost.GroundModel.from_simple_profiles(vp_tk, vp,
                                                       vs_tk, vs,
                                                       rh_tk, rh)
         self.assertListEqual(mygm.tk, [1, 1, 1, 1, 1, 1, 0])
@@ -462,7 +465,7 @@ class Test_GroundModel(TestCase):
         vs = [100, 101, 102, 103, 104, 105]
         rh_tk = [0]
         rh = [2000]
-        mygm = swipp.GroundModel.from_simple_profiles(vp_tk, vp,
+        mygm = swprepost.GroundModel.from_simple_profiles(vp_tk, vp,
                                                       vs_tk, vs,
                                                       rh_tk, rh)
         self.assertListEqual(mygm.tk, [1, 1, 1, 1, 1, 1, 0])
@@ -476,7 +479,7 @@ class Test_GroundModel(TestCase):
         vp = [100,200,300]
         vs = [50,100,150]
         rh = [2000]*3
-        gm = swipp.GroundModel(tk, vp, vs, rh)
+        gm = swprepost.GroundModel(tk, vp, vs, rh)
         # str
         self.assertEqual(gm.txt_repr, gm.__str__())
         # repr
@@ -488,22 +491,22 @@ class Test_GroundModel(TestCase):
         vp = [100,200,300]
         vs = [50,100,150]
         rh = [2000]*3
-        gm_a = swipp.GroundModel(tk, vp, vs, rh)
+        gm_a = swprepost.GroundModel(tk, vp, vs, rh)
 
         # Equal
-        gm_b = swipp.GroundModel(tk, vp, vs, rh)
+        gm_b = swprepost.GroundModel(tk, vp, vs, rh)
         self.assertEqual(gm_a, gm_b)
 
         # Not Equal - Wrong Length
         x = [1,2]
         y = [2,4]
-        gm_b = swipp.GroundModel(x,y,x,x)
+        gm_b = swprepost.GroundModel(x,y,x,x)
         self.assertNotEqual(gm_a, gm_b)
 
         # Not Equal - Wrong Value
         x = [1,2,3]
         y = [2,4,6]
-        gm_b = swipp.GroundModel(x,y,x,x)
+        gm_b = swprepost.GroundModel(x,y,x,x)
         self.assertNotEqual(gm_a, gm_b)
 
 class Test_FromSimple(unittest.TestCase):
@@ -529,7 +532,7 @@ class Test_FromSimple(unittest.TestCase):
         rh_tk = rh_tk[:rh_len][:-1]
         rh = rh[:rh_len]
 
-        mygm = swipp.GroundModel.from_simple_profiles(
+        mygm = swprepost.GroundModel.from_simple_profiles(
             vp_tk+[0], vp, vs_tk+[0], vs, rh_tk+[0], rh)
         self.assertEqual(mygm.simplify(parameter='vp'), (vp_tk+[0], vp))
         self.assertEqual(mygm.simplify(parameter='vs'), (vs_tk+[0], vs))

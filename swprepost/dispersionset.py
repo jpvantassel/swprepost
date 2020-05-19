@@ -1,4 +1,4 @@
-# This file is part of swipp, a Python package for surface-wave
+# This file is part of swprepost, a Python package for surface-wave
 # inversion pre- and post-processing.
 # Copyright (C) 2019-2020 Joseph P. Vantassel (jvantassel@utexas.edu)
 #
@@ -17,7 +17,7 @@
 
 """DispersionSet class definition."""
 
-from swipp import DispersionCurve, regex
+from swprepost import DispersionCurve, regex
 
 __all__ = ["DispersionSet"]
 

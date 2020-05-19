@@ -1,4 +1,4 @@
-# This file is part of swipp, a Python package for surface-wave
+# This file is part of swprepost, a Python package for surface-wave
 # inversion pre- and post-processing.
 # Copyright (C) 2019-2020 Joseph P. Vantassel (jvantassel@utexas.edu)
 #
@@ -17,11 +17,14 @@
 
 """Tests for Suite."""
 
-from testtools import unittest, TestCase, get_full_path
-import swipp
-import numpy as np
-import warnings
 import logging
+import warnings
+
+import numpy as np
+
+import swprepost
+from testtools import unittest, TestCase, get_full_path
+
 logging.basicConfig(level=logging.ERROR)
 
 
@@ -36,9 +39,9 @@ class Test_Suite(TestCase):
         rh = [2000]*3
         gms = []
         for _id, _mf in enumerate([0.5, 0.8, 1, 0.3, 0.4, 0.6, 0.7, 0.1, 0.2, 0.1]):
-            gms.append(swipp.GroundModel(tk, vp, vs, rh,
+            gms.append(swprepost.GroundModel(tk, vp, vs, rh,
                                          identifier=_id, misfit=_mf))
-        self.gm_suite = swipp.GroundModelSuite.from_list(gms)
+        self.gm_suite = swprepost.GroundModelSuite.from_list(gms)
 
     def test_handle_nbest(self):
         # GroundModelSuite

@@ -1,4 +1,4 @@
-# This file is part of swipp, a Python package for surface-wave
+# This file is part of swprepost, a Python package for surface-wave
 # inversion pre- and post-processing.
 # Copyright (C) 2019-2020 Joseph P. Vantassel (jvantassel@utexas.edu)
 #
@@ -20,7 +20,7 @@
 import numpy as np
 
 from testtools import unittest, TestCase
-import swipp
+import swprepost
 
 
 class Test_Curve(TestCase):
@@ -39,31 +39,31 @@ class Test_Curve(TestCase):
                 raise TypeError
 
         # Check types
-        self.assertRaises(TypeError, swipp.Curve.check_input, bad_types, good,
-                          fxn)
-        self.assertRaises(TypeError, swipp.Curve.check_input, good, bad_types,
-                          fxn)
+        self.assertRaises(TypeError, swprepost.Curve.check_input, bad_types,
+                          good, fxn)
+        self.assertRaises(TypeError, swprepost.Curve.check_input, good,
+                          bad_types, fxn)
 
         # Check values
         for bad in bad_lengths:
-            self.assertRaises(IndexError, swipp.Curve.check_input, bad, good,
-                              fxn)
-            self.assertRaises(IndexError, swipp.Curve.check_input, good, bad,
-                              fxn)
+            self.assertRaises(IndexError, swprepost.Curve.check_input, bad,
+                              good, fxn)
+            self.assertRaises(IndexError, swprepost.Curve.check_input, good,
+                              bad, fxn)
 
         # Check values
-        self.assertRaises(ValueError, swipp.Curve.check_input, bad_values,
+        self.assertRaises(ValueError, swprepost.Curve.check_input, bad_values,
                           good, fxn)
-        self.assertRaises(ValueError, swipp.Curve.check_input, good,
+        self.assertRaises(ValueError, swprepost.Curve.check_input, good,
                           bad_values, fxn)
 
     def test_resample(self):
-        x = [1,2,4,5]
-        y = [0,1,3,4]
-        curve = swipp.Curve(x, y)
-        
-        xx = [1,2,3,4,5]
-        expected = np.array([0,1,2,3,4])
+        x = [1, 2, 4, 5]
+        y = [0, 1, 3, 4]
+        curve = swprepost.Curve(x, y)
+
+        xx = [1, 2, 3, 4, 5]
+        expected = np.array([0, 1, 2, 3, 4])
 
         # Inplace = False
         xx, returned = curve.resample(xx, inplace=False)

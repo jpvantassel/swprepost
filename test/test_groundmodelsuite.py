@@ -1,4 +1,4 @@
-# This file is part of swipp, a Python package for surface-wave
+# This file is part of swprepost, a Python package for surface-wave
 # inversion pre- and post-processing.
 # Copyright (C) 2019-2020 Joseph P. Vantassel (jvantassel@utexas.edu)
 #
@@ -17,11 +17,14 @@
 
 """Tests for GroundModelSuite class."""
 
-from testtools import unittest, TestCase, get_full_path
 import os
-import numpy as np
-import swipp
 import logging
+
+import numpy as np
+
+import swprepost
+from testtools import unittest, TestCase, get_full_path
+
 logging.basicConfig(level=logging.ERROR)
 
 
@@ -33,7 +36,7 @@ class Test_GroundModelSuite(TestCase):
         def make_gm(v, gm_dict):
             for key, value in gm_dict.items():
                 setattr(cls, key+v, value)
-            setattr(cls, "gm"+v, swipp.GroundModel(*[gm_dict[attr] for attr in ["tk", "vp", "vs", "rh"]],
+            setattr(cls, "gm"+v, swprepost.GroundModel(*[gm_dict[attr] for attr in ["tk", "vp", "vs", "rh"]],
                                                    **{key: gm_dict[attr] for key, attr in zip(["identifier", "misfit"], ["id", "mf"])}))
 
         v = "_0"
@@ -54,7 +57,7 @@ class Test_GroundModelSuite(TestCase):
         mf = 1.3
         make_gm(v, dict(tk=tk, vp=vp, vs=vs, rh=rh, id=_id, mf=mf))
 
-        cls.suite = swipp.GroundModelSuite(cls.gm_0)
+        cls.suite = swprepost.GroundModelSuite(cls.gm_0)
         cls.suite.append(cls.gm_1)
 
     def setUp(self):
@@ -62,19 +65,19 @@ class Test_GroundModelSuite(TestCase):
 
     def test_init(self):
         # One GroundModel
-        gm = swipp.GroundModel(self.tk_0, self.vp_0, self.vs_0, self.rh_0,
+        gm = swprepost.GroundModel(self.tk_0, self.vp_0, self.vs_0, self.rh_0,
                                identifier=self.id_0, misfit=self.mf_0)
-        returned = swipp.GroundModelSuite(gm)
-        expected = swipp.GroundModelSuite(self.gm_0)
+        returned = swprepost.GroundModelSuite(gm)
+        expected = swprepost.GroundModelSuite(self.gm_0)
         self.assertEqual(expected, returned)
 
         # Bad Value - Wrong Type
         gm = ["GroundModel"]
-        self.assertRaises(TypeError, swipp.GroundModelSuite, gm)
+        self.assertRaises(TypeError, swprepost.GroundModelSuite, gm)
 
     def test_append(self):
         # Two GroundModels
-        returned = swipp.GroundModelSuite(self.gm_0)
+        returned = swprepost.GroundModelSuite(self.gm_0)
         returned.append(self.gm_1)
         self.assertEqual(self.suite, returned)
 
@@ -86,11 +89,11 @@ class Test_GroundModelSuite(TestCase):
         rh = [2000.]*7
         _id = 149698
         mf = 0.766485
-        expected_0 = swipp.GroundModel(thickness=tk, vp=vp, vs=vs, density=rh,
+        expected_0 = swprepost.GroundModel(thickness=tk, vp=vp, vs=vs, density=rh,
                                        identifier=_id, misfit=mf)
 
         fname = self.full_path+"data/test_gm_mod1.txt"
-        returned_0 = swipp.GroundModelSuite.from_geopsy(fname=fname)[0]
+        returned_0 = swprepost.GroundModelSuite.from_geopsy(fname=fname)[0]
         self.assertEqual(expected_0, returned_0)
 
         # Two Models
@@ -100,18 +103,18 @@ class Test_GroundModelSuite(TestCase):
         rh1 = [2000.]*7
         _id = 147185
         mf = 0.767484
-        expected_1 = swipp.GroundModel(thickness=tk1, vp=vp1,
+        expected_1 = swprepost.GroundModel(thickness=tk1, vp=vp1,
                                        vs=vs1, density=rh1, identifier=_id,
                                        misfit=mf)
 
         fname = self.full_path+"data/test_gm_mod2.txt"
-        returned_1 = swipp.GroundModelSuite.from_geopsy(fname=fname)
+        returned_1 = swprepost.GroundModelSuite.from_geopsy(fname=fname)
         self.assertEqual(expected_0, returned_1[0])
         self.assertEqual(expected_1, returned_1[1])
 
         # Randomly check the 10th profile (index=9)
         fname = self.full_path+"data/test_gm_mod100.txt"
-        suite = swipp.GroundModelSuite.from_geopsy(fname=fname, nmodels=10)
+        suite = swprepost.GroundModelSuite.from_geopsy(fname=fname, nmodels=10)
 
         tk = [0.77397930357999966677,
               9.4057659375340758601,
@@ -137,7 +140,7 @@ class Test_GroundModelSuite(TestCase):
         rh = [2000]*7
         _id = 149535
         mf = 0.770783
-        expected_9 = swipp.GroundModel(thickness=tk, vp=vp, vs=vs, density=rh,
+        expected_9 = swprepost.GroundModel(thickness=tk, vp=vp, vs=vs, density=rh,
                                        identifier=_id, misfit=mf)
         self.assertEqual(expected_9, suite[9])
 
@@ -147,8 +150,8 @@ class Test_GroundModelSuite(TestCase):
         vps = [300, 600, 800]
         vss = [150, 300, 400]
         rho = [2000]*3
-        gm = swipp.GroundModel(thk, vps, vss, rho)
-        suite = swipp.GroundModelSuite(gm)
+        gm = swprepost.GroundModel(thk, vps, vss, rho)
+        suite = swprepost.GroundModelSuite(gm)
         for _ in range(5):
             suite.append(gm)
         self.assertListEqual(suite.vs30(), [266.6666666666666666666]*6)
@@ -163,17 +166,17 @@ class Test_GroundModelSuite(TestCase):
         vps = [[300, 500, 350], [600, 700, 800], [300, 1000, 400]]
         rhs = [[2000]*3, [2300]*3, [2200]*3]
 
-        gm = swipp.GroundModel(tks[0], vps[0], vss[0], rhs[0])
-        suite = swipp.GroundModelSuite(gm)
+        gm = swprepost.GroundModel(tks[0], vps[0], vss[0], rhs[0])
+        suite = swprepost.GroundModelSuite(gm)
         for tk, vs, vp, rh in zip(tks[1:], vss[1:], vps[1:], rhs[1:]):
-            gm = swipp.GroundModel(tk, vp, vs, rh)
+            gm = swprepost.GroundModel(tk, vp, vs, rh)
             suite.append(gm)
         calc_med_gm = suite.median(nbest=3)
         med_tks = [2., 5., 0.]
         med_vss = [100., 275., 300.]
         med_vps = [300., 700., 400.]
         med_rhs = [2200.]*3
-        med_gm = swipp.GroundModel(med_tks, med_vps, med_vss, med_rhs)
+        med_gm = swprepost.GroundModel(med_tks, med_vps, med_vss, med_rhs)
         self.assertTrue(med_gm == calc_med_gm)
 
         tks = [[1, 2, 3, 0], [2, 4, 0], [5, 10, 0]]
@@ -181,17 +184,17 @@ class Test_GroundModelSuite(TestCase):
         vps = [[300, 500, 500, 350], [600, 700, 800], [300, 1000, 400]]
         rhs = [[2000]*4, [2300]*3, [2200]*3]
 
-        gm = swipp.GroundModel(tks[0], vps[0], vss[0], rhs[0])
-        suite = swipp.GroundModelSuite(gm)
+        gm = swprepost.GroundModel(tks[0], vps[0], vss[0], rhs[0])
+        suite = swprepost.GroundModelSuite(gm)
         for tk, vs, vp, rh in zip(tks[1:], vss[1:], vps[1:], rhs[1:]):
-            gm = swipp.GroundModel(tk, vp, vs, rh)
+            gm = swprepost.GroundModel(tk, vp, vs, rh)
             suite.append(gm)
         calc_med_gm = suite.median(nbest="all")
         med_tks = [2., 5., 0.]
         med_vss = [100., 275., 300.]
         med_vps = [300., 700., 400.]
         med_rhs = [2200.]*3
-        med_gm = swipp.GroundModel(med_tks, med_vps, med_vss, med_rhs)
+        med_gm = swprepost.GroundModel(med_tks, med_vps, med_vss, med_rhs)
         self.assertTrue(med_gm == calc_med_gm)
 
     def test_sigma_ln(self):
@@ -200,10 +203,10 @@ class Test_GroundModelSuite(TestCase):
         vp = [200, 400, 600]
         rh = [2000]*3
 
-        gm = swipp.GroundModel(tk, vp, vss[0], rh)
-        suite = swipp.GroundModelSuite(gm)
+        gm = swprepost.GroundModel(tk, vp, vss[0], rh)
+        suite = swprepost.GroundModelSuite(gm)
         for vs in vss[1:]:
-            gm = swipp.GroundModel(tk, vp, vs, rh)
+            gm = swprepost.GroundModel(tk, vp, vs, rh)
             suite.append(gm)
         dmax = 10
         dy = 0.5
@@ -224,13 +227,13 @@ class Test_GroundModelSuite(TestCase):
 
         gms = []
         for col in range(tks.shape[1]):
-            gm = swipp.GroundModel(tks[:, col], vps[:, col],
+            gm = swprepost.GroundModel(tks[:, col], vps[:, col],
                                    vss[:, col], rhs[:, col],
                                    identifier=ids[col],
                                    misfit=misfits[col])
             gms.append(gm)
 
-        suite = swipp.GroundModelSuite.from_array(tks, vps, vss, rhs,
+        suite = swprepost.GroundModelSuite.from_array(tks, vps, vss, rhs,
                                                   ids, misfits)
 
         for expected, returned in zip(gms, suite):
@@ -247,17 +250,17 @@ class Test_GroundModelSuite(TestCase):
         ids = [1, 2, 3]
         misfits = [1, 0.5, 0.3]
 
-        gm = swipp.GroundModel(tks[0], vps[0], vss[0], rhs[0],
+        gm = swprepost.GroundModel(tks[0], vps[0], vss[0], rhs[0],
                                identifier=ids[0], misfit=misfits[0])
-        suite = swipp.GroundModelSuite(gm)
+        suite = swprepost.GroundModelSuite(gm)
         for tk, vs, vp, rh, cid, ms in zip(tks[1:], vss[1:], vps[1:], rhs[1:], ids[1:], misfits[1:]):
-            gm = swipp.GroundModel(tk, vp, vs, rh, identifier=cid, misfit=ms)
+            gm = swprepost.GroundModel(tk, vp, vs, rh, identifier=cid, misfit=ms)
             suite.append(gm)
 
         fname = "text.txt"
         suite.write_to_txt(fname)
 
-        mysuite = swipp.GroundModelSuite.from_geopsy(fname)
+        mysuite = swprepost.GroundModelSuite.from_geopsy(fname)
         for gm_a, gm_b in zip(suite.gms, mysuite.gms):
             self.assertEqual(gm_a, gm_b)
         os.remove(fname)
@@ -265,8 +268,8 @@ class Test_GroundModelSuite(TestCase):
     def test_str(self):
         x = [1, 2, 3]
         y = [2, 4, 5]
-        gm = swipp.GroundModel(x, y, x, x)
-        suite = swipp.GroundModelSuite(gm)
+        gm = swprepost.GroundModel(x, y, x, x)
+        suite = swprepost.GroundModelSuite(gm)
         for _ in range(3):
             suite.append(gm)
         expected = "GroundModelSuite with 4 GroundModels."

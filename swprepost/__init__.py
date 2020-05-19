@@ -1,4 +1,4 @@
-# This file is part of swipp, a Python package for surface-wave
+# This file is part of swprepost, a Python package for surface-wave
 # inversion pre- and post-processing.
 # Copyright (C) 2019-2020 Joseph P. Vantassel (jvantassel@utexas.edu)
 #
@@ -15,7 +15,7 @@
 #     You should have received a copy of the GNU General Public License
 #     along with this program.  If not, see <https: //www.gnu.org/licenses/>.
 
-"""Import class definitions into the swipp package."""
+"""Import class definitions into the swprepost package namespace."""
 
 from .curve import Curve
 from .curveuncertain import CurveUncertain

@@ -1,4 +1,4 @@
-# This file is part of swipp, a Python package for surface-wave
+# This file is part of swprepost, a Python package for surface-wave
 # inversion pre- and post-processing.
 # Copyright (C) 2019-2020 Joseph P. Vantassel (jvantassel@utexas.edu)
 #
@@ -23,7 +23,7 @@ import logging
 import numpy as np
 
 from testtools import unittest, TestCase, get_full_path
-import swipp
+import swprepost
 
 logging.basicConfig(level=logging.CRITICAL)
 
@@ -36,33 +36,33 @@ class Test_DispersionSuite(TestCase):
     def test_check_input(self):
         # DispersionSuite to be instantiated with only a DispersionSet object.
         for test in [[1, 2, 3], (1, 2, 3), True, "DC"]:
-            self.assertRaises(TypeError, swipp.DispersionSuite, test)
+            self.assertRaises(TypeError, swprepost.DispersionSuite, test)
 
     def test_init(self):
         # Manual instantiation
         frequency = np.array([1, 2, 3])
         velocity = np.array([4, 5, 6])
-        dc = swipp.DispersionCurve(frequency=frequency, velocity=velocity)
-        expected = swipp.DispersionSet(identifier=5, misfit=15.,
+        dc = swprepost.DispersionCurve(frequency=frequency, velocity=velocity)
+        expected = swprepost.DispersionSet(identifier=5, misfit=15.,
                                      rayleigh={0: dc}, love=None)
-        dc_suite = swipp.DispersionSuite(dispersionset=expected)
+        dc_suite = swprepost.DispersionSuite(dispersionset=expected)
         returned = dc_suite[0]
         self.assertEqual(expected, returned)
 
         # Invalid type
-        self.assertRaises(TypeError, swipp.DispersionSuite, ["bad dc_set"])
+        self.assertRaises(TypeError, swprepost.DispersionSuite, ["bad dc_set"])
 
     def test_append(self):
         # Manual instantiation
         frequency = np.array([1, 2, 3])
         velocity = np.array([4, 5, 6])
-        dc = swipp.DispersionCurve(frequency=frequency, velocity=velocity)
-        dc_set_0 = swipp.DispersionSet(identifier=0, misfit=2.1,
+        dc = swprepost.DispersionCurve(frequency=frequency, velocity=velocity)
+        dc_set_0 = swprepost.DispersionSet(identifier=0, misfit=2.1,
                                        rayleigh={0: dc}, love=None)
-        dc_suite = swipp.DispersionSuite(dispersionset=dc_set_0)
+        dc_suite = swprepost.DispersionSuite(dispersionset=dc_set_0)
 
         # Manual Append
-        dc_set_1 = swipp.DispersionSet(identifier=2, misfit=1.1,
+        dc_set_1 = swprepost.DispersionSet(identifier=2, misfit=1.1,
                                        rayleigh={0: dc}, love=None)
         dc_suite.append(dispersionset=dc_set_1, sort=False)
 
@@ -75,7 +75,7 @@ class Test_DispersionSuite(TestCase):
 
     def test_str(self):
         fname = "data/test_dc_mod2_ray2_lov0_shrt.txt"
-        suite = swipp.DispersionSuite.from_geopsy(self.full_path+fname)
+        suite = swprepost.DispersionSuite.from_geopsy(self.full_path+fname)
         expected = "DispersionSuite with 2 DispersionSets."
         returned = suite.__str__()
         self.assertEqual(expected, returned)
@@ -83,7 +83,7 @@ class Test_DispersionSuite(TestCase):
     def test_from_geopsy(self):
 
         def compare(fname, models, **kwargs):
-            dc_suite = swipp.DispersionSuite.from_geopsy(fname=fname, **kwargs)
+            dc_suite = swprepost.DispersionSuite.from_geopsy(fname=fname, **kwargs)
 
             for model in models:
                 # Use identifier to select the appropriate DispersionSet
@@ -313,36 +313,36 @@ class Test_DispersionSuite(TestCase):
         compare(fname, models, nsets=20)
 
     def test_write_to_txt(self):
-        dc_0 = swipp.DispersionCurve([1, 5, 10, 15], [100, 200, 300, 400])
-        dc_1 = swipp.DispersionCurve([1, 5, 12, 15], [100, 180, 300, 400])
-        dc_set_0 = swipp.DispersionSet(0, misfit=0.0,
+        dc_0 = swprepost.DispersionCurve([1, 5, 10, 15], [100, 200, 300, 400])
+        dc_1 = swprepost.DispersionCurve([1, 5, 12, 15], [100, 180, 300, 400])
+        dc_set_0 = swprepost.DispersionSet(0, misfit=0.0,
                                        rayleigh={0: dc_0, 1: dc_1},
                                        love={0: dc_1, 1: dc_0})
-        dc_set_1 = swipp.DispersionSet(1, misfit=0.0,
+        dc_set_1 = swprepost.DispersionSet(1, misfit=0.0,
                                        rayleigh={0: dc_1, 1: dc_0},
                                        love={0: dc_0, 1: dc_1})
         set_list = [dc_set_0, dc_set_1]
-        expected = swipp.DispersionSuite.from_list(set_list)
+        expected = swprepost.DispersionSuite.from_list(set_list)
 
         fname = "dc_suite_expected.dc"
         expected.write_to_txt(fname)
-        returned = swipp.DispersionSuite.from_geopsy(fname)
+        returned = swprepost.DispersionSuite.from_geopsy(fname)
         os.remove(fname)
 
         self.assertEqual(expected, returned)
 
     def test_eq(self):
-        dc = swipp.DispersionCurve([1,2,3],[10,20,30])
-        dc_set = swipp.DispersionSet(0, rayleigh={0:dc})
-        expected = swipp.DispersionSuite.from_list([dc_set, dc_set])
+        dc = swprepost.DispersionCurve([1,2,3],[10,20,30])
+        dc_set = swprepost.DispersionSet(0, rayleigh={0:dc})
+        expected = swprepost.DispersionSuite.from_list([dc_set, dc_set])
 
         # Bad length
-        returned = swipp.DispersionSuite.from_list([dc_set])
+        returned = swprepost.DispersionSuite.from_list([dc_set])
         self.assertNotEqual(expected, returned)
 
         # Bad Value
-        dc_set = swipp.DispersionSet(1, rayleigh={0:dc})
-        returned = swipp.DispersionSuite.from_list([dc_set, dc_set])
+        dc_set = swprepost.DispersionSet(1, rayleigh={0:dc})
+        returned = swprepost.DispersionSuite.from_list([dc_set, dc_set])
         self.assertNotEqual(expected, returned)
 
 

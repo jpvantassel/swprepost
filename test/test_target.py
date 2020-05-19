@@ -1,13 +1,33 @@
-"""This file contains tests for the `Target` class."""
+# This file is part of swprepost, a Python package for surface-wave
+# inversion pre- and post-processing.
+# Copyright (C) 2019-2020 Joseph P. Vantassel (jvantassel@utexas.edu)
+#
+#     This program is free software: you can redistribute it and/or modify
+#     it under the terms of the GNU General Public License as published by
+#     the Free Software Foundation, either version 3 of the License, or
+#     (at your option) any later version.
+#
+#     This program is distributed in the hope that it will be useful,
+#     but WITHOUT ANY WARRANTY; without even the implied warranty of
+#     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#     GNU General Public License for more details.
+#
+#     You should have received a copy of the GNU General Public License
+#     along with this program.  If not, see <https: //www.gnu.org/licenses/>.
 
-from testtools import unittest, TestCase, get_full_path
-import swipp
-import numpy as np
+"""Tests for the Target class."""
+
 import os
+import logging
 import warnings
+
+import numpy as np
 import nbformat
 from nbconvert.preprocessors import ExecutePreprocessor
-import logging
+
+from testtools import unittest, TestCase, get_full_path
+import swprepost
+
 logging.basicConfig(level=logging.ERROR)
 
 
@@ -21,7 +41,7 @@ class Test_Target(TestCase):
         frequency = np.array([1, 2, 3])
         velocity = np.array([100, 50, 25])
         velstd = np.array([5, 2.5, 1.25])
-        tar = swipp.Target(frequency, velocity, velstd)
+        tar = swprepost.Target(frequency, velocity, velstd)
         self.assertArrayEqual(tar.frequency, frequency)
         self.assertArrayEqual(tar.velocity, velocity)
         self.assertArrayEqual(tar.velstd, velstd)
@@ -30,7 +50,7 @@ class Test_Target(TestCase):
         frequency = np.array([1, 2, 3])
         velocity = np.array([100, 50, 25])
         velstd = None
-        tar = swipp.Target(frequency, velocity, velstd)
+        tar = swprepost.Target(frequency, velocity, velstd)
         self.assertArrayEqual(tar.frequency, frequency)
         self.assertArrayEqual(tar.velocity, velocity)
         self.assertArrayEqual(tar.velstd, np.zeros(velocity.shape))
@@ -39,24 +59,24 @@ class Test_Target(TestCase):
         frequency = np.array([1, 2, 3])
         velocity = np.array([100, 50, 25])
         velstd = 0.01
-        tar = swipp.Target(frequency, velocity, velstd)
+        tar = swprepost.Target(frequency, velocity, velstd)
         self.assertArrayEqual(tar.frequency, frequency)
         self.assertArrayEqual(tar.velocity, velocity)
         self.assertArrayEqual(tar.velstd, velocity*velstd)
 
         # With list.
         a = [1, 2, 3]
-        tar = swipp.Target(a, a, a)
+        tar = swprepost.Target(a, a, a)
         self.assertListEqual(tar.frequency.tolist(), a)
 
         # With unequal lists.
         a = [1, 2, 3]
         b = [1, 2]
-        self.assertRaises(IndexError, swipp.Target, a, b, a)
+        self.assertRaises(IndexError, swprepost.Target, a, b, a)
 
     def test_setters(self):
         x = [1, 3, 2]
-        tar = swipp.Target(x, x, velstd=x)
+        tar = swprepost.Target(x, x, velstd=x)
 
         # Check _check_new_value
         self.assertRaises(ValueError, tar._check_new_value, [1, 2])
@@ -77,7 +97,7 @@ class Test_Target(TestCase):
 
     def test_sort(self):
         x = [1, 3, 2]
-        tar = swipp.Target(x, x, velstd=x)
+        tar = swprepost.Target(x, x, velstd=x)
 
         # Check sort
         expected = np.array([1, 2, 3])
@@ -87,7 +107,7 @@ class Test_Target(TestCase):
 
     def test_from_csv(self):
         # With standard deviation provided.
-        tar = swipp.Target.from_csv(self.full_path+"data/test_tar_wstd.csv")
+        tar = swprepost.Target.from_csv(self.full_path+"data/test_tar_wstd.csv")
         self.assertListEqual(tar.frequency.tolist(), [1.55, 2.00])
         self.assertListEqual(tar.velocity.tolist(), [200, 500.01245])
         self.assertListEqual(tar.velstd.tolist(), [60.012111, 100.00001])
@@ -95,7 +115,7 @@ class Test_Target(TestCase):
                              [200/1.55, 500.01245/2.00])
 
         # Without standard deviation provided.
-        tar = swipp.Target.from_csv(self.full_path+"data/test_tar_wostd.csv")
+        tar = swprepost.Target.from_csv(self.full_path+"data/test_tar_wostd.csv")
         self.assertListEqual(tar.frequency.tolist(), [1.55, 2.00])
         self.assertListEqual(tar.velocity.tolist(), [200, 500.01245])
         self.assertListEqual(tar.velstd.tolist(), [0, 0])
@@ -104,12 +124,12 @@ class Test_Target(TestCase):
 
         # With incorrect formatting
         fname = self.full_path+"data/test_tar_bad.csv"
-        self.assertRaises(ValueError, swipp.Target.from_csv, fname)
+        self.assertRaises(ValueError, swprepost.Target.from_csv, fname)
 
     def test_setcov(self):
         frequency = [1, 2, 3]
         velocity = np.array([10, 100, 1000])
-        tar = swipp.Target(frequency, velocity, None)
+        tar = swprepost.Target(frequency, velocity, None)
 
         cov = 0.01
         tar.setmincov(cov)
@@ -131,18 +151,18 @@ class Test_Target(TestCase):
         frequency = [0.1, 0.2, 0.3]
         velocity = [10., 20., 30.]
         velstd = None
-        tar = swipp.Target(frequency, velocity, velstd)
+        tar = swprepost.Target(frequency, velocity, velstd)
         self.assertTrue(tar.is_no_velstd)
 
         velstd = 0.1
-        tar = swipp.Target(frequency, velocity, velstd)
+        tar = swprepost.Target(frequency, velocity, velstd)
         self.assertFalse(tar.is_no_velstd)
 
     def test_pseudo_vs(self):
         frequency = [0.1, 0.2, 0.3]
         velocity = np.array([10., 20., 30.])
         velstd = None
-        tar = swipp.Target(frequency, velocity, velstd)
+        tar = swprepost.Target(frequency, velocity, velstd)
         velocity_factor = 1.1
         self.assertArrayEqual(tar.pseudo_vs(velocity_factor),
                               velocity*velocity_factor)
@@ -159,7 +179,7 @@ class Test_Target(TestCase):
         velocity = np.array([10., 20., 30.])
         velstd = None
         wavelength = velocity/frequency
-        tar = swipp.Target(frequency, velocity, velstd)
+        tar = swprepost.Target(frequency, velocity, velstd)
         depth_factor = 2.5
         self.assertArrayEqual(tar.pseudo_depth(depth_factor),
                               wavelength/depth_factor)
@@ -176,7 +196,7 @@ class Test_Target(TestCase):
         velocity = np.array([1, 2, 3, 4, 5])
         velstd = np.array([1, 2, 3, 4, 5])
 
-        tar = swipp.Target(frequency, velocity, velstd)
+        tar = swprepost.Target(frequency, velocity, velstd)
         tar.cut(pmin=1.5, pmax=4.5, domain="frequency")
 
         self.assertListEqual(tar.frequency.tolist(), [2, 3, 4])
@@ -191,7 +211,7 @@ class Test_Target(TestCase):
         # Inplace=False
         # Linear w/ VelStd
         fname = self.full_path+"data/test_tar_wstd_linear.csv"
-        tar = swipp.Target.from_csv(fname)
+        tar = swprepost.Target.from_csv(fname)
         returned = tar.resample(pmin=0.5, pmax=4.5, pn=5,
                                 res_type='linear', domain="frequency",
                                 inplace=False).frequency
@@ -200,7 +220,7 @@ class Test_Target(TestCase):
 
         # Linear w/ VelStd
         fname = self.full_path+"data/test_tar_wstd_linear.csv"
-        tar = swipp.Target.from_csv(fname)
+        tar = swprepost.Target.from_csv(fname)
         expected = np.array([2., 2.8, 4.0])
         returned = tar.resample(pmin=2, pmax=4, pn=3,
                                 res_type='log', domain="frequency",
@@ -209,7 +229,7 @@ class Test_Target(TestCase):
 
         # Non-linear w/ VelStd
         fname = self.full_path+"data/test_tar_wstd_nonlin_0.csv"
-        tar = swipp.Target.from_csv(fname)
+        tar = swprepost.Target.from_csv(fname)
         new_tar = tar.resample(pmin=50, pmax=100, pn=5,
                                res_type='log', domain="wavelength",
                                inplace=False)
@@ -223,7 +243,7 @@ class Test_Target(TestCase):
 
         # Inplace=True
         x = [0.1, 0.2, 0.4, 0.5]
-        tar = swipp.Target(x, x, x)
+        tar = swprepost.Target(x, x, x)
 
         for pmin, pmax in [(0.1, 0.5), (0.5, 0.1)]:
             tar.resample(pmin=pmin, pmax=pmax, pn=5, domain="frequency",
@@ -243,35 +263,35 @@ class Test_Target(TestCase):
 
     def test_vr40(self):
         fname = self.full_path+"data/test_tar_wstd_nonlin_0.csv"
-        tar = swipp.Target.from_csv(fname)
+        tar = swprepost.Target.from_csv(fname)
         self.assertAlmostEqual(tar.vr40, 180, places=1)
 
         fname = self.full_path+"data/test_tar_wstd_nonlin_1.csv"
-        tar = swipp.Target.from_csv(fname)
+        tar = swprepost.Target.from_csv(fname)
         self.assertAlmostEqual(tar.vr40, 267.2, places=1)
 
         # Vr40 out of range
         x = [1, 2, 3]
-        tar = swipp.Target(x, x, x)
+        tar = swprepost.Target(x, x, x)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             self.assertTrue(tar.vr40 is None)
 
     def test_to_and_from_target(self):
         prefix = self.full_path+"data/test_tar_wstd_nonlin_1"
-        tar = swipp.Target.from_csv(prefix + ".csv")
-        tar.to_target(fname_prefix=prefix+"_swipp_v3", version="3")
-        tar.to_target(fname_prefix=prefix+"_swipp_v2", version="2")
+        tar = swprepost.Target.from_csv(prefix + ".csv")
+        tar.to_target(fname_prefix=prefix+"_swprepost_v3", version="3")
+        tar.to_target(fname_prefix=prefix+"_swprepost_v2", version="2")
 
-        tar_swipp = swipp.Target.from_target(prefix+"_swipp_v3", version="3")
-        tar_geopsy = swipp.Target.from_target(prefix+"_geopsy_v3", version="3")
-        self.assertEqual(tar_geopsy, tar_swipp)
-        os.remove(prefix+"_swipp_v3.target")
+        tar_swprepost = swprepost.Target.from_target(prefix+"_swprepost_v3", version="3")
+        tar_geopsy = swprepost.Target.from_target(prefix+"_geopsy_v3", version="3")
+        self.assertEqual(tar_geopsy, tar_swprepost)
+        os.remove(prefix+"_swprepost_v3.target")
 
-        tar_swipp = swipp.Target.from_target(prefix+"_swipp_v2", version="2")
-        tar_geopsy = swipp.Target.from_target(prefix+"_geopsy_v2", version="2")
-        self.assertEqual(tar_geopsy, tar_swipp)
-        os.remove(prefix+"_swipp_v2.target")
+        tar_swprepost = swprepost.Target.from_target(prefix+"_swprepost_v2", version="2")
+        tar_geopsy = swprepost.Target.from_target(prefix+"_geopsy_v2", version="2")
+        self.assertEqual(tar_geopsy, tar_swprepost)
+        os.remove(prefix+"_swprepost_v2.target")
 
         # Bad version
         self.assertRaises(NotImplementedError, tar.to_target,
@@ -283,12 +303,12 @@ class Test_Target(TestCase):
         frq = [1, 3, 5, 7, 9, 15]
         vel = [200, 150, 112, 95, 90, 85]
         velstd = [10, 8, 6, 5, 5, 5]
-        tar = swipp.Target(frq, vel, velstd)
+        tar = swprepost.Target(frq, vel, velstd)
 
         fname = self.full_path+"test_dinver_txt.txt"
         for version in ["2", "3"]:
             tar.to_txt_dinver(fname, version=version)
-            new = swipp.Target.from_txt_dinver(fname, version=version)
+            new = swprepost.Target.from_txt_dinver(fname, version=version)
 
             for attr in ["frequency", "velocity", "velstd"]:
                 expected = getattr(tar, attr)
@@ -299,7 +319,7 @@ class Test_Target(TestCase):
         version = "1245"
         self.assertRaises(NotImplementedError, tar.to_txt_dinver,
                           fname, version=version)
-        self.assertRaises(NotImplementedError, swipp.Target.from_txt_dinver,
+        self.assertRaises(NotImplementedError, swprepost.Target.from_txt_dinver,
                           fname, version=version)
 
         os.remove(fname)
@@ -308,20 +328,20 @@ class Test_Target(TestCase):
         frq = [1, 3, 5, 7, 9, 15]
         vel = [200, 150, 112, 95, 90, 85]
         velstd = [10, 8, 6, 5, 5, 5]
-        tar = swipp.Target(frq, vel, velstd)
+        tar = swprepost.Target(frq, vel, velstd)
 
         fname = self.full_path+"test_csv.txt"
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             tar.to_txt_swipp(fname)
-        new = swipp.Target.from_csv(fname)
+        new = swprepost.Target.from_csv(fname)
         self.assertEqual(tar, new)
 
         os.remove(fname)
 
     def test_str_and_repr(self):
         x = np.array([1, 2.01, 3.155])
-        tar = swipp.Target(x, x, x)
+        tar = swprepost.Target(x, x, x)
 
         arr = "[1.   2.01 3.16]"
         expected = f"Target(frequency={arr}, velocity={arr}, velstd={arr})"
@@ -334,16 +354,16 @@ class Test_Target(TestCase):
 
     def test_eq(self):
         x = [1, 2]
-        tar1 = swipp.Target(x, x, x)
+        tar1 = swprepost.Target(x, x, x)
 
         # False - Wrong Values
         y = [1, 15]
-        tar2 = swipp.Target(y, y, y)
+        tar2 = swprepost.Target(y, y, y)
         self.assertFalse(tar1 == tar2)
 
         # False - Wrong Length
         y = [1, 2, 3]
-        tar2 = swipp.Target(y, y, y)
+        tar2 = swprepost.Target(y, y, y)
         self.assertFalse(tar1 == tar2)
 
     def test_notebook(self):

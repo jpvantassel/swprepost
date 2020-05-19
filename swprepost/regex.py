@@ -15,30 +15,27 @@
 #     You should have received a copy of the GNU General Public License
 #     along with this program.  If not, see <https: //www.gnu.org/licenses/>.
 
-"""Performance test for reading a file containing ground models."""
+"""Regular expressions for text parsing."""
 
-import cProfile
-import pstats
+import re
 
-import swprepost
-from testtools import get_full_path
+number = r"\d+.?\d*[eE]?[+-]?\d*"
 
-full_path = get_full_path(__file__)
+# DC
+pair = f"{number} {number}\n"
+model_txt = r"# Layered model (\d+): value=(\d+.?\d*)"
+wave_txt = r"# \d+ (Rayleigh|Love) dispersion mode\(s\)"
+mode_txt = r"# Mode \d+\n"
+dcset_txt = f"{model_txt}\n{wave_txt}\n.*\n((?:{mode_txt}(?:{pair})+)+)"
 
+model = re.compile(model_txt)
+mode = re.compile(mode_txt)
+dcset = re.compile(dcset_txt)
+dc_data = re.compile(f"({number}) ({number})")
 
-def main():
-    fname = full_path+"data/test_gm_mod100.txt"
-    suite = swprepost.GroundModelSuite.from_geopsy(fname=fname)
+# GM
+quad = f"{number} {number} {number} {number}\n"
+gm_txt = f"{model_txt}\n\d+\n((?:{quad})+)"
 
-
-fname = full_path+"data/.tmp_profiler_run"
-data = cProfile.run('main()', filename=fname)
-stat = pstats.Stats(fname)
-stat.sort_stats('tottime')
-stat.print_stats(0.1)
-
-# YEAR - MO - DY : TIME UNIT
-# -------------------------
-# 2020 - 01 - 22 :  0.019s -> Basline
-# 2020 - 01 - 23 :  0.016s -> Refactor for delegation
-# 2020 - 04 - 06 :  0.007s -> Major refactoring
+gm = re.compile(gm_txt)
+gm_data = re.compile(f"({number}) ({number}) ({number}) ({number})")

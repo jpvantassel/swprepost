@@ -1,11 +1,30 @@
+# This file is part of swprepost, a Python package for surface-wave
+# inversion pre- and post-processing.
+# Copyright (C) 2019-2020 Joseph P. Vantassel (jvantassel@utexas.edu)
+#
+#     This program is free software: you can redistribute it and/or modify
+#     it under the terms of the GNU General Public License as published by
+#     the Free Software Foundation, either version 3 of the License, or
+#     (at your option) any later version.
+#
+#     This program is distributed in the hope that it will be useful,
+#     but WITHOUT ANY WARRANTY; without even the implied warranty of
+#     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#     GNU General Public License for more details.
+#
+#     You should have received a copy of the GNU General Public License
+#     along with this program.  If not, see <https: //www.gnu.org/licenses/>.
+
 """Tests for Parameterization class."""
 
-from testtools import unittest, TestCase, get_full_path
 import warnings
-import swipp
 import os
 import tarfile as tar
 import logging
+
+import swprepost
+from testtools import unittest, TestCase, get_full_path
+
 logging.basicConfig(level=logging.DEBUG)
 
 
@@ -16,43 +35,43 @@ class Test_Parameterization(TestCase):
 
     def test_init(self):
         # Define parameterization in terms of depths
-        vp = swipp.Parameter(lay_min=[1, 5], lay_max=[3, 16],
+        vp = swprepost.Parameter(lay_min=[1, 5], lay_max=[3, 16],
                              par_min=[200, 400], par_max=[400, 600],
                              par_rev=[True, False],
                              lay_type="depth")
-        pr = swipp.Parameter(lay_min=[0], lay_max=[100],
+        pr = swprepost.Parameter(lay_min=[0], lay_max=[100],
                              par_min=[0.2], par_max=[0.5],
                              par_rev=[False],
                              lay_type="depth")
-        vs = swipp.Parameter(lay_min=[1, 2], lay_max=[2, 3],
+        vs = swprepost.Parameter(lay_min=[1, 2], lay_max=[2, 3],
                              par_min=[100, 200], par_max=[200, 300],
                              par_rev=[True, False],
                              lay_type="depth")
-        rh = swipp.Parameter(lay_min=[0], lay_max=[100],
+        rh = swprepost.Parameter(lay_min=[0], lay_max=[100],
                              par_min=[2000], par_max=[2000],
                              par_rev=[False],
                              lay_type="depth")
-        test = swipp.Parameterization(vp, pr, vs, rh)
+        test = swprepost.Parameterization(vp, pr, vs, rh)
         self.assertTrue(test)
 
         # Define parameters in terms of thicknesses
-        vp = swipp.Parameter(lay_min=[1, 5], lay_max=[3, 16],
+        vp = swprepost.Parameter(lay_min=[1, 5], lay_max=[3, 16],
                              par_min=[200, 400], par_max=[400, 600],
                              par_rev=[True, False],
                              lay_type="thickness")
-        pr = swipp.Parameter(lay_min=[0], lay_max=[100],
+        pr = swprepost.Parameter(lay_min=[0], lay_max=[100],
                              par_min=[0.2], par_max=[0.5],
                              par_rev=[False],
                              lay_type="thickness")
-        vs = swipp.Parameter(lay_min=[1, 2], lay_max=[2, 3],
+        vs = swprepost.Parameter(lay_min=[1, 2], lay_max=[2, 3],
                              par_min=[100, 200], par_max=[200, 300],
                              par_rev=[True, False],
                              lay_type="thickness")
-        rh = swipp.Parameter(lay_min=[0], lay_max=[100],
+        rh = swprepost.Parameter(lay_min=[0], lay_max=[100],
                              par_min=[2000], par_max=[2000],
                              par_rev=[False],
                              lay_type="thickness")
-        test = swipp.Parameterization(vp, pr, vs, rh)
+        test = swprepost.Parameterization(vp, pr, vs, rh)
         self.assertTrue(test)
 
     def test_from_min_max(self):
@@ -65,7 +84,7 @@ class Test_Parameterization(TestCase):
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
 
-            param = swipp.Parameterization.from_min_max(vp, pr, vs, rh, wv)
+            param = swprepost.Parameterization.from_min_max(vp, pr, vs, rh, wv)
             # Fixed - FX
             self.assertEqual(rh[0], param.rh._par_type)
             self.assertEqual(rh[1], param.rh.par_value)
@@ -102,12 +121,12 @@ class Test_Parameterization(TestCase):
 
             vs = ['LN', 4, 300, 500, True]
             pr = ['LR', 3, 0.2, 0.5, False]
-            param = swipp.Parameterization.from_min_max(vp, pr, vs, rh, wv)
+            param = swprepost.Parameterization.from_min_max(vp, pr, vs, rh, wv)
 
             # Layering Ratio - LR
             self.assertEqual(pr[0], param.pr._par_type)
             self.assertEqual(pr[1], param.pr.par_value)
-            lay_min, lay_max = swipp.Parameter.depth_lr(*wv, pr[1])
+            lay_min, lay_max = swprepost.Parameter.depth_lr(*wv, pr[1])
             self.assertListEqual(lay_min, param.pr.lay_min)
             self.assertListEqual(lay_max, param.pr.lay_max)
             self.assertListEqual([pr[2]]*len(lay_min), param.pr.par_min)
@@ -129,10 +148,10 @@ class Test_Parameterization(TestCase):
         vs = ['FTL', 3, 3, 100, 200, True]
         rh = ['FX', 2000]
         wv = [1, 100]
-        par = swipp.Parameterization.from_min_max(vp, pr, vs, rh, wv)
+        par = swprepost.Parameterization.from_min_max(vp, pr, vs, rh, wv)
         fname_prefix = self.full_path+"data/test_par1"
         par.to_param(fname_prefix=fname_prefix)
-        new_par = swipp.Parameterization.from_param(fname_prefix)
+        new_par = swprepost.Parameterization.from_param(fname_prefix)
         self.assertEqual(par, new_par)
         os.remove(fname_prefix+".param")
 

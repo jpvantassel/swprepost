@@ -1,4 +1,4 @@
-# This file is part of swipp, a Python package for surface-wave
+# This file is part of swprepost, a Python package for surface-wave
 # inversion pre- and post-processing.
 # Copyright (C) 2019-2020 Joseph P. Vantassel (jvantassel@utexas.edu)
 #
@@ -17,10 +17,13 @@
 
 """Tests for CurveUncertain class."""
 
-from testtools import unittest, TestCase, get_full_path
-import swipp
-import numpy as np
 import logging
+
+import numpy as np
+
+from testtools import unittest, TestCase, get_full_path
+import swprepost
+
 logging.basicConfig(level=logging.CRITICAL)
 
 
@@ -34,14 +37,14 @@ class Test_CurveUncertain(TestCase):
         cls.yerr = np.array([2, 4, 6, 10, 12, 14])
 
         # Define both error terms
-        cls.ucurve_b = swipp.CurveUncertain(
+        cls.ucurve_b = swprepost.CurveUncertain(
             x=cls.x, y=cls.y, yerr=cls.yerr, xerr=cls.xerr)
 
         # Define only yerr
-        cls.ucurve_y = swipp.CurveUncertain(x=cls.x, y=cls.y, yerr=cls.yerr)
+        cls.ucurve_y = swprepost.CurveUncertain(x=cls.x, y=cls.y, yerr=cls.yerr)
 
         # Define neither
-        cls.ucurve_n = swipp.CurveUncertain(x=cls.x, y=cls.y)
+        cls.ucurve_n = swprepost.CurveUncertain(x=cls.x, y=cls.y)
 
     def test_init(self):
         ucurve = self.ucurve_b
@@ -74,7 +77,7 @@ class Test_CurveUncertain(TestCase):
 
         # Inconsistent sizes
         yerr = [1, 2, 3]
-        self.assertRaises(IndexError, swipp.CurveUncertain,
+        self.assertRaises(IndexError, swprepost.CurveUncertain,
                           self.x, self.y, yerr)
 
     def test_resample(self):
@@ -96,7 +99,7 @@ class Test_CurveUncertain(TestCase):
         # Inplace = True
         xy = [1,2,3,5,6,7]
         _xx = [1,2,3,4,5,6,7]
-        ucurve = swipp.CurveUncertain(xy, xy, yerr=xy, xerr=xy)
+        ucurve = swprepost.CurveUncertain(xy, xy, yerr=xy, xerr=xy)
         ucurve.resample(_xx, inplace=True)
 
         expected = np.array(_xx)
