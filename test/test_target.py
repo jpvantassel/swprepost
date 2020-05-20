@@ -367,7 +367,7 @@ class Test_Target(TestCase):
         self.assertFalse(tar1 == tar2)
 
     def test_notebook(self):
-        fname = "../examples/Targets.ipynb"
+        fname = "../examples/basic/Targets.ipynb"
         with open(self.full_path+fname) as f:
             nb = nbformat.read(f, as_version=4)
 
@@ -376,7 +376,7 @@ class Test_Target(TestCase):
                 warnings.simplefilter("ignore")
                 ep = ExecutePreprocessor(timeout=600, kernel_name='python3')
                 ep.preprocess(
-                    nb, {'metadata': {'path': self.full_path+"../examples"}})
+                    nb, {'metadata': {'path': self.full_path+"../examples/basic"}})
         finally:
             with open(self.full_path+fname, 'w', encoding='utf-8') as f:
                 nbformat.write(nb, f)

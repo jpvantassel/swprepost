@@ -20,4 +20,5 @@ test/htmlcov
 *.png
 *.hypothesis
 *.tmp_profiler_run
-examples/to_*
+examples/basic/to_*
+reformat.py
