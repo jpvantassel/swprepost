@@ -20,12 +20,12 @@
 post-processing. `SWprepost` was developed by Joseph P. Vantassel under the
 supervision of Professor Brady R. Cox at The University of Texas at Austin. The
 package includes 11 class definitions for interacting with the various
-components of surface wave inversion. It is designed to integrate seamlessly
-with the Dinver module of the popular open-source software Geopsy, however
-has been written in a general manner to ensure its usefulness with other
+components required for surface wave inversion. It is designed to integrate
+seamlessly with the Dinver module of the popular open-source software Geopsy,
+however has been written in a general manner to ensure its usefulness with other
 inversion programs. Furthermore, some of the class definitions provided such as
-`GroundModel` may even be of use those working in the Geotechnical or
-Geophysical fields, but who do not perform surface wave inversions at all.
+`GroundModel` may even be of use to those working in the Geotechnical or
+Geophysical fields, but who do not perform surface wave inversions.
 
 If you use `SWprepost` in your research or consulting we ask you please cite the
 following:
@@ -39,16 +39,16 @@ on the `SWprepost` [archive](!!!ADD LINK!!!!)._
 
 For the motivation behind the development of `SWprepost` and its role in a
 larger project focused on developing a complete workflow for surface wave
-inversion please refer to the following:
+inversion please refer to and consider citing the following:
 
 > Citation Forthcoming
 
 ## A Few Examples
 
-All examples are provided in full in `examples` directory, but be sure to see
-[Getting Started](#Getting-Started) first.
+All examples presented here can be replicated using the Jupyter notebook titled
+`ReadmeExamples.ipynb` in the `examples` directory.
 
-### Import 100 ground models in under 1 second
+### Import 100 ground models in less than 0.5 seconds
 
 ```Python
 time_start = time.perf_counter()
@@ -63,7 +63,7 @@ Elapsed Time: 0.0 seconds.
 GroundModelSuite with 100 GroundModels.
 ```
 
-### Plot 100 ground models with their median
+### Plot the ground models
 
 ```Python
 fig, ax = plt.subplots(figsize=(2,4), dpi=150)
@@ -72,20 +72,18 @@ label = "100 Best"
 for gm in gm_suite:
     ax.plot(gm.vs2, gm.depth, color="#ababab", label=label)
     label=None
-# Calculate and plot the median profile
-median = gm_suite.median()
-ax.plot(median.vs2, median.depth, color="#00ffff", label="Median")
+# Plot the single best in different color
+ax.plot(gm_suite[0].vs2, gm_suite[0].depth, color="#00ffff", label="1 Best")
 ax.set_ylim(50,0)
 ax.set_xlabel("Vs (m/s)")
 ax.set_ylabel("Depth (m)")
 ax.legend()
-fig.savefig("100bestvs.svg", bbox_inches="tight")
 plt.show()
 ```
 
 ![100bestvs.svg](figs/100bestvs.svg)
 
-### And now compute and plot their uncertainty
+### Compute and plot their uncertainty
 
 ```
 fig, ax = plt.subplots(figsize=(2,4), dpi=150)
@@ -118,14 +116,14 @@ If you have an earlier version and would like to upgrade to the latest version
 of `swprepost` use `pip install swprepost --upgrade`.
 
 3.  Confirm that `swprepost` has installed/updated successfully by examining the
-last few lines of the text displayed in the console.
+last few lines of text displayed in the console.
 
 ### Using _SWprepost_
 
 1.  Download the contents of the [examples](https://github.com/jpvantassel/swprepost/tree/master/examples)
   directory to any location of your choice.
 
-2.  Explore the Jupyter notebooks there for a no-coding-required introduction
+2.  Explore the Jupyter notebooks for a no-coding-required introduction
   to the basics of the `swprepost` package. If you have not installed `Jupyter`,
   detailed instructions can be found [here](https://jpvantassel.github.io/python3-course/#/intro/installing_jupyter).
 
