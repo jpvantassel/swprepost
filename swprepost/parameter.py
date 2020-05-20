@@ -102,8 +102,8 @@ class Parameter():
             Minimum and maximum potential value of the parameter,
             one `float` per layer.
         par_rev : iterable
-            Indicate whether to allow parameter reversals, one 
-            `bool` per layer.             
+            Indicate whether to allow parameter reversals, one
+            `bool` per layer.
         lay_type : {'thickness', 'depth'}, optional
             Inidcate whether the layers are defined in terms of
             depth or thickness.
@@ -123,6 +123,7 @@ class Parameter():
         self.par_min, self.par_max = self.check_layers("par_min", par_min,
                                                        "par_max", par_max)
         self.par_rev = self.check_rev(par_rev)
+        self.linked = False
 
         if (len(self.lay_min) != len(self.par_min)) and (len(self.lay_min) != len(self.par_rev)):
             raise ValueError("Length of all inputs must be consistent.")
@@ -156,13 +157,13 @@ class Parameter():
         return obj
 
     @staticmethod
-    def check_wavelengths(wmin, wmax):
+    def _check_wavelengths(wmin, wmax):
         """Check wavelength input.
 
         Specifically:
-            1. Cast Wavelength to `float`.
-            2. Wavelengths are > 0.
-            3. Minimum wavelength is less than maximum wavelength.
+        1. Cast Wavelength to `float`.
+        2. Wavelengths are > 0.
+        3. Minimum wavelength is less than maximum wavelength.
         """
         wmin = float(wmin)
         wmax = float(wmax)
@@ -217,6 +218,7 @@ class Parameter():
         Tuple
             Tuple of lists indicating thicknesses of the form
             ([minthickness...], [maxthickness...]).
+
         """
         if type(nlayers) != int:
             raise TypeError(f"`nlayers` must be `int`, not {type(nlayers)}.")
@@ -246,7 +248,7 @@ class Parameter():
             Thickness of all layers in meters.
         par_min, par_max : float
             Minimum and maximum potential value of the parameter,
-            applied to all layers. 
+            applied to all layers.
         par_rev : bool, optional
             Indicate whether layers are allowed to reverse or not,
             default is `False` (i.e., no reversal allowed).
@@ -261,6 +263,7 @@ class Parameter():
         If a more detailed parameterization is desired than
         available here use the `dinver` user inferface to tweak the
         resulting `.param` file.
+
         """
         lay_min, lay_max = cls.depth_ftl(nlayers, thickness)
         par_min, par_max, par_rev = cls.min_max_rev(nlayers,
@@ -276,7 +279,7 @@ class Parameter():
     @staticmethod
     def depth_ln_thickness(wmin, wmax, nlayers, depth_factor=2,
                            increasing=False):
-        """Calculate the minimum and maximum thickness for each layer 
+        """Calculate the minimum and maximum thickness for each layer
         using Layering by Number (LN).
 
         Parameters
@@ -291,7 +294,7 @@ class Parameter():
             divided to estimate the maxium depth of profiling,
             default is 2.
         increasing : bool, optional
-            Indicate whether the layering thickness should be 
+            Indicate whether the layering thickness should be
             contrained to increase, default value is `False`
             meaning that layers are not contrained to increase.
 
@@ -300,8 +303,9 @@ class Parameter():
         Tuple
             Tuple of lists indicating thicknesses of the form
             ([minthickness...], [maxthickness...]).
+
         """
-        wmin, wmax = Parameter.check_wavelengths(wmin, wmax)
+        wmin, wmax = Parameter._check_wavelengths(wmin, wmax)
 
         if type(nlayers) != int:
             msg = f"`nlayers` must be `int`. Not {type(nlayers)}."
@@ -335,7 +339,7 @@ class Parameter():
             Desired number of layers.
         par_min, par_max : float
             Minimum and maximum potential value of the parameter,
-            applied to all layers. 
+            applied to all layers.
         par_rev : bool, optional
             Indicate whether layers are allowed to reverse or not,
             default is `False` (i.e., no reversal allowed).
@@ -379,7 +383,7 @@ class Parameter():
 
     @staticmethod
     def depth_ln_depth(wmin, wmax, nlayers, depth_factor=2):
-        """Calculate the minimum and maximum depth for each layer 
+        """Calculate the minimum and maximum depth for each layer
         using Layering by Number.
 
         Parameters
@@ -400,7 +404,7 @@ class Parameter():
             Tuple of lists indicating depths of the form
             ([mindepth...], [maxdepth...]).
         """
-        wmin, wmax = Parameter.check_wavelengths(wmin, wmax)
+        wmin, wmax = Parameter._check_wavelengths(wmin, wmax)
 
         if type(nlayers) != int:
             msg = f"`nlayers` must be `int`. Not {type(nlayers)}."
@@ -444,7 +448,7 @@ class Parameter():
             Desired number of layers.
         par_min, par_max : float
             Minimum and maximum potential value of the parameter,
-            applied to all layers. 
+            applied to all layers.
         par_rev : bool, optional
             Indicate whether layers are allowed to reverse or not,
             default is `False` (i.e., no reversal allowed).
@@ -457,6 +461,7 @@ class Parameter():
         -------
         Parameter
             Instantiated `Parameter` object.
+
         """
 
         lay_min, lay_max = cls.depth_ln_depth(wmin, wmax, nlayers,
@@ -500,8 +505,9 @@ class Parameter():
         Tuple
             Tuple of lists indicating depths of the form
             ([mindepth...], [maxdepth...]).
+
         """
-        wmin, wmax = Parameter.check_wavelengths(wmin, wmax)
+        wmin, wmax = Parameter._check_wavelengths(wmin, wmax)
 
         if type(lr) not in (int, float):
             msg = f"`lr` must be `int` or `float`, not {type(lr)}."
@@ -559,10 +565,10 @@ class Parameter():
         lr : float
             Layering Ratio, this controls the number of layers and
             their potential thicknesses, refer to Cox and Teague
-            (2016) for details.                
+            (2016) for details.
         par_min, par_max : float
             Minimum and maximum potential value of the parameter,
-            applied to all layers. 
+            applied to all layers.
         par_rev : bool, optional
             Indicate whether layers are allowed to reverse or not,
             default is `False` (i.e., no reversal allowed).
@@ -577,10 +583,11 @@ class Parameter():
             Instantiated `Parameter` object.
 
         Note
-        ---- 
+        ----
         If a more detailed parameterization is desired than
         available here use the `dinver` user inferface to tweak the
         resulting `.param` file.
+
         """
         lay_min, lay_max = cls.depth_lr(wmin, wmax, lr, depth_factor)
         par_min, par_max, par_rev = cls.min_max_rev(len(lay_min),
@@ -590,13 +597,70 @@ class Parameter():
         obj.par_value = lr
         return obj
 
+    @property
+    def lay_type(self):
+        if self._par_type in ["FTL", "CT"]:
+            return "thickness"
+        else:
+            return "depth"
+
+    @classmethod
+    def from_parameter_and_link(cls, par_min, par_max, par_rev,
+                                existing_parameter, ptype="vs"):
+        """Create `Parameter` from an existing `Parameter` and link.
+
+        Parameters
+        ----------
+        par_min, par_max : float
+            Minimum and maximum potential value of the parameter,
+            applied to all layers.
+        par_rev : bool, optional
+            Indicate whether layers are allowed to reverse or not,
+            default is `False` (i.e., no reversal allowed).
+        existing_parameter : Parameter
+            Instantiated `Parameter` object to which you wish to link
+            the current parameter. 
+        ptype : {'vs', 'pr', 'rh', 'vp'}, optional
+            Inversion parameter, representated by the
+            `existing_parameter`, default is `vs`.
+
+        Returns
+        -------
+        Parameter
+            Instantiated `Parameter` with the same layering as
+            `existing_parameter`, but different bounds.
+
+        Note
+        ----
+        If a more detailed parameterization is desired than
+        available here use the `dinver` user inferface to tweak the
+        resulting `.param` file.
+
+        """
+        obj = cls.clone(existing_parameter)
+
+        length = len(obj.par_min)
+        obj.par_min = [float(par_min) for _ in range(length)]
+        obj.par_max = [float(par_max) for _ in range(length)]
+        obj.par_rev = [float(par_rev) for _ in range(length)]
+
+        linked_map = {"vs":"Vs", "vp":"Vp", "rh":"Rho", "pr":"Nu"}
+        obj.linked = linked_map[ptype]
+        return obj
+
+    @classmethod
+    def clone(cls, parameter):
+        """Copy provided `Parameter` object."""
+        return cls(parameter.lay_min, parameter.lay_max, parameter.par_min,
+                   parameter.par_max, parameter.par_rev, parameter.lay_type)
+
     @staticmethod
     def make_rectangle(left, right, upper, lower):
         return ([left, left, right, right],
                 [upper, lower, lower, upper])
 
     def plot(self, ax=None, show_example=True):
-        #TODO (jpv): Add docstring.
+        # TODO (jpv): Add docstring.
         if ax is None:
             ax_was_none = True
             fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(3.5, 5))

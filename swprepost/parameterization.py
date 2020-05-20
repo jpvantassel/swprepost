@@ -278,18 +278,19 @@ class Parameterization():
                 isdepth = "true"
             else:
                 msg = f"._par_type` {value._par_type} not recognized, refer to Parameter.__doc__."
-                raise NotImplementedError(msg)
+                raise NotImplementedError(msg)          
 
             for lnum, (dhmin, dhmax, pmin, pmax, rev) in enumerate(zip(value.lay_min, value.lay_max, value.par_min, value.par_max, value.par_rev)):
                 rev_check = 'true' if not rev else 'false'
                 rev_check = 'true' if len(value.lay_min) == 1 else rev_check
+                linkedto = f"{value.linked}{lnum}" if value.linked else "Not linked"
                 contents += ['      <ParamLayer name="'+key+str(lnum)+'">',
                              '        <shape>Uniform</shape>',
                              '        <lastParamCondition>'+rev_check+'</lastParamCondition>',
                              '        <nSubayers>5</nSubayers>',
                              '        <topMin>'+str(pmin)+'</topMin>',
                              '        <topMax>'+str(pmax)+'</topMax>',
-                             '        <linkedTo>Not linked</linkedTo>',
+                             '        <linkedTo>'+linkedto+'</linkedTo>',
                              '        <isDepth>'+isdepth+'</isDepth>',
                              '        <dhMin>'+str(dhmin)+'</dhMin>',
                              '        <dhMax>'+str(dhmax)+'</dhMax>',

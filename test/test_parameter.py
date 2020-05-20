@@ -66,20 +66,20 @@ class Test_Parameter(TestCase):
         wmin, wmax = (1, 100)
         # Proper Order
         self.assertTupleEqual((wmin, wmax,),
-                              swprepost.Parameter.check_wavelengths(wmin, wmax))
+                              swprepost.Parameter._check_wavelengths(wmin, wmax))
         # Reverse Order
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             self.assertTupleEqual((wmin, wmax,),
-                                  swprepost.Parameter.check_wavelengths(wmax, wmin))
+                                  swprepost.Parameter._check_wavelengths(wmax, wmin))
         # Raise TypeError
         for val in [(1, 2), [1, 2]]:
             self.assertRaises(
-                TypeError, swprepost.Parameter.check_wavelengths, wmin, val)
+                TypeError, swprepost.Parameter._check_wavelengths, wmin, val)
         # Raise ValueError
         for val in [0, -1, -0.01]:
             self.assertRaises(
-                ValueError, swprepost.Parameter.check_wavelengths, wmin, val)
+                ValueError, swprepost.Parameter._check_wavelengths, wmin, val)
 
     def test_check_depth_factor(self):
         # Raise TypeError
