@@ -138,9 +138,18 @@ class Test_Parameter(TestCase):
         lay_min, lay_max = swprepost.Parameter.depth_ln_depth(wmin=wmin, wmax=wmax,
                                                               nlayers=nlayers,
                                                               depth_factor=2)
-        # expected_lay_min = [1/3, 2/3, 3/3, 4/3, 5/3]
         expected_lay_min = [wmin/3]*nlayers
         expected_lay_max = [wmax/2]*nlayers
+        self.assertListAlmostEqual(expected_lay_min, lay_min)
+        self.assertListAlmostEqual(expected_lay_max, lay_max)
+
+        # Simple example
+        nlayers = 5
+        lay_min, lay_max = swprepost.Parameter.depth_ln_depth(wmin=wmin, wmax=wmax,
+                                                              nlayers=nlayers,
+                                                              depth_factor=5)
+        expected_lay_min = [wmin/3]*nlayers
+        expected_lay_max = [wmax/5]*nlayers
         self.assertListAlmostEqual(expected_lay_min, lay_min)
         self.assertListAlmostEqual(expected_lay_max, lay_max)
 

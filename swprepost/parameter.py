@@ -430,7 +430,7 @@ class Parameter():
                 depth_factor=2):
         return cls.from_ln_depth(wmin=wmin, wmax=wmax, nlayers=nlayers,
                                  par_min=par_min, par_max=par_max,
-                                 par_rev=par_rev, depth_factor=2)
+                                 par_rev=par_rev, depth_factor=depth_factor)
 
     @classmethod
     def from_ln_depth(cls, wmin, wmax, nlayers, par_min, par_max, par_rev,
@@ -463,7 +463,6 @@ class Parameter():
             Instantiated `Parameter` object.
 
         """
-
         lay_min, lay_max = cls.depth_ln_depth(wmin, wmax, nlayers,
                                               depth_factor)
         par_min, par_max, par_rev = cls.min_max_rev(nlayers,
