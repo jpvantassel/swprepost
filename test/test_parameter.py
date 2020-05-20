@@ -37,8 +37,8 @@ class Test_Parameter(TestCase):
         par_max = [400, 600]
         par_rev = [True, False]
         mypar = swprepost.Parameter(lay_min, lay_max,
-                                par_min, par_max, par_rev,
-                                lay_type="depth")
+                                    par_min, par_max, par_rev,
+                                    lay_type="depth")
         self.assertEqual("CD", mypar._par_type)
         self.assertListEqual(lay_min, mypar.lay_min)
         self.assertListEqual(lay_max, mypar.lay_max)
@@ -53,8 +53,8 @@ class Test_Parameter(TestCase):
         par_max = [400, 600]
         par_rev = [True, False]
         mypar = swprepost.Parameter(lay_min, lay_max,
-                                par_min, par_max, par_rev,
-                                lay_type="thickness")
+                                    par_min, par_max, par_rev,
+                                    lay_type="thickness")
         self.assertEqual("CT", mypar._par_type)
         self.assertListEqual(lay_min, mypar.lay_min)
         self.assertListEqual(lay_max, mypar.lay_max)
@@ -68,10 +68,12 @@ class Test_Parameter(TestCase):
         self.assertTupleEqual((wmin, wmax,),
                               swprepost.Parameter.check_wavelengths(wmin, wmax))
         # Reverse Order
-        self.assertTupleEqual((wmin, wmax,),
-                              swprepost.Parameter.check_wavelengths(wmax, wmin))
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            self.assertTupleEqual((wmin, wmax,),
+                                  swprepost.Parameter.check_wavelengths(wmax, wmin))
         # Raise TypeError
-        for val in [(1, 2), [1,2]]:
+        for val in [(1, 2), [1, 2]]:
             self.assertRaises(
                 TypeError, swprepost.Parameter.check_wavelengths, wmin, val)
         # Raise ValueError
@@ -96,16 +98,19 @@ class Test_Parameter(TestCase):
     def test_depth_ftl(self):
         # TypeError - nlayers
         for val in ["1", True, [1], (1,), 1.1]:
-            self.assertRaises(TypeError, swprepost.Parameter.depth_ftl, val, 1.)
+            self.assertRaises(
+                TypeError, swprepost.Parameter.depth_ftl, val, 1.)
         # ValueError - nlayers
         for val in [-1, 0]:
-            self.assertRaises(ValueError, swprepost.Parameter.depth_ftl, val, 1.)
+            self.assertRaises(
+                ValueError, swprepost.Parameter.depth_ftl, val, 1.)
         # TypeError - thickness
         for val in ["1", True, [1], (1,)]:
             self.assertRaises(TypeError, swprepost.Parameter.depth_ftl, 1, val)
         # ValueError - thickness.
         for val in [-1, 0]:
-            self.assertRaises(ValueError, swprepost.Parameter.depth_ftl, 1, val)
+            self.assertRaises(
+                ValueError, swprepost.Parameter.depth_ftl, 1, val)
 
     def test_depth_ln_thickness(self):
         wmin, wmax = 1, 100
@@ -131,8 +136,8 @@ class Test_Parameter(TestCase):
         # Simple example
         nlayers = 5
         lay_min, lay_max = swprepost.Parameter.depth_ln_depth(wmin=wmin, wmax=wmax,
-                                                          nlayers=nlayers,
-                                                          depth_factor=2)
+                                                              nlayers=nlayers,
+                                                              depth_factor=2)
         # expected_lay_min = [1/3, 2/3, 3/3, 4/3, 5/3]
         expected_lay_min = [wmin/3]*nlayers
         expected_lay_max = [wmax/2]*nlayers
@@ -204,8 +209,8 @@ class Test_Parameter(TestCase):
                      [0.5, 3.0, 15.5, 50, 51]]}
         for key, (expected_mindepth, expected_maxdepth) in known_lr.items():
             mindepth, maxdepth = swprepost.Parameter.depth_lr(wmin, wmax,
-                                                          lr=float(key),
-                                                          depth_factor=2)
+                                                              lr=float(key),
+                                                              depth_factor=2)
             self.assertListAlmostEqual(expected_mindepth, mindepth, places=1)
             self.assertListAlmostEqual(expected_maxdepth, maxdepth, places=1)
 
@@ -214,26 +219,30 @@ class Test_Parameter(TestCase):
         par_min, par_max, par_rev = 100, 200, True
         lr = 2.0
         par = swprepost.Parameter.from_lr(wmin, wmax, lr,
-                                      par_min, par_max, par_rev)
+                                          par_min, par_max, par_rev)
         self.assertEqual("LR", par._par_type)
         self.assertEqual(lr, par.par_value)
 
     def test_eq(self):
         wmin, wmax = 1, 100
         par_min, par_max, par_rev = 100, 200, True
-        nlay=3
+        nlay = 3
         # Equal
-        par1 = swprepost.Parameter.from_ln_depth(wmin, wmax, nlay, par_min, par_max, par_rev)
-        par2 = swprepost.Parameter.from_ln_depth(wmin, wmax, nlay, par_min, par_max, par_rev)
+        par1 = swprepost.Parameter.from_ln_depth(
+            wmin, wmax, nlay, par_min, par_max, par_rev)
+        par2 = swprepost.Parameter.from_ln_depth(
+            wmin, wmax, nlay, par_min, par_max, par_rev)
         self.assertEqual(par1, par2)
 
         # NotEqual - Different Value
-        par3 = swprepost.Parameter.from_ln_depth(wmin, wmax, nlay, par_min, par_max, par_rev)
+        par3 = swprepost.Parameter.from_ln_depth(
+            wmin, wmax, nlay, par_min, par_max, par_rev)
         par3.par_min[0] = 5
         self.assertNotEqual(par1, par3)
 
         # NotEqual - Different Length
-        par4 = swprepost.Parameter.from_ln_depth(wmin, wmax, nlay, par_min, par_max, par_rev)
+        par4 = swprepost.Parameter.from_ln_depth(
+            wmin, wmax, nlay, par_min, par_max, par_rev)
         par4.par_min = par4.par_min[:-1]
         self.assertNotEqual(par1, par4)
 
