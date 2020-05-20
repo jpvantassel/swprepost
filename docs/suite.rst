@@ -3,7 +3,7 @@
 Suite
 =====
 
-.. automodule:: swipp.suite
+.. automodule:: swprepost.suite
     :members:
     :undoc-members:
     :show-inheritance:

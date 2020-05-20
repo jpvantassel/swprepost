@@ -3,7 +3,7 @@
 CurveUncertain
 ==============
 
-.. automodule:: swipp.curveuncertain
+.. automodule:: swprepost.curveuncertain
     :members:
     :undoc-members:
     :show-inheritance:

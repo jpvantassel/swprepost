@@ -17,7 +17,7 @@ for class_name in class_names:
 {class_name}
 {"="*len(class_name)}
 
-.. automodule:: swipp.{class_name.lower()}
+.. automodule:: swprepost.{class_name.lower()}
     :members:
     :undoc-members:
     :show-inheritance:

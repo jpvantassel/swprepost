@@ -3,7 +3,7 @@
 GroundModelSuite
 ================
 
-.. automodule:: swipp.groundmodelsuite
+.. automodule:: swprepost.groundmodelsuite
     :members:
     :undoc-members:
     :show-inheritance:

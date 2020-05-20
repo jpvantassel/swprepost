@@ -3,7 +3,7 @@
 DispersionSet
 =============
 
-.. automodule:: swipp.dispersionset
+.. automodule:: swprepost.dispersionset
     :members:
     :undoc-members:
     :show-inheritance:

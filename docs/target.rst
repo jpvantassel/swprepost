@@ -3,7 +3,7 @@
 Target
 ======
 
-.. automodule:: swipp.target
+.. automodule:: swprepost.target
     :members:
     :undoc-members:
     :show-inheritance:

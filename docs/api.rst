@@ -7,7 +7,6 @@ API Reference
    :maxdepth: 2
 
    curve
-   curveset
    curveuncertain
    dispersioncurve
    dispersionset

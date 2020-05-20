@@ -3,7 +3,7 @@
 Parameterization
 ================
 
-.. automodule:: swipp.parameterization
+.. automodule:: swprepost.parameterization
     :members:
     :undoc-members:
     :show-inheritance:

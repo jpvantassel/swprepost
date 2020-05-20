@@ -13,16 +13,16 @@
 import os
 import sys
 
-sys.path.insert(0, os.path.abspath('../swipp'))
+sys.path.insert(0, os.path.abspath('../swprepost'))
 
 # -- Project information -----------------------------------------------------
 
-project = 'swipp'
-copyright = '2020, Joseph P. Vantassel'
+project = 'swprepost'
+copyright = '2019 - 2020, Joseph P. Vantassel'
 author = 'Joseph P. Vantassel'
 
 # The full version, including alpha/beta/rc tags
-release = '0.1.0'
+release = '0.3.0'
 
 # -- General configuration ---------------------------------------------------
 

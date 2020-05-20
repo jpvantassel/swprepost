@@ -3,6 +3,6 @@
 Installation
 ============
 
-``pip install swipp``
+``pip install swprepost``
 
 ``pip`` will handle the rest!

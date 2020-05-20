@@ -3,7 +3,7 @@
 Parameter
 =========
 
-.. automodule:: swipp.parameter
+.. automodule:: swprepost.parameter
     :members:
     :undoc-members:
     :show-inheritance:

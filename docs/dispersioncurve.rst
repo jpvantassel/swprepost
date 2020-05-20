@@ -3,7 +3,7 @@
 DispersionCurve
 ===============
 
-.. automodule:: swipp.dispersioncurve
+.. automodule:: swprepost.dispersioncurve
     :members:
     :undoc-members:
     :show-inheritance:
