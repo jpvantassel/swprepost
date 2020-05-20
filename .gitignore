@@ -8,6 +8,8 @@ doc
 scratch
 html
 test/htmlcov
+examples/adv/0_targets
+examples/adv/1_parameters
 
 # File Types
 *.coverage

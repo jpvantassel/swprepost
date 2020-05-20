@@ -85,7 +85,7 @@ plt.show()
 
 ### Compute and plot their uncertainty
 
-```
+```Python
 fig, ax = plt.subplots(figsize=(2,4), dpi=150)
 # Calculate Median
 disc_depth, siglnvs = gm_suite.sigma_ln()
