@@ -892,6 +892,10 @@ class Target(CurveUncertain):
 
         errorbardefaults = dict(color="#000000", label="Exp. Disp. Data",
                                 capsize=2, linestyle="" )
+
+        if errorbarkwargs is None:
+            errorbarkwargs = {}
+
         _errorbarkwargs = {**errorbardefaults, **errorbarkwargs}
 
         ax.errorbar(x=getattr(self, x), y=getattr(self, y), 
@@ -905,7 +909,7 @@ class Target(CurveUncertain):
             xlabeltext = ""
 
         if y == "velocity":
-            ylabeltext = "Rayleigh Phase-Velocity, "+r"$V_R$"+" "+r"$(m/s)$"
+            ylabeltext = "Rayleigh Phase Velocity, "+r"$V_R$"+" "+r"$(m/s)$"
         elif y == "slowness":
             ylabeltext = "Slowness, "+r"$p$"+" "+r"$(s/m)$"
         else:
