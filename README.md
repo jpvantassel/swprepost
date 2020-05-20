@@ -123,8 +123,14 @@ last few lines of text displayed in the console.
 1.  Download the contents of the [examples](https://github.com/jpvantassel/swprepost/tree/master/examples)
   directory to any location of your choice.
 
-2.  Explore the Jupyter notebooks for a no-coding-required introduction
-  to the basics of the `swprepost` package. If you have not installed `Jupyter`,
-  detailed instructions can be found [here](https://jpvantassel.github.io/python3-course/#/intro/installing_jupyter).
+2.  Explore Jupyter notebooks in the
+  [basic](https://github.com/jpvantassel/swprepost/tree/master/examples/basic)
+  directory for a no-coding-required introduction to the `swprepost` package.
+  If you have not installed `Jupyter`, detailed instructions can be found
+  [here](https://jpvantassel.github.io/python3-course/#/intro/installing_jupyter).
 
-3.  Enjoy!
+3.  Move to the [adv](https://github.com/jpvantassel/swprepost/tree/master/examples/adv)
+  directory and follow the Jupyter notebook title `SWinvertWorkflow.ipynb` for
+  an example application of the SWinvert workflow.
+
+4.  Enjoy!
