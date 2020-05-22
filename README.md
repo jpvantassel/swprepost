@@ -35,7 +35,7 @@ following:
 _Note: For software, version specific citations should be preferred to general
 concept citations, such as that listed above. To generate a version specific
 citation for `SWprepost`, please use the citation tool for that specific version
-on the `SWprepost` [archive](!!!ADD LINK!!!!)._
+on the `SWprepost` archive._
 
 For the motivation behind the development of `SWprepost` and its role in a
 larger project focused on developing a complete workflow for surface wave
