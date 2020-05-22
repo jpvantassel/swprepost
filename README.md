@@ -2,6 +2,7 @@
 
 > Joseph P. Vantassel, The University of Texas at Austin
 
+[![DOI](https://zenodo.org/badge/222287042.svg)](https://zenodo.org/badge/latestdoi/222287042)
 [![CircleCI](https://circleci.com/gh/jpvantassel/swprepost.svg?style=svg)](https://circleci.com/gh/jpvantassel/swprepost)
 
 ## Table of Contents
@@ -41,7 +42,7 @@ For the motivation behind the development of `SWprepost` and its role in a
 larger project focused on developing a complete workflow for surface wave
 inversion please refer to and consider citing the following:
 
-> Citation Forthcoming
+> Joseph Vantassel. (2020). jpvantassel/swprepost: latest (Concept). Zenodo. http://doi.org/10.5281/zenodo.3839998
 
 ## A Few Examples
 
