@@ -4,6 +4,7 @@
 
 [![DOI](https://zenodo.org/badge/222287042.svg)](https://zenodo.org/badge/latestdoi/222287042)
 [![CircleCI](https://circleci.com/gh/jpvantassel/swprepost.svg?style=svg)](https://circleci.com/gh/jpvantassel/swprepost)
+[![Documentation Status](https://readthedocs.org/projects/swprepost/badge/?version=latest)](https://swprepost.readthedocs.io/en/latest/?badge=latest)
 
 ## Table of Contents
 
@@ -31,7 +32,7 @@ Geophysical fields, but who do not perform surface wave inversions.
 If you use `SWprepost` in your research or consulting we ask you please cite the
 following:
 
-> Citation Forthcoming
+> Joseph Vantassel. (2020). jpvantassel/swprepost: latest (Concept). Zenodo. http://doi.org/10.5281/zenodo.3839998
 
 _Note: For software, version specific citations should be preferred to general
 concept citations, such as that listed above. To generate a version specific
@@ -42,7 +43,8 @@ For the motivation behind the development of `SWprepost` and its role in a
 larger project focused on developing a complete workflow for surface wave
 inversion please refer to and consider citing the following:
 
-> Joseph Vantassel. (2020). jpvantassel/swprepost: latest (Concept). Zenodo. http://doi.org/10.5281/zenodo.3839998
+> Joseph P. Vantassel and Brady R. Cox (2020) SWinvert: A workflow for
+performing rigorous surface wave inversion. (Submitted).
 
 ## A Few Examples
 
