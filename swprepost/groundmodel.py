@@ -377,40 +377,50 @@ class GroundModel():
             If `parameter` is not one of those options specified.
 
         """
-        disc_depth = np.linspace(0, dmax, int(dmax//dy)+1).tolist()
+        # Use linspace to ensure start, end, and number of samples.
+        disc_depth = np.linspace(0, dmax, int(round(dmax/dy))+1)
+        disc_par = np.empty_like(disc_depth, dtype=float)
 
         if parameter == "pr":
             disc_par = self.calc_pr(self.discretize(dmax, dy, "vp")[1],
                                     self.discretize(dmax, dy, "vs")[1])
-            return (disc_depth, disc_par)
+            return (disc_depth.tolist(), disc_par)
 
         valid_parameters = ["depth", "vp", "vs", "rh", "density", "pr"]
         self._validate_parameter(parameter, valid_parameters)
         par_to_disc = getattr(self, parameter)
 
         # For each layer
-        disc_par = [par_to_disc[0]]
+        start_index = 1
+        disc_par[0] = par_to_disc[0]
         residual = 0
-        if len(self.tk) > 1:
-            for c_lay, c_tk in enumerate(self.tk[:-1]):
-                float_disc = c_tk/dy
-                int_disc = int(c_tk // dy)
 
-                residual += (float_disc - int_disc)
-                if residual >= 1:
-                    int_disc += 1
-                disc_par += [par_to_disc[c_lay]]*int_disc
+        for c_lay, c_tk in enumerate(self.tk):
 
-        else:
-            c_lay = -1
-        # Half-space
-        disc_par += [par_to_disc[c_lay+1]]*(len(disc_depth)-len(disc_par))
+            # Half-space
+            if c_tk == 0:
+                disc_par[start_index:] = par_to_disc[c_lay]
+                break
 
-        # TODO (jpv): Properly account for the fact that the entire profile
-        # may not be discretized (i.e., for loop should not extend to self.tk[:-1])
-        disc_par = disc_par[:len(disc_depth)]
+            float_disc = c_tk/dy
+            int_disc = int(c_tk/dy)
+            residual += (float_disc - int_disc)
+            if residual >= 1:
+                int_disc += 1
+                residual -= 1
+            stop_index = start_index + int_disc
 
-        return (disc_depth, disc_par)
+            # Layer extends beyond dmax
+            if stop_index > len(disc_par):
+                disc_par[start_index:] = par_to_disc[c_lay]
+                break
+            # Typical iteration
+            else:
+                disc_par[start_index:stop_index] = par_to_disc[c_lay]
+
+            start_index = stop_index
+
+        return (disc_depth.tolist(), disc_par.tolist())
 
     def simplify(self, parameter='vs'):
         """Remove unecessary breaks in the parameter specified.
