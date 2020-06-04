@@ -20,7 +20,7 @@
 import os
 import logging
 
-from scipy.io import savemat, loadmat
+from scipy.io import loadmat
 from hypothesis import given, settings
 import hypothesis.strategies as st
 import numpy as np

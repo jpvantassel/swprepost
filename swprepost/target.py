@@ -25,7 +25,6 @@ import logging
 
 import matplotlib.pyplot as plt
 import numpy as np
-import scipy.interpolate as sp
 
 from swprepost import CurveUncertain
 
@@ -77,14 +76,13 @@ class Target(CurveUncertain):
 
         """
         logger.info("Howdy!")
-        try:
-            super().__init__(x=frequency, y=velocity, yerr=velstd, xerr=None)
-        except IndexError as e:
-            try:
-                velocity = np.array(velocity)
-                velstd = velocity*velstd
-            finally:
-                super().__init__(x=frequency, y=velocity, yerr=velstd, xerr=None)
+
+        # if velstd is None:
+        #     velstd = np.zeros_like(velocity, dtype=np.double).tolist()
+        if isinstance(velstd, float):
+            velstd = (np.array(velocity, dtype=np.double)*velstd).tolist()
+        
+        super().__init__(x=frequency, y=velocity, yerr=velstd, xerr=None)
 
         self._sort_data()
         self.dc_weight = 1

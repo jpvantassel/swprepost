@@ -19,7 +19,6 @@
 
 import warnings
 import os
-import tarfile as tar
 import logging
 
 import swprepost

@@ -23,7 +23,7 @@ import warnings
 import numpy as np
 
 import swprepost
-from testtools import unittest, TestCase, get_full_path
+from testtools import unittest, TestCase
 
 logging.basicConfig(level=logging.ERROR)
 
@@ -63,7 +63,7 @@ class Test_Suite(TestCase):
                 returned = self.gm_suite.misfit_range(nmodels)
             self.assertEqual(expected, returned)
 
-    def test_misfit_range(self):
+    def test_misfit_repr(self):
         # GroundModelSuite
         for nmodels, expected in zip(["all", 1, 5], ["[0.10-1.00]", "[0.10]", "[0.10-0.40]"]):
             with warnings.catch_warnings():

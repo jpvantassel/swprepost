@@ -17,14 +17,12 @@
 
 """GroundModel class definiton."""
 
-import os
-import warnings
 import logging
 
 from scipy.io import savemat
 import numpy as np
 
-from swprepost import DispersionSet, regex
+from swprepost import regex
 
 logger = logging.getLogger(__name__)
 

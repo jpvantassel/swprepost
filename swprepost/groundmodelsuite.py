@@ -17,14 +17,11 @@
 
 """GroundModelSuite class definition."""
 
-import warnings
-import os
 import logging
 
-import scipy.io as sio
 import numpy as np
 
-from swprepost import GroundModel, Suite, DispersionSuite, regex
+from swprepost import GroundModel, Suite, regex
 
 logger = logging.getLogger(__name__)
 

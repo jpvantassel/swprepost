@@ -329,7 +329,7 @@ indicate by setting `full_version='2.9.0'`, otherwise no action is required."
                         contents += [
                             f'linear("D{key}{lay+1}",">",{1},"D{key}{lay}",{min_thickness});']
 
-        contents += ['      </text>'
+        contents += ['      </text>',
                      '    </ParamSpaceScript>',
                      '  </ParamGroundModel>',
                      '</Dinver>']
