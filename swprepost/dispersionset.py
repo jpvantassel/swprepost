@@ -107,6 +107,8 @@ class DispersionSet():
 
         if nmodes == "all":
             modes = modes[1:]
+        elif nmodes == 0:
+            return None
         else:
             modes = modes[1:nmodes+1]
 

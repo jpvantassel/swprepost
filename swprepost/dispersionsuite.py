@@ -144,13 +144,18 @@ class DispersionSuite(Suite):
         for model_info in regex.dcset.finditer(lines):
             identifier, misfit, wave_type, data = model_info.groups()
 
+            # Encountered new model, save previous and reset.
             if identifier != previous_id and previous_id != "start":
+                if model_count+1 == nsets:
+                    break
+
                 dc_sets.append(cls._dcset()(previous_id,
                                             float(previous_misfit),
                                             rayleigh=rayleigh, love=love))
                 model_count += 1
                 rayleigh, love = None, None
 
+            # Parse data.
             if wave_type == "Rayleigh":
                 rayleigh = cls._dcset()._parse_dcs(data, nmodes=nrayleigh)
             elif wave_type == "Love":
@@ -158,11 +163,7 @@ class DispersionSuite(Suite):
             else:
                 raise NotImplementedError
 
-            previous_id = identifier
-            previous_misfit = misfit
-
-            if model_count + 1 == nsets:
-                break
+            previous_id, previous_misfit = identifier, misfit
 
         dc_sets.append(cls._dcset()(previous_id,
                                     float(previous_misfit),
