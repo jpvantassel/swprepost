@@ -23,7 +23,7 @@ from swprepost import Curve
 
 
 class CurveUncertain(Curve):
-    """Curve object with aribtrary uncertainty in terms of x and y.
+    """Curve object with arbitrary uncertainty in terms of x and y.
 
     Attributes
     ----------
@@ -33,6 +33,22 @@ class CurveUncertain(Curve):
         Vector defining the error in x and y respectively.
 
     """
+
+    @staticmethod
+    def _check_error(error, npts):
+        """Check error is compatable, specifically:
+
+            1. Can be cast to a ndarray.
+            2. Error has same length of the curve.
+
+        """
+        error = np.array(error, dtype=np.double)
+
+        if error.size != npts:
+            msg = f"Size of error and curve must match exactly. {error.size} != {npts}."
+            raise IndexError(msg)
+
+        return error
 
     def __init__(self, x, y, yerr=None, xerr=None):
         """Initialize a new `CurveUncertain` object.
@@ -58,25 +74,18 @@ class CurveUncertain(Curve):
             provided) are inconsistent.
 
         """
-        # Pass x, y to `Curve` constuctor.
+        # Pass x, y to `Curve`.
         super().__init__(x, y)
 
         # Handle x-error and y-error.
-        for attr, attr_name, attr_bool in zip([yerr, xerr],
-                                              ["_yerr", "_xerr"],
-                                              ["_isyerr", "_isxerr"]):
-            if attr is None:
-                setattr(self, attr_bool, False)
-            else:
-                setattr(self, attr_bool, True)
-                setattr(self, attr_name, np.array(attr))
+        npts = self._x.size
+        self._yerr = None if yerr is None else self._check_error(yerr, npts)
+        self._xerr = None if xerr is None else self._check_error(xerr, npts)
+        self._isyerr = False if yerr is None else True
+        self._isxerr = False if xerr is None else True
 
-                if self._x.size != getattr(self, attr_name).size:
-                    msg = "Size of the curve's attributes must be consistent."
-                    raise IndexError(msg)
-
-    def resample(self, xx, inplace=False,
-                 res_fxn=None, res_fxn_xerr=None, res_fxn_yerr=None):
+    def resample(self, xx, inplace=False, interp1d_kwargs=None, res_fxn=None,
+                 res_fxn_xerr=None, res_fxn_yerr=None):
         """Resample curve and its associated uncertainty.
 
         Parameters
@@ -85,42 +94,53 @@ class CurveUncertain(Curve):
             Desired x values after resampling.
         inplace : bool, optional
             Indicates whether resampling is performed inplace and
-            the objects attributes are updated or if calculated 
+            the objects attributes are updated or if calculated
             values are returned.
+        interp1d_settings : dict, optional
+            Settings for use with the `interp1d` function from `scipy`.
+            See documentation `here
+            <https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.interp1d.html>`_
+            for details.
         res_fxn, res_fxn_xerr, res_fxn_yerr : function, optional
             Functions to define the resampling of the central
             x and y values, xerr and yerr respectively, default is
             `None` indicating default resampling function is used.
 
         Returns
-        -------          
+        -------
         None or Tuple
             If `inplace=True`, returns `None`, instead update
             attributes `_x`, `_y`, `_xerr`, and `_yerr` if they exist.
             If `inplace=False`, returns `Tuple` of the form
             `(xx, yy, yyerr, xxerr)`. If `xerr` and/or `yerr` are not
-            defined they are not resampled and ommited from the return
+            defined they are not resampled and omitted from the return
             statement.
 
         """
-        # Create resample functions before resampling mean curve
+        # Default interpolation kwargs
+        if interp1d_kwargs is None:
+            interp1d_kwargs = {"kind": "cubic"}
+
+        # Define error resampling first.
         if self._isyerr and res_fxn_yerr is None:
-            res_fxn_yerr = super().resample_function(self._x, self._yerr,
-                                                     kind="cubic")
+            res_fxn_yerr = super().resample_function(self._x,
+                                                     self._yerr,
+                                                     **interp1d_kwargs)
         if self._isxerr and res_fxn_xerr is None:
-            res_fxn_xerr = super().resample_function(self._x, self._xerr,
-                                                     kind="cubic")
+            res_fxn_xerr = super().resample_function(self._x,
+                                                     self._xerr,
+                                                     **interp1d_kwargs)
 
         # Resample mean curve
         new_mean_curve = super().resample(xx=xx, inplace=inplace,
+                                          interp1d_kwargs=interp1d_kwargs,
                                           res_fxn=res_fxn)
-
-        # Resample error
         if inplace:
             xx = self._x
         else:
             xx, yy = new_mean_curve
 
+        # Resample error
         if self._isyerr:
             yerr = res_fxn_yerr(xx)
         if self._isxerr:

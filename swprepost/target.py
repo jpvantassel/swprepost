@@ -410,7 +410,7 @@ class Target(CurveUncertain):
         else:
             return Target(new_frq, new_vel, new_velstd)
 
-    def resample(self, pmin, pmax, pn, res_type="log", domain="wavelength", inplace=False):
+    def easy_resample(self, pmin, pmax, pn, res_type="log", domain="wavelength", inplace=False):
         """Resample dispersion curve.
 
         Resample dispersion curve over a specific range, using log or
@@ -442,7 +442,7 @@ class Target(CurveUncertain):
         Raises
         ------
         NotImplementedError
-            If `res_type` and/or `domain` are not amoung the options
+            If `res_type` and/or `domain` are not among the options
             specified.
 
         """
@@ -471,7 +471,7 @@ class Target(CurveUncertain):
         """Estimate Rayleigh wave velocity at a wavelength of 40m."""
         wavelength = self.wavelength
         if (max(wavelength) > 40) & (min(wavelength) < 40):
-            obj = self.resample(pmin=40, pmax=40, pn=1, res_type="linear",
+            obj = self.easy_resample(pmin=40, pmax=40, pn=1, res_type="linear",
                                 domain="wavelength", inplace=False)
             return float(obj.velocity)
         else:

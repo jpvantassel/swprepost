@@ -74,6 +74,34 @@ class Test_Curve(TestCase):
         returned = curve._y
         self.assertArrayEqual(expected, returned)
 
+    def test_eq(self):
+        curve_a = swprepost.Curve(x=[1,2,3], y=[4,5,6])
+        curve_b = "I am not a Curve object"
+        curve_c = swprepost.Curve(x=[2,4,4], y=[4,5,6])
+        curve_d = swprepost.Curve(x=[1,2,3,4], y=[1,2,3,7])
+        curve_e = swprepost.Curve(x=[1,2,3], y=[4,5,6])
+
+        self.assertTrue(curve_a != curve_b)
+        self.assertTrue(curve_a != curve_c)
+        self.assertTrue(curve_a != curve_b)
+        self.assertTrue(curve_a != curve_d)
+        self.assertTrue(curve_a == curve_e)
+
+    def test_str_and_repr(self):
+        x = [4,5,6]
+        y = [7,8,9]
+        curve = swprepost.Curve(x,y)
+        
+        # __repr__
+        expected = f"Curve(x={curve._x}, y={curve._y})"
+        returned = curve.__repr__()
+        self.assertEqual(expected, returned)
+
+        # __str__
+        expected = f"Curve with 3 points."
+        returned = curve.__str__()
+        self.assertEqual(expected, returned)
+
 
 if __name__ == "__main__":
     unittest.main()

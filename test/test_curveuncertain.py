@@ -37,33 +37,33 @@ class Test_CurveUncertain(TestCase):
         cls.yerr = np.array([2, 4, 6, 10, 12, 14])
 
         # Define both error terms
-        cls.ucurve_b = swprepost.CurveUncertain(
-            x=cls.x, y=cls.y, yerr=cls.yerr, xerr=cls.xerr)
+        cls.ucurve_b = swprepost.CurveUncertain(x=cls.x, y=cls.y,
+                                                yerr=cls.yerr, xerr=cls.xerr)
 
         # Define only yerr
-        cls.ucurve_y = swprepost.CurveUncertain(x=cls.x, y=cls.y, yerr=cls.yerr)
+        cls.ucurve_y = swprepost.CurveUncertain(x=cls.x, y=cls.y,
+                                                yerr=cls.yerr)
+
+        # Define only xerr
+        cls.ucurve_x = swprepost.CurveUncertain(x=cls.x, y=cls.y,
+                                                xerr=cls.xerr)
 
         # Define neither
         cls.ucurve_n = swprepost.CurveUncertain(x=cls.x, y=cls.y)
 
     def test_init(self):
         ucurve = self.ucurve_b
-        for eattr, rattr in zip(["x", "y", "xerr", "yerr"], ["_x", "_y", "_xerr", "_yerr"]):
-            expected = getattr(self, eattr)
-            returned = getattr(ucurve, rattr)
+
+        for ex_attr, re_attr in zip(["x", "y", "xerr", "yerr"], ["_x", "_y", "_xerr", "_yerr"]):
+            expected = getattr(self, ex_attr)
+            returned = getattr(ucurve, re_attr)
             self.assertArrayEqual(expected, returned)
-        for expected, attr in zip([True, True], ["_isxerr", "_isyerr"]):
-            returned = getattr(ucurve, attr)
-            self.assertEqual(expected, returned)
 
         ucurve = self.ucurve_y
         for eattr, rattr in zip(["x", "y", "yerr"], ["_x", "_y", "_yerr"]):
             expected = getattr(self, eattr)
             returned = getattr(ucurve, rattr)
             self.assertArrayEqual(expected, returned)
-        for expected, attr in zip([False, True], ["_isxerr", "_isyerr"]):
-            returned = getattr(ucurve, attr)
-            self.assertEqual(expected, returned)
 
         # Define neither
         ucurve = self.ucurve_n
@@ -71,9 +71,6 @@ class Test_CurveUncertain(TestCase):
             expected = getattr(self, eattr)
             returned = getattr(ucurve, rattr)
             self.assertArrayEqual(expected, returned)
-        for expected, attr in zip([False, False], ["_isxerr", "_isyerr"]):
-            returned = getattr(ucurve, attr)
-            self.assertEqual(expected, returned)
 
         # Inconsistent sizes
         yerr = [1, 2, 3]
@@ -91,7 +88,7 @@ class Test_CurveUncertain(TestCase):
         self.assertArrayAlmostEqual(np.ones(7), xxerr)
         self.assertArrayAlmostEqual(np.array([2,4,6,8,10,12,14]), yyerr)
 
-        # Neither
+        # # Neither
         xx, yy = self.ucurve_n.resample(_xx)
         self.assertArrayAlmostEqual(_xx, xx)
         self.assertArrayAlmostEqual(_xx, yy)
@@ -106,7 +103,6 @@ class Test_CurveUncertain(TestCase):
         for attr in ["_x", "_y", "_yerr", "_xerr"]:
             returned = getattr(ucurve, attr)
             self.assertArrayAlmostEqual(expected, returned)
-
 
 
 if __name__ == "__main__":
