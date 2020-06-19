@@ -26,7 +26,7 @@ full_path = get_full_path(__file__)
 
 def main():
     fname = full_path+"data/test_dc_mod100_ray2_lov2_full.txt"
-    suite = swprepost.DispersionSuite.from_geopsy(fname=fname, nsets="all")
+    swprepost.DispersionSuite.from_geopsy(fname=fname, nsets="all")
 
 fname = full_path+"data/.tmp_profiler_run"
 data = cProfile.run('main()', filename=fname)

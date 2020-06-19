@@ -789,7 +789,7 @@ class Target(CurveUncertain):
                 lines = f.read()
             if "<Dinver>" not in lines[:10]:
                 raise RuntimeError
-        except (UnicodeDecodeError, RuntimeError) as e:
+        except (UnicodeDecodeError, RuntimeError):
             with open("contents.xml", "r", encoding="utf_16_le") as f:
                 lines = f.read()
             if "<Dinver>" not in lines[:10]:
