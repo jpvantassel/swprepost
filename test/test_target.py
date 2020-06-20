@@ -207,12 +207,12 @@ class Test_Target(TestCase):
         self.assertRaises(NotImplementedError, tar.cut, pmin=2, pmax=4,
                           domain="slowness")
 
-    def test_resample(self):
+    def test_easy_resample(self):
         # Inplace=False
         # Linear w/ VelStd
         fname = self.full_path+"data/test_tar_wstd_linear.csv"
         tar = swprepost.Target.from_csv(fname)
-        returned = tar.resample(pmin=0.5, pmax=4.5, pn=5,
+        returned = tar.easy_resample(pmin=0.5, pmax=4.5, pn=5,
                                 res_type='linear', domain="frequency",
                                 inplace=False).frequency
         expected = np.array([0.5, 1.5, 2.5, 3.5, 4.5])
@@ -222,7 +222,7 @@ class Test_Target(TestCase):
         fname = self.full_path+"data/test_tar_wstd_linear.csv"
         tar = swprepost.Target.from_csv(fname)
         expected = np.array([2., 2.8, 4.0])
-        returned = tar.resample(pmin=2, pmax=4, pn=3,
+        returned = tar.easy_resample(pmin=2, pmax=4, pn=3,
                                 res_type='log', domain="frequency",
                                 inplace=False).frequency
         self.assertArrayAlmostEqual(expected, returned, places=1)
@@ -230,7 +230,7 @@ class Test_Target(TestCase):
         # Non-linear w/ VelStd
         fname = self.full_path+"data/test_tar_wstd_nonlin_0.csv"
         tar = swprepost.Target.from_csv(fname)
-        new_tar = tar.resample(pmin=50, pmax=100, pn=5,
+        new_tar = tar.easy_resample(pmin=50, pmax=100, pn=5,
                                res_type='log', domain="wavelength",
                                inplace=False)
         expected = np.array([112.5, 118.1, 125.5, 135.6, 150])
@@ -246,7 +246,7 @@ class Test_Target(TestCase):
         tar = swprepost.Target(x, x, x)
 
         for pmin, pmax in [(0.1, 0.5), (0.5, 0.1)]:
-            tar.resample(pmin=pmin, pmax=pmax, pn=5, domain="frequency",
+            tar.easy_resample(pmin=pmin, pmax=pmax, pn=5, domain="frequency",
                          res_type="linear", inplace=True)
 
             expected = np.array([0.1, 0.2, 0.3, 0.4, 0.5])
@@ -255,10 +255,10 @@ class Test_Target(TestCase):
                 self.assertArrayAlmostEqual(expected, returned)
 
         # Bad pn
-        self.assertRaises(ValueError, tar.resample, pmin=0.1, pmax=0.5, pn=-1)
+        self.assertRaises(ValueError, tar.easy_resample, pmin=0.1, pmax=0.5, pn=-1)
 
         # Bad res_type
-        self.assertRaises(NotImplementedError, tar.resample, pmin=0.1,
+        self.assertRaises(NotImplementedError, tar.easy_resample, pmin=0.1,
                           pmax=0.5, pn=5, res_type="log-spiral")
 
     def test_vr40(self):

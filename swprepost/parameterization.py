@@ -65,8 +65,8 @@ class Parameterization():
         Parameters
         ----------
         vp, pr, vs, rh : Parameter
-            Instantitated `Parameter` objects, see :meth: `Parameter
-            <swipp.Parameter.__init__>`.
+            Instantiated `Parameter` objects, see :meth: `Parameter
+            <swprepost.Parameter.__init__>`.
 
         Returns
         -------
@@ -90,7 +90,7 @@ class Parameterization():
 
     @classmethod
     def from_min_max(cls, vp, pr, vs, rh, wv, factor=2):
-        """Intilize an instance of the Parameterization class from
+        """Initialize an instance of the Parameterization class from
         a minimum and maximum value.
 
         This method compromises readability for pure character
@@ -114,7 +114,7 @@ class Parameterization():
                 Ex. ['FX', value]
 
                 If type = 'FTL'
-                    Layering follows Fixed Thickness Layinering, the
+                    Layering follows Fixed Thickness Layering, the
                     second argument is the number of layers desired,
                     followed by their thickness, min, max, and bool.
 
@@ -138,11 +138,11 @@ class Parameterization():
             Of the form [min_wave, max_wave] where 
             `min_wave` and `max_wave` are of type `float` or `int`
             and indicate the minimum and maximum measured wavelength
-            from the fundemental mode Rayleigh wave disperison.
+            from the fundamental mode Rayleigh wave disperison.
 
         factor : float, optional
             Factor by which the maximum wavelength is
-            divided to estimate the maxium depth of profiling,
+            divided to estimate the maximum depth of profiling,
             default is 2.
 
         Returns
@@ -194,7 +194,7 @@ class Parameterization():
                    input_arguements["vs"], input_arguements["rh"])
 
     def to_param(self, fname_prefix, version="3", full_version=None):
-        """Write paramterization to `.param` file that can be imported
+        """Write parameterization to `.param` file that can be imported
         into Dinver.
 
         Parameters
@@ -329,7 +329,7 @@ indicate by setting `full_version='2.9.0'`, otherwise no action is required."
                         contents += [
                             f'linear("D{key}{lay+1}",">",{1},"D{key}{lay}",{min_thickness});']
 
-        contents += ['      </text>'
+        contents += ['      </text>',
                      '    </ParamSpaceScript>',
                      '  </ParamGroundModel>',
                      '</Dinver>']
@@ -369,7 +369,7 @@ indicate by setting `full_version='2.9.0'`, otherwise no action is required."
                 lines = f.read()
             if "<Dinver>" not in lines[:10]:
                 raise RuntimeError
-        except (UnicodeDecodeError, RuntimeError) as e:
+        except (UnicodeDecodeError, RuntimeError):
             with open("contents.xml", "r", encoding="utf_16_le") as f:
                 lines = f.read()
             if "<Dinver>" not in lines[:10]:

@@ -20,10 +20,8 @@
 import logging
 import warnings
 
-import numpy as np
-
 import swprepost
-from testtools import unittest, TestCase, get_full_path
+from testtools import unittest, TestCase
 
 logging.basicConfig(level=logging.ERROR)
 
@@ -40,20 +38,20 @@ class Test_Suite(TestCase):
         gms = []
         for _id, _mf in enumerate([0.5, 0.8, 1, 0.3, 0.4, 0.6, 0.7, 0.1, 0.2, 0.1]):
             gms.append(swprepost.GroundModel(tk, vp, vs, rh,
-                                         identifier=_id, misfit=_mf))
+                                             identifier=_id, misfit=_mf))
         self.gm_suite = swprepost.GroundModelSuite.from_list(gms)
 
     def test_handle_nbest(self):
         # GroundModelSuite
-        for nbest, expected in zip([None, "all", 4], [10, 10, 4]):
+        for nbest, expected in zip([None, "all", 4, 12], [10, 10, 4, 10]):
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
                 returned = self.gm_suite._handle_nbest(nbest)
             self.assertEqual(expected, returned)
 
         # Bad value
-        self.assertRaises(
-            ValueError, self.gm_suite._handle_nbest, nbest="tada")
+        self.assertRaises(ValueError, self.gm_suite._handle_nbest,
+                          nbest="tada")
 
     def test_misfit_range(self):
         # GroundModelSuite
@@ -63,7 +61,7 @@ class Test_Suite(TestCase):
                 returned = self.gm_suite.misfit_range(nmodels)
             self.assertEqual(expected, returned)
 
-    def test_misfit_range(self):
+    def test_misfit_repr(self):
         # GroundModelSuite
         for nmodels, expected in zip(["all", 1, 5], ["[0.10-1.00]", "[0.10]", "[0.10-0.40]"]):
             with warnings.catch_warnings():

@@ -20,7 +20,7 @@
 import os
 import logging
 
-from scipy.io import savemat, loadmat
+from scipy.io import loadmat
 from hypothesis import given, settings
 import hypothesis.strategies as st
 import numpy as np
@@ -311,6 +311,17 @@ class Test_GroundModel(TestCase):
         self.assertListEqual(expected, disc_depth)
         expected = [100]*6
         self.assertListEqual(expected, disc_vs)
+
+        # Fine discretization
+        tk = [5.3, 12.5, 0]
+        vp = [100, 200, 300]
+        vs = [50, 100, 150]
+        rh = [2000]*3
+        gm = swprepost.GroundModel(tk, vp, vs, rh)
+        disc_depth, disc_vs = gm.discretize(dmax=50, dy=0.01)
+        expected = np.arange(0, int(50/0.01)+1, 1)*0.01
+        self.assertListEqual(expected.tolist(), disc_depth)
+        self.assertEqual(len(disc_depth), len(disc_vs))
 
     def test_validate_parameter(self):
         # Bad Values

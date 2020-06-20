@@ -101,10 +101,31 @@ class Test_DispersionSuite(TestCase):
                     for mode_number in model[wave]:
                         for attr in model[wave][mode_number]:
                             expected = np.array(model[wave][mode_number][attr])
-                            returned = getattr(getattr(dc_set, wave)[
-                                               mode_number], attr)
-                            self.assertArrayAlmostEqual(
-                                expected, returned, places=10)
+                            returned = getattr(getattr(dc_set, wave)[mode_number], attr)
+                            self.assertArrayAlmostEqual(expected, returned, places=10)
+
+        # One Set with Two Rayleigh and Two Love Modes
+        fname = self.full_path+"data/test_dc_mod1_ray2_lov2_shrt.txt"
+        e1 = {"identifier": 149641,
+              "misfit": 1.08851,
+              "love":None,
+              "rayleigh": {0: {"frequency": [0.15, 64],
+                               "velocity": [1/0.000334532972901842,
+                                            1/0.00917746839997367]}}}
+        models = [e1]
+        compare(fname, models, nsets=1, nrayleigh=1, nlove=0)
+
+        # One Set with Two Rayleigh and Two Love Modes
+        fname = self.full_path+"data/test_dc_mod1_ray2_lov2_shrt.txt"
+        e1 = {"identifier": 149641,
+              "misfit": 1.08851,
+              "love": {0: {"frequency": [0.11, 61],
+                           "velocity": [1/0.0003055565316784,
+                                        1/0.00838314255586564]}},
+              "rayleigh": None}
+
+        models = [e1]
+        compare(fname, models, nsets=1, nrayleigh=0, nlove=1)
 
         # One Set with Two Rayleigh and Two Love Modes
         fname = self.full_path+"data/test_dc_mod1_ray2_lov2_shrt.txt"

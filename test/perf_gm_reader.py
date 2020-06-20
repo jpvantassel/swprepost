@@ -28,7 +28,7 @@ full_path = get_full_path(__file__)
 
 def main():
     fname = full_path+"data/test_gm_mod100.txt"
-    suite = swprepost.GroundModelSuite.from_geopsy(fname=fname)
+    swprepost.GroundModelSuite.from_geopsy(fname=fname)
 
 
 fname = full_path+"data/.tmp_profiler_run"

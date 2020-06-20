@@ -91,7 +91,7 @@ class Curve():
         return (x, y)
 
     def __init__(self, x, y, check_fxn=None):
-        """Intialize a curve object from x, y coordinates.
+        """Initialize a curve object from x, y coordinates.
 
         Parameters
         ----------
@@ -129,8 +129,7 @@ class Curve():
         """Wrapper for `interp1d` from `scipy`."""
         return sp.interp1d(x, y, **kwargs)
 
-    def resample(self, xx, inplace=False,
-                 interp1d_kwargs={"kind": "cubic"}, res_fxn=None):
+    def resample(self, xx, inplace=False, interp1d_kwargs=None, res_fxn=None):
         """Resample Curve at select x values.
 
         Parameters
@@ -150,8 +149,8 @@ class Curve():
             for details.
         res_fxn : function, optional
             Define a custom resampling function. It should accept an
-            ndarray of resampling locations and return the
-            interpolated y-coordinates as an iterable.
+            ndarray of resampling x-coordinates and return the
+            interpolated y-coordinates as an ndarray.
 
         Returns
         -------
@@ -163,6 +162,8 @@ class Curve():
         xx = np.array(xx, dtype=np.double)
 
         if res_fxn is None:
+            if interp1d_kwargs is None:
+                interp1d_kwargs = {"kind": "cubic"}
             res_fxn = self.resample_function(self._x,
                                              self._y,
                                              **interp1d_kwargs)
@@ -172,3 +173,28 @@ class Curve():
             self._x, self._y = xx, yy
         else:
             return (xx, yy)
+
+    def __eq__(self, other):
+        """Compare whether two curve objects are equal."""
+        if not isinstance(other, Curve):
+            return False
+
+        for attr in ["_x", "_y"]:
+            my = getattr(self, attr)
+            ur = getattr(other, attr)
+
+            if my.size != ur.size:
+                return False
+
+            if not np.allclose(my, ur):
+                return False
+
+        return True
+
+    def __repr__(self):
+        """Unambiguous representation of a `Curve` object."""
+        return f"Curve(x={self._x}, y={self._y})"
+
+    def __str__(self):
+        """Human-readable representation of a `Curve` object."""
+        return f"Curve with {self._x.size} points."
