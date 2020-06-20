@@ -81,7 +81,7 @@ class Target(CurveUncertain):
         #     velstd = np.zeros_like(velocity, dtype=np.double).tolist()
         if isinstance(velstd, float):
             velstd = (np.array(velocity, dtype=np.double)*velstd).tolist()
-        
+
         super().__init__(x=frequency, y=velocity, yerr=velstd, xerr=None)
 
         self._sort_data()
@@ -93,7 +93,7 @@ class Target(CurveUncertain):
         self._yerr = self._yerr[sort_ids] if self._isyerr else None
         self._y = self._y[sort_ids]
         self._x = self._x[sort_ids]
-    
+
     def _check_new_value(self, value):
         value = np.array(value, dtype=np.double)
         if value.shape == self._x.shape:
@@ -394,8 +394,8 @@ class Target(CurveUncertain):
         res_fxn_y = self.resample_function(x, self.velocity, kind="cubic")
         res_fxn_yerr = self.resample_function(x, self.velstd, kind="cubic")
 
-        results = super().resample(xx=xx, inplace=False, res_fxn=res_fxn_y,
-                                   res_fxn_yerr=res_fxn_yerr)
+        results = super().resample(xx=xx, inplace=False,
+                                   res_fxn=(res_fxn_y, None, res_fxn_yerr))
         xx, new_vel, new_velstd, = results
 
         if domain == "frequency":
@@ -472,7 +472,7 @@ class Target(CurveUncertain):
         wavelength = self.wavelength
         if (max(wavelength) > 40) & (min(wavelength) < 40):
             obj = self.easy_resample(pmin=40, pmax=40, pn=1, res_type="linear",
-                                domain="wavelength", inplace=False)
+                                     domain="wavelength", inplace=False)
             return float(obj.velocity)
         else:
             warnings.warn("A wavelength of 40m is out of range.")
@@ -524,14 +524,13 @@ class Target(CurveUncertain):
         """
         with open(fname, "r") as f:
             lines = f.readlines()
-        
+
         frqs, slos, stds = [], [], []
         for line in lines:
             frq, slo, std = line.split("\t")
             frqs.append(frq)
             slos.append(slo)
             stds.append(std)
-
 
         frq = np.array(frqs, dtype=np.double)
         slo = np.array(slos, dtype=np.double)
@@ -567,7 +566,6 @@ class Target(CurveUncertain):
             f.write("#Frequency,Velocity,Velstd\n")
             for c_frq, c_vel, c_velstd in zip(self.frequency, self.velocity, self.velstd):
                 f.write(f"{c_frq},{c_vel},{c_velstd}\n")
-
 
     def to_txt_swipp(self, fname):
         """Write in text format readily accepted by `swprepost`.
@@ -686,7 +684,6 @@ class Target(CurveUncertain):
 
         elif version in ["3"]:
             contents += ["    </DispersionTarget>"]
-
 
         contents += ["    <AutocorrTarget>",
                      "      <selected>false</selected>",
@@ -847,7 +844,7 @@ class Target(CurveUncertain):
         return f"Target with {len(self.frequency)} frequency/wavelength points"
 
     def plot(self, x="frequency", y="velocity", yerr="velstd", ax=None,
-             figkwargs=None, errorbarkwargs=None): # pragma: no cover
+             figkwargs=None, errorbarkwargs=None):  # pragma: no cover
         """Plot `Target` information.
 
         Parameters
@@ -889,14 +886,14 @@ class Target(CurveUncertain):
             ax_was_none = True
 
         errorbardefaults = dict(color="#000000", label="Exp. Disp. Data",
-                                capsize=2, linestyle="" )
+                                capsize=2, linestyle="")
 
         if errorbarkwargs is None:
             errorbarkwargs = {}
 
         _errorbarkwargs = {**errorbardefaults, **errorbarkwargs}
 
-        ax.errorbar(x=getattr(self, x), y=getattr(self, y), 
+        ax.errorbar(x=getattr(self, x), y=getattr(self, y),
                     yerr=getattr(self, yerr), **_errorbarkwargs)
 
         if x == "frequency":

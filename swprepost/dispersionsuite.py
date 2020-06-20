@@ -92,21 +92,7 @@ class DispersionSuite(Suite):
 
         """
         self.check_input(dispersionset, DispersionSet)
-        super().append(dispersionset, sort=sort)
-
-    @property
-    def size(self):
-        return len(self._items)
-
-    # @property
-    # def ids(self):
-    #     """Return the ids corresponding to `sets`."""
-    #     return [cset.identifier for cset in self.sets]
-
-    # @property
-    # def misfits(self):
-    #     """Return the misfits corresponding to `sets`."""
-    #     return [cset.misfit for cset in self.sets]
+        super()._append(dispersionset, sort=sort)
 
     @classmethod
     def from_geopsy(cls, fname, nsets="all", nrayleigh="all", nlove="all",
@@ -191,7 +177,7 @@ class DispersionSuite(Suite):
         Returns
         -------
         DipsersionSuite
-            Instatiated `DispersionSuite` object.
+            Instantiated `DispersionSuite` object.
 
         """
         obj = cls(dc_sets[0])
@@ -219,7 +205,7 @@ class DispersionSuite(Suite):
         """
         nbest = self._handle_nbest(nbest)
         with open(fname, "w") as f:
-            f.write("# File written by swipp\n")
+            f.write("# File written by swprepost\n")
             for cit in self.sets[:nbest]:
                 cit.write_set(f)
 

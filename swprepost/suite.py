@@ -32,7 +32,7 @@ class Suite(ABC):
         """Create `Suite` from `item`."""
         self._items = [item]
 
-    def append(self, item, sort=True):
+    def _append(self, item, sort=True):
         """Append item to `Suite`."""
         self._items.append(item)
         if sort:
@@ -42,6 +42,10 @@ class Suite(ABC):
         """Define how to sort `Suite`."""
         self._items = [x for _, x in sorted(zip(self.misfits, self._items),
                                             key=lambda pair: pair[0])]
+
+    @property
+    def size(self):
+        return len(self._items)
 
     @property
     def misfits(self):

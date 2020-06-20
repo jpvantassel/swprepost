@@ -69,10 +69,6 @@ class GroundModelSuite(Suite):
     def gms(self):
         return self._items
 
-    @property
-    def size(self):
-        return len(self.gms)
-
     def append(self, groundmodel, sort=True):
         """Append `GroundModel` object to `GroundModelSuite` object.
 
@@ -95,7 +91,7 @@ class GroundModelSuite(Suite):
             Instead updates the attributes `gms`.
 
         """
-        super().append(self.check_type(groundmodel), sort=sort)
+        super()._append(self.check_type(groundmodel), sort=sort)
 
     def vs30(self, nbest="all"):
         """Calculate Vs30 for `GroundModelSuite`.

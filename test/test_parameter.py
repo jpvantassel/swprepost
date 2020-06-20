@@ -17,7 +17,6 @@
 
 """Tests for Parameter class."""
 
-import os
 import logging
 import warnings
 

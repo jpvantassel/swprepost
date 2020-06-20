@@ -84,8 +84,7 @@ class CurveUncertain(Curve):
         self._isyerr = False if yerr is None else True
         self._isxerr = False if xerr is None else True
 
-    def resample(self, xx, inplace=False, interp1d_kwargs=None, res_fxn=None,
-                 res_fxn_xerr=None, res_fxn_yerr=None):
+    def resample(self, xx, inplace=False, interp1d_kwargs=None, res_fxn=None):
         """Resample curve and its associated uncertainty.
 
         Parameters
@@ -101,7 +100,7 @@ class CurveUncertain(Curve):
             See documentation `here
             <https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.interp1d.html>`_
             for details.
-        res_fxn, res_fxn_xerr, res_fxn_yerr : function, optional
+        res_fxn : tuple of functions, optional
             Functions to define the resampling of the central
             x and y values, xerr and yerr respectively, default is
             `None` indicating default resampling function is used.
@@ -117,6 +116,12 @@ class CurveUncertain(Curve):
             statement.
 
         """
+        # Unpack res_fxn
+        if res_fxn is None:
+            res_fxn_xerr, res_fxn_yerr = None, None
+        else:
+            res_fxn, res_fxn_xerr, res_fxn_yerr = res_fxn
+
         # Default interpolation kwargs
         if interp1d_kwargs is None:
             interp1d_kwargs = {"kind": "cubic"}

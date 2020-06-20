@@ -333,24 +333,24 @@ class Test_DispersionSuite(TestCase):
         models = [e1]
         compare(fname, models, nsets=20)
 
-    # def test_write_to_txt(self):
-    #     dc_0 = swprepost.DispersionCurve([1, 5, 10, 15], [100, 200, 300, 400])
-    #     dc_1 = swprepost.DispersionCurve([1, 5, 12, 15], [100, 180, 300, 400])
-    #     dc_set_0 = swprepost.DispersionSet(0, misfit=0.0,
-    #                                    rayleigh={0: dc_0, 1: dc_1},
-    #                                    love={0: dc_1, 1: dc_0})
-    #     dc_set_1 = swprepost.DispersionSet(1, misfit=0.0,
-    #                                    rayleigh={0: dc_1, 1: dc_0},
-    #                                    love={0: dc_0, 1: dc_1})
-    #     set_list = [dc_set_0, dc_set_1]
-    #     expected = swprepost.DispersionSuite.from_list(set_list)
+    def test_write_to_txt(self):
+        dc_0 = swprepost.DispersionCurve([1, 5, 10, 15], [100, 200, 300, 400])
+        dc_1 = swprepost.DispersionCurve([1, 5, 12, 15], [100, 180, 300, 400])
+        dc_set_0 = swprepost.DispersionSet(0, misfit=0.0,
+                                       rayleigh={0: dc_0, 1: dc_1},
+                                       love={0: dc_1, 1: dc_0})
+        dc_set_1 = swprepost.DispersionSet(1, misfit=0.0,
+                                       rayleigh={0: dc_1, 1: dc_0},
+                                       love={0: dc_0, 1: dc_1})
+        set_list = [dc_set_0, dc_set_1]
+        expected = swprepost.DispersionSuite.from_list(set_list)
 
-    #     fname = "dc_suite_expected.dc"
-    #     expected.write_to_txt(fname)
-    #     returned = swprepost.DispersionSuite.from_geopsy(fname)
-    #     os.remove(fname)
+        fname = "dc_suite_expected.dc"
+        expected.write_to_txt(fname)
+        returned = swprepost.DispersionSuite.from_geopsy(fname)
+        os.remove(fname)
 
-    #     self.assertEqual(expected, returned)
+        self.assertEqual(expected, returned)
 
     def test_eq(self):
         dc = swprepost.DispersionCurve([1,2,3],[10,20,30])

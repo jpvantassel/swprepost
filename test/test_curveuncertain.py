@@ -21,7 +21,7 @@ import logging
 
 import numpy as np
 
-from testtools import unittest, TestCase, get_full_path
+from testtools import unittest, TestCase
 import swprepost
 
 logging.basicConfig(level=logging.CRITICAL)
@@ -88,12 +88,14 @@ class Test_CurveUncertain(TestCase):
         self.assertArrayAlmostEqual(np.ones(7), xxerr)
         self.assertArrayAlmostEqual(np.array([2,4,6,8,10,12,14]), yyerr)
 
-        # # Neither
+        # Neither
         xx, yy = self.ucurve_n.resample(_xx)
         self.assertArrayAlmostEqual(_xx, xx)
         self.assertArrayAlmostEqual(_xx, yy)
 
         # Inplace = True
+
+        # Both
         xy = [1,2,3,5,6,7]
         _xx = [1,2,3,4,5,6,7]
         ucurve = swprepost.CurveUncertain(xy, xy, yerr=xy, xerr=xy)
@@ -101,6 +103,15 @@ class Test_CurveUncertain(TestCase):
 
         expected = np.array(_xx)
         for attr in ["_x", "_y", "_yerr", "_xerr"]:
+            returned = getattr(ucurve, attr)
+            self.assertArrayAlmostEqual(expected, returned)
+
+        # x only
+        ucurve = swprepost.CurveUncertain(xy, xy, xerr=xy)
+        ucurve.resample(_xx, inplace=True)
+
+        expected = np.array(_xx)
+        for attr in ["_x", "_xerr"]:
             returned = getattr(ucurve, attr)
             self.assertArrayAlmostEqual(expected, returned)
 
