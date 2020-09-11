@@ -47,8 +47,9 @@ For the motivation behind the development of `SWprepost` and its role in a
 larger project focused on developing a complete workflow for surface wave
 inversion please refer to and consider citing the following:
 
-> Joseph P. Vantassel and Brady R. Cox (2020) SWinvert: A workflow for
-> performing rigorous surface wave inversion. (Submitted).
+> Vantassel, J.P., Cox, B.R., (2020). SWinvert: A workflow for performing
+> rigorous 1D surface wave inversions. Geophysical Journal International
+> (Accepted) https://doi.org/10.1093/gji/ggaa426
 
 ## A Few Examples
 
