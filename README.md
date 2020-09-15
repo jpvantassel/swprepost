@@ -44,8 +44,8 @@ _citation for `SWprepost`, please use the citation tool for that specific_
 _version on the `SWprepost` [archive](https://doi.org/10.5281/zenodo.3839998)._
 
 For the motivation behind the development of `SWprepost` and its role in a
-larger project focused on developing a complete workflow for surface wave
-inversion please refer to and consider citing the following:
+larger project focused on developing a complete and rigorous workflow for
+surface wave inversion please refer to and consider citing the following:
 
 > Vantassel, J.P., Cox, B.R., (2020). SWinvert: A workflow for performing
 > rigorous 1D surface wave inversions. Geophysical Journal International
@@ -95,7 +95,6 @@ plt.show()
 
 ```Python
 fig, ax = plt.subplots(figsize=(2,4), dpi=150)
-# Calculate Median
 disc_depth, siglnvs = gm_suite.sigma_ln()
 ax.plot(siglnvs, disc_depth, color="#00ff00")
 ax.set_xlim(0, 0.2)
@@ -128,10 +127,11 @@ last few lines of text displayed in the console.
 
 ### Using _SWprepost_
 
-1.  Download the contents of the [examples](https://github.com/jpvantassel/swprepost/tree/master/examples)
+1.  Download the contents of the
+  [examples](https://github.com/jpvantassel/swprepost/tree/master/examples)
   directory to any location of your choice.
 
-2.  Explore Jupyter notebooks in the
+2.  Explore the Jupyter notebooks in the
   [basic](https://github.com/jpvantassel/swprepost/tree/master/examples/basic)
   directory for a no-coding-required introduction to the `swprepost` package.
   If you have not installed `Jupyter`, detailed instructions can be found
@@ -139,6 +139,7 @@ last few lines of text displayed in the console.
 
 3.  Move to the [adv](https://github.com/jpvantassel/swprepost/tree/master/examples/adv)
   directory and follow the Jupyter notebook title `SWinvertWorkflow.ipynb` for
-  an example application of the SWinvert workflow.
+  an example application of `swprepost` to the SWinvert workflow
+  (Vantassel and Cox, 2020).
 
 4.  Enjoy!
