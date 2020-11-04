@@ -82,12 +82,20 @@ class Parameter():
             1. `par_rev` is a list of `bool`s.
         """
         # Check type
+        _par_rev = []
         for cpar in par_rev:
-            if type(cpar) != bool:
+            try:
+                _par_rev.append(bool(cpar))
+            # TODO (jpv): Actual exception
+            except Exception as e:
                 msg = "`par_rev` must be an iterable composed of `bool`s."
-                raise TypeError(msg)
+                raise TypeError(msg) from e
+                
+        # for cpar in par_rev:
+        #     if type(cpar) != bool:
+        #         raise TypeError(msg)
 
-        return (list(par_rev))
+        return _par_rev
 
     def __init__(self, lay_min, lay_max, par_min, par_max, par_rev,
                  lay_type="thickness"):
