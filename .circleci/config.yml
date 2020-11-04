@@ -29,7 +29,7 @@ jobs:
           command: |
             . venv/bin/activate
             cd test
-            coverage run --source=../swprepost -m unittest
+            coverage run --source=../swprepost --omit=*/testtools.py,*/test_*.py -m unittest
       - run:
           name: Create coverage xml
           command: |
