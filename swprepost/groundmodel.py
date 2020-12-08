@@ -34,7 +34,7 @@ class GroundModel():
     ----------
     tk, vp, vs, rh : list
         Thickness, compression-wave velocity (Vp), shear-wave
-        velcocity (Vs), and mass density defining each layer of the
+        velocity (Vs), and mass density defining each layer of the
         `GroundModel`, respectively.
     identifier : int, optional
         Model numeric identifier, default is 0.
@@ -55,7 +55,7 @@ class GroundModel():
         Parameters
         ----------
         **kwargs
-            Keyword arguements containing name and value pairs.
+            Keyword arguments containing name and value pairs.
 
         Raises
         ------
@@ -91,7 +91,7 @@ class GroundModel():
         Parameters
         ----------
         **kwargs
-            Keyword arguements containing name and value pairs.
+            Keyword arguments containing name and value pairs.
 
         Raises
         ------
