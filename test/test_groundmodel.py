@@ -386,16 +386,16 @@ class Test_GroundModel(TestCase):
 
         mygm = swprepost.GroundModel(tk, vp, vs, rh)
         simp_tk, simp_vp = mygm.simplify(parameter='vp')
-        self.assertListEqual(simp_tk, [4, 6, 0])
-        self.assertListEqual(simp_vp, [200, 500, 600])
+        self.assertListEqual(simp_tk, [1, 3, 6, 0])
+        self.assertListEqual(simp_vp, [200, 200, 500, 600])
 
         simp_tk, simp_vs = mygm.simplify(parameter='vs')
-        self.assertListEqual(simp_tk, [5, 0])
-        self.assertListEqual(simp_vs, [100, 300])
+        self.assertListEqual(simp_tk, [1, 4, 0])
+        self.assertListEqual(simp_vs, [100, 100, 300])
 
         simp_tk, simp_rh = mygm.simplify(parameter='rh')
-        self.assertListEqual(simp_tk, [0])
-        self.assertListEqual(simp_rh, [2000])
+        self.assertListEqual(simp_tk, [1, 0])
+        self.assertListEqual(simp_rh, [2000, 2000])
 
     def test_from_simple_profiles(self):
         vp_tk = [0]

@@ -142,14 +142,33 @@ class GroundModelSuite(Suite):
         nbest = self._handle_nbest(nbest)
         gms = self.gms[:nbest]
 
-        thk, par = gms[0].simplify(parameter)
-        thks = np.zeros((len(thk), nbest))
-        pars = np.zeros((len(par), nbest))
+        # Assume one model does not require simplification.
+        # This model will have minimum number of layers, and this will
+        # equal the true number of layers in the parameterization.
+        nlays = []
+        for gm in gms:
+            nlays.append(len(getattr(gm, "thickness")))
+        nlay = min(nlays)
+        
+        # Comfirm that the model does not require simplification.
+        # TODO (jpv): Consider checking model
+        thks = np.zeros((nlay, nbest))
+        pars = np.zeros((nlay, nbest))
 
         for ncol, gm in enumerate(gms):
-            thk, par = gm.simplify(parameter)
-            thks[:, ncol] = thk
-            pars[:, ncol] = par
+            # TODO (jpv): 
+            if len(getattr(gm, parameter)) == nlay:
+                thks[:, ncol] = getattr(gm, "thickness")
+                pars[:, ncol] = getattr(gm, parameter)
+            else:
+                thk, par = gm.simplify(parameter)
+                try:
+                    thks[:, ncol] = thk
+                    pars[:, ncol] = par
+                except ValueError as e:
+                    print(gm)
+                    print(thk, par)
+                    raise ValueError from e
 
         return (np.median(thks, axis=1).tolist(),
                 np.median(pars, axis=1).tolist())

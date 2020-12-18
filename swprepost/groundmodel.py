@@ -421,7 +421,7 @@ class GroundModel():
         return (disc_depth.tolist(), disc_par.tolist())
 
     def simplify(self, parameter='vs'):
-        """Remove unecessary breaks in the parameter specified.
+        """Remove unnecessary breaks in the parameter specified.
 
         This will typically be used for calculating the median across
         many profiles.
@@ -442,11 +442,18 @@ class GroundModel():
         valid_parameters = ["depth", "vp", "vs", "rh", "density", "pr"]
         self._validate_parameter(parameter, valid_parameters)
         par = getattr(self, parameter)
+        
+        other_pars = ["vs", "vp", "rh"]
+        other_pars.remove(parameter)
+        par1 = getattr(self, other_pars[0])
+        par2 = getattr(self, other_pars[1])
+
         tk = []
         spar = [par[0]]
         sum_ctk = self.tk[0]
-        for cpar, ctk in zip(par[1:], self.tk[1:]):
-            if cpar == spar[-1]:
+        for (ctk, ppar, cpar, ppar1, cpar1, ppar2, cpar2) in zip(self.tk[1:], par[:-1], par[1:], par1[:-1], par1[1:], par2[:-1], par2[1:]):
+            
+            if (cpar == ppar) and ((cpar1 != ppar1) or (cpar2 != ppar2)):
                 sum_ctk += ctk
             else:
                 tk.append(sum_ctk)
@@ -457,7 +464,7 @@ class GroundModel():
 
     @property
     def vs30(self):
-        """Calcualte Vs30 of the `GroundModel`.
+        """Calculate Vs30 of the `GroundModel`.
 
         Vs0 is the time-averaged shear-wave velocity in the upper 30m.
 

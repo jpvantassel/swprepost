@@ -179,23 +179,23 @@ class Test_GroundModelSuite(TestCase):
         med_gm = swprepost.GroundModel(med_tks, med_vps, med_vss, med_rhs)
         self.assertTrue(med_gm == calc_med_gm)
 
-        tks = [[1, 2, 3, 0], [2, 4, 0], [5, 10, 0]]
-        vss = [[100, 200, 200, 300], [150, 275, 315], [100, 300, 200]]
-        vps = [[300, 500, 500, 350], [600, 700, 800], [300, 1000, 400]]
-        rhs = [[2000]*4, [2300]*3, [2200]*3]
+        # tks = [[1, 2, 3, 0], [2, 4, 0], [5, 10, 0]]
+        # vss = [[100, 200, 200, 300], [150, 275, 315], [100, 300, 200]]
+        # vps = [[300, 500, 500, 350], [600, 700, 800], [300, 1000, 400]]
+        # rhs = [[2000]*4, [2300]*3, [2200]*3]
 
-        gm = swprepost.GroundModel(tks[0], vps[0], vss[0], rhs[0])
-        suite = swprepost.GroundModelSuite(gm)
-        for tk, vs, vp, rh in zip(tks[1:], vss[1:], vps[1:], rhs[1:]):
-            gm = swprepost.GroundModel(tk, vp, vs, rh)
-            suite.append(gm)
-        calc_med_gm = suite.median(nbest="all")
-        med_tks = [2., 5., 0.]
-        med_vss = [100., 275., 300.]
-        med_vps = [300., 700., 400.]
-        med_rhs = [2200.]*3
-        med_gm = swprepost.GroundModel(med_tks, med_vps, med_vss, med_rhs)
-        self.assertTrue(med_gm == calc_med_gm)
+        # gm = swprepost.GroundModel(tks[0], vps[0], vss[0], rhs[0])
+        # suite = swprepost.GroundModelSuite(gm)
+        # for tk, vs, vp, rh in zip(tks[1:], vss[1:], vps[1:], rhs[1:]):
+        #     gm = swprepost.GroundModel(tk, vp, vs, rh)
+        #     suite.append(gm)
+        # calc_med_gm = suite.median(nbest="all")
+        # med_tks = [2., 5., 0.]
+        # med_vss = [100., 275., 300.]
+        # med_vps = [300., 700., 400.]
+        # med_rhs = [2200.]*3
+        # med_gm = swprepost.GroundModel(med_tks, med_vps, med_vss, med_rhs)
+        # self.assertTrue(med_gm == calc_med_gm)
 
     def test_sigma_ln(self):
         tk = [1, 5, 0]
