@@ -145,30 +145,36 @@ class GroundModelSuite(Suite):
         # Assume one model does not require simplification.
         # This model will have minimum number of layers, and this will
         # equal the true number of layers in the parameterization.
-        nlays = []
+        nlay = 1E6
         for gm in gms:
-            nlays.append(len(getattr(gm, "thickness")))
-        nlay = min(nlays)
+            nlay = min(nlay, len(getattr(gm, "thickness")))
         
         # Comfirm that the model does not require simplification.
         # TODO (jpv): Consider checking model
+
+        # Preallocate space for models.
         thks = np.zeros((nlay, nbest))
         pars = np.zeros((nlay, nbest))
 
         for ncol, gm in enumerate(gms):
-            # TODO (jpv): 
+            # If model has the correct number of layers (i.e., the same)
+            # as the minimum number of layers, then accept.
             if len(getattr(gm, parameter)) == nlay:
                 thks[:, ncol] = getattr(gm, "thickness")
                 pars[:, ncol] = getattr(gm, parameter)
+            # Otherwise, simplify the profile. In most cases this should
+            # result in a simplified profile with the proper number of
+            # layers, however this is not guaranteed. If the
+            # simplification fails, the model will be printed and an
+            # error raised.
             else:
                 thk, par = gm.simplify(parameter)
                 try:
                     thks[:, ncol] = thk
                     pars[:, ncol] = par
                 except ValueError as e:
-                    print(gm)
-                    print(thk, par)
-                    raise ValueError from e
+                    msg = f"The simplified model {thks}, {pars} contains too few layers. The original model was {gm}. Please report this issue."
+                    raise ValueError(msg) from e
 
         return (np.median(thks, axis=1).tolist(),
                 np.median(pars, axis=1).tolist())
