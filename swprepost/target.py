@@ -538,7 +538,7 @@ class Target(CurveUncertain):
         std = np.array(stds, dtype=np.double)
 
         if version == "2":
-            velstd = (1 - np.sqrt(1 - 4*std*std*vel*vel))/(2*std)
+            velstd = (-1 + np.sqrt(1 + 4*std*std*vel*vel))/(2*std)
         elif version == "3":
             cov = std - np.sqrt(std*std - 2*std + 2)
             velstd = cov*vel
