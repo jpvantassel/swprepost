@@ -365,11 +365,14 @@ class GroundModelSuite(Suite):
         if isinstance(sliced, slice):
             return self._gm_suite().from_list(self.gms[sliced])
 
+    def __len__(self):
+        return len(self.gms)
+
     def __str__(self):
         """Human-readable representation of a `GroundModelSuite`."""
         return f"GroundModelSuite with {len(self.gms)} GroundModels."
 
     def __repr__(self):
-        """Unambiguos representation of a `GroundModelSuite`."""
-        return f"GroundModelSuite at {id(self)}."
+        """Unambiguous representation of a `GroundModelSuite`."""
+        return f"GroundModelSuite with {len(self.gms)} GroundModels at {id(self)}."
     
