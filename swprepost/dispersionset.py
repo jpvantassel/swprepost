@@ -236,7 +236,7 @@ class DispersionSet():
             self.write_set(f)
 
     def __eq__(self, other):
-        """Define when two DispersionSet objects are equal."""
+        """Define when two `DispersionSet` objects are equal."""
         for attr in ["misfit", "identifier", "love", "rayleigh"]:
             my_attr = getattr(self, attr)
             ur_attr = getattr(other, attr)
