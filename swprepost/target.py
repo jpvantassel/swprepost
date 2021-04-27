@@ -26,6 +26,7 @@ import logging
 import matplotlib.pyplot as plt
 import numpy as np
 
+from swprepost import Curve
 from swprepost import CurveUncertain
 
 logger = logging.getLogger(name=__name__)
@@ -47,7 +48,7 @@ class Target(CurveUncertain):
     """
 
     def __init__(self, frequency, velocity, velstd=0.05):
-        """Instantiate a Target object.
+        """Initialize a `Target` object.
 
         Parameters
         ----------
@@ -75,8 +76,6 @@ class Target(CurveUncertain):
             If `velstd` is `float` and the value is less than zero.
 
         """
-        logger.info("Howdy!")
-
         # if velstd is None:
         #     velstd = np.zeros_like(velocity, dtype=np.double).tolist()
         if isinstance(velstd, float):
@@ -210,12 +209,54 @@ class Target(CurveUncertain):
                 a, b = line.split(",")
                 c = 0
             else:
-                msg = "Format of input file not recognized. Refer to documentation."
+                msg = f"Format of input file {fname} not recognized. Refer to documentation."
                 raise ValueError(msg)
             frequency.append(float(a))
             velocity.append(float(b))
             velstd.append(float(c))
         return cls(frequency, velocity, velstd)
+
+    @classmethod
+    def from_wavelength(cls, wavelength, velocity, velstd=0.05):
+        """Create from data processed in terms of wavelength.
+
+        Parameters
+        ----------
+        wavelength, velocity : array-like
+            Vector of wavelength and velocity values respectively
+            in the experimental dispersion curve (one per point).
+        velstd : None, float, array-like, optional
+            Velocity standard deviation of the experimental
+            dispersion curve. If `None`, no standard deviation is
+            defined. If `float`, a constant coefficient of variation
+            (COV) is applied, the default is 0.05. If `array-like`,
+            standard deviation is defined point-by-point.
+
+        Returns
+        -------
+        Target
+            Instantiated `Target` object.
+
+        """
+        # Sterilize inputs.
+        wavelength = np.array(wavelength)
+        velocity = np.array(velocity)
+        if velstd is None:
+            velstd = np.zeros_like(velocity)
+        elif isinstance(velstd, float):
+            velstd = velocity*velstd
+        else:
+            velstd = np.array(velstd)
+
+        frequency = velocity/wavelength
+        upper = Curve(x=(velocity+velstd)/wavelength, y=velocity+velstd)
+        lower = Curve(x=(velocity-velstd)/wavelength, y=velocity-velstd)
+        
+        # Average velstd
+        a = upper.resample(xx=frequency, interp1d_kwargs=dict(fill_value="extrapolate"))[1]
+        b = lower.resample(xx=frequency, interp1d_kwargs=dict(fill_value="extrapolate"))[1]
+        velstd = (abs(a - velocity) + abs(b - velocity))/2
+        return cls(frequency, velocity, velstd=velstd)
 
     def setcov(self, cov):
         """Set coefficient of variation (COV) to a constant value.
@@ -865,7 +906,7 @@ class Target(CurveUncertain):
             Additional keyword arguments defining the `Figure`. Ignored
             if `ax` is defined.
         errorbarkwargs : dict
-            Additional keyword arguements defining the sytling of the
+            Additional keyword arguments defining the styling of the
             errorbar plot.
 
 
@@ -881,6 +922,8 @@ class Target(CurveUncertain):
         ax_was_none = False
         if ax is None:
             figdefaults = dict(figsize=(4, 3), dpi=150)
+            if figkwargs is None:
+                figkwargs = {}
             _figkwargs = {**figdefaults, **figkwargs}
             fig, ax = plt.subplots(**_figkwargs)
             ax_was_none = True
@@ -897,16 +940,16 @@ class Target(CurveUncertain):
                     yerr=getattr(self, yerr), **_errorbarkwargs)
 
         if x == "frequency":
-            xlabeltext = "Frequency, "+r"$f$"+" "+r"$(Hz)$"
+            xlabeltext = r"Frequency (Hz)"
         elif x == "wavelength":
-            xlabeltext = "Wavelength, "+r"$\lambda$"+" "+r"$(m)$"
+            xlabeltext = r"Wavelength (m)"
         else:
             xlabeltext = ""
 
         if y == "velocity":
-            ylabeltext = "Rayleigh Phase Velocity, "+r"$V_R$"+" "+r"$(m/s)$"
+            ylabeltext = r"Phase Velocity (m/s)"
         elif y == "slowness":
-            ylabeltext = "Slowness, "+r"$p$"+" "+r"$(s/m)$"
+            ylabeltext = r"Slowness (s/m)"
         else:
             ylabeltext = ""
 
