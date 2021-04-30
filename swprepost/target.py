@@ -331,7 +331,7 @@ class Target(CurveUncertain):
 
         This method, along with :meth: `pseudo-vs`, may be useful to
         create plots of pseudo-Vs vs pseudo-depth for selecting
-        approprate boundaries for parameter limits in the inverison
+        appropriate boundaries for parameter limits in the inversion
         stage.
 
         Parameters
@@ -357,7 +357,7 @@ class Target(CurveUncertain):
 
         This method, along with :meth: `pseudo-depth`, may be useful to
         create plots of pseudo-Vs vs pseudo-depth for selecting
-        approprate boundaries for parameter limits.
+        appropriate boundaries for parameter limits.
 
         Parameters
         ----------
@@ -374,7 +374,7 @@ class Target(CurveUncertain):
 
         """
         if (velocity_factor > 1.2) | (velocity_factor < 1):
-            msg = "`velocity_factor` is outside the typical range. See documenation."
+            msg = "`velocity_factor` is outside the typical range. See documentation."
             warnings.warn(msg)
         return self.velocity*velocity_factor
 
@@ -519,7 +519,7 @@ class Target(CurveUncertain):
             warnings.warn("A wavelength of 40m is out of range.")
 
     def to_txt_dinver(self, fname, version="3"):
-        """Write in text format accepted by `Dinver's` pre-processor.
+        """Write in text format accepted by `Dinver`.
 
         Parameters
         ----------
@@ -548,7 +548,7 @@ class Target(CurveUncertain):
 
     @classmethod
     def from_txt_dinver(cls, fname, version="3"):
-        """Create from text format accepted by `Dinver's` pre-processor.
+        """Create from text format accepted by `Dinver`.
 
         Parameters
         ----------
