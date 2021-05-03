@@ -187,7 +187,7 @@ class DispersionSet():
             data = f.read()
         return cls._from_full_file(data, nrayleigh=nrayleigh, nlove=nlove)
 
-    def write_set(self, fileobj):
+    def write_set(self, fileobj, nrayleigh="all", nlove="all"):
         """Write `DispersionSet` to current file.
         
         Parameters
@@ -201,19 +201,30 @@ class DispersionSet():
             Writes file to disk.
 
         """
+        nrayleigh = np.inf if nrayleigh == "all" else int(nrayleigh)
+        nlove = np.inf if nlove == "all" else int(nlove)
+
         misfit = 0.0 if self.misfit is None else self.misfit
-        if self.rayleigh is not None:
+        if (self.rayleigh is not None) and (nrayleigh > 0):
             fileobj.write(f"# Layered model {self.identifier}: value={misfit}\n")
-            fileobj.write(f"# {len(self.rayleigh)} Rayleigh dispersion mode(s)\n")
+            nmodes = min(len(self.rayleigh), nrayleigh)
+            # TODO (jpv): Not true is mode is missing.
+            fileobj.write(f"# {nmodes} Rayleigh dispersion mode(s)\n")
             fileobj.write(f"# CPU Time = 0 ms\n")
             for key, value in self.rayleigh.items():
+                if key >= nrayleigh:
+                    continue
                 fileobj.write(f"# Mode {key}\n")
                 value.write_curve(fileobj)
-        if self.love is not None:
+        if (self.love is not None) and (nlove > 0):
             fileobj.write(f"# Layered model {self.identifier}: value={misfit}\n")
-            fileobj.write(f"# {len(self.love)} Love dispersion mode(s)\n")
+            nmodes = min(len(self.love), nlove)
+            # TODO (jpv): Not true is mode is missing.
+            fileobj.write(f"# {nmodes} Love dispersion mode(s)\n")
             fileobj.write(f"# CPU Time = 0 ms\n")
             for key, value in self.love.items():
+                if key >= nlove:
+                    continue
                 fileobj.write(f"# Mode {key}\n")
                 value.write_curve(fileobj)
     
