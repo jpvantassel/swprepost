@@ -332,21 +332,6 @@ class Test_Target(TestCase):
 
         os.remove(fname)
 
-    def test_to_and_from_wavelength(self):
-        frq = np.array([1, 3, 5, 15, 30, 75])
-        vel = np.array([500, 475, 100, 90, 75, 50])
-        std = np.array([20, 17, 15, 20, 10, 8])
-        tar_f = swprepost.Target(frq, vel, velstd=std)
-        
-        tar_n = tar_f._resample(xx=tar_f.wavelength, domain="wavelength")
-        tar_w = swprepost.Target.from_wavelength(tar_n.wavelength, tar_n.velocity, tar_n.velstd)
-
-        self.assertArrayAlmostEqual(tar_f.frequency, tar_w.frequency)
-        self.assertArrayAlmostEqual(tar_f.velocity, tar_w.velocity)
-        # self.assertArrayAlmostEqual(tar_f.velstd, tar_w.velstd, delta=0.5)
-
-        print(tar_f.velstd, tar_w.velstd)
-
     def test_to_and_from_csv(self):
         frq = [1, 3, 5, 7, 9, 15]
         vel = [200, 150, 112, 95, 90, 85]

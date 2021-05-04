@@ -17,6 +17,8 @@
 
 """DispersionSet class definition."""
 
+import numpy as np
+
 from swprepost import DispersionCurve, regex
 
 __all__ = ["DispersionSet"]

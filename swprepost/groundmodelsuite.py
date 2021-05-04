@@ -341,6 +341,8 @@ class GroundModelSuite(Suite):
             Initialized `GroundModelSuite`.
 
         """
+        # TODO (jpv): Add warning if nsets < navailable.
+        # TODO (jpv): Strange if statement below.
         if nmodels == "all":
             nmodels = 1E9
 
@@ -375,4 +377,3 @@ class GroundModelSuite(Suite):
     def __repr__(self):
         """Unambiguous representation of a `GroundModelSuite`."""
         return f"GroundModelSuite with {len(self.gms)} GroundModels at {id(self)}."
-    

@@ -120,6 +120,7 @@ class DispersionSuite(Suite):
             Instantiated `DispersionSuite` object.
 
         """
+        # TODO (jpv): Add warning if nsets < navailable.
         with open(fname, "r") as f:
             lines = f.read()
 

@@ -55,12 +55,11 @@ class Target(CurveUncertain):
         frequency, velocity : array-like
             Vector of frequency and velocity values respectively
             in the experimental dispersion curve (one per point).
-        velstd : None, float, array-like, optional
+        velstd : float, array-like, optional
             Velocity standard deviation of the experimental
-            dispersion curve. If `None`, no standard deviation is
-            defined. If `float`, a constant coefficient of variation
-            (COV) is applied, the default is 0.05. If `array-like`,
-            standard deviation is defined point-by-point.
+            dispersion curve. If `float`, a constant coefficient of
+            variation (COV) is applied, the default is 0.05. If
+            `array-like`, standard deviation is defined point-by-point.
 
         Returns
         -------
@@ -76,8 +75,6 @@ class Target(CurveUncertain):
             If `velstd` is `float` and the value is less than zero.
 
         """
-        # if velstd is None:
-        #     velstd = np.zeros_like(velocity, dtype=np.double).tolist()
         if isinstance(velstd, float):
             velstd = (np.array(velocity, dtype=np.double)*velstd).tolist()
 
