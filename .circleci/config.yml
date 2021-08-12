@@ -6,10 +6,11 @@ workflows:
       - test-3.6
       - test-3.7
       - test-3.8
+      - test-3.9
 jobs:
   test-3.6: &test-template
     docker:
-      - image: circleci/python:3.6.9
+      - image: circleci/python:3.6.14
     working_directory: ~/repo
     steps:
       - checkout
@@ -48,11 +49,26 @@ jobs:
             pip install codecov
             codecov
 
-  test-3.7:
+  test-37:
     <<: *test-template
     docker:
-      - image: circleci/python:3.7.5
-  test-3.8:
+      - image: circleci/python:3.7.11
+        auth:
+          username: jpvantassel
+          password: $DOCKER_PASS
+
+  test-38:
     <<: *test-template
     docker:
-      - image: circleci/python:3.8.0
+      - image: circleci/python:3.8.11
+        auth:
+          username: jpvantassel
+          password: $DOCKER_PASS
+
+  test-39:
+    <<: *test-template
+    docker:
+      - image: circleci/python:3.9.6
+        auth:
+          username: jpvantassel
+          password: $DOCKER_PASS
