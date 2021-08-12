@@ -9,6 +9,7 @@
 - __(20 minutes)__: jupyter notebook test in `test_target.py` failing on py38.
 - __(15 minutes)__: review `parameter.py` where casting of bool occurs.
 - __(20 minutes)__: `inl_mfc_rayleigh_0_hf.txt` cause np runtime warning.
+- __(20 minutes)__: update circleci config.
 
 ## :hammer: Improvements
 
