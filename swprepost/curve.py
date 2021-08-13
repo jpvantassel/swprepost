@@ -1,6 +1,6 @@
-# This file is part of swprepost, a Python package for surface-wave
+# This file is part of swprepost, a Python package for surface wave
 # inversion pre- and post-processing.
-# Copyright (C) 2019-2020 Joseph P. Vantassel (jvantassel@utexas.edu)
+# Copyright (C) 2019-2021 Joseph P. Vantassel (jvantassel@utexas.edu)
 #
 #     This program is free software: you can redistribute it and/or modify
 #     it under the terms of the GNU General Public License as published by
@@ -30,7 +30,7 @@ class Curve():
         1D array of x coordinates defining the curve. These
         should, in general, not be accessed directly.
     _y : ndarray
-        Same as `_x` but for the y coordiantes of the curve.
+        Same as `_x` but for the y coordinates of the curve.
 
     """
 
@@ -74,7 +74,7 @@ class Curve():
             If `x` and `y` pass
 
         Raises
-        ------    
+        ------
         ValueError
             If `x` and `y` fail.
 
