@@ -1,6 +1,6 @@
-# This file is part of swprepost, a Python package for surface-wave
+# This file is part of swprepost, a Python package for surface wave
 # inversion pre- and post-processing.
-# Copyright (C) 2019-2020 Joseph P. Vantassel (jvantassel@utexas.edu)
+# Copyright (C) 2019-2021 Joseph P. Vantassel (jvantassel@utexas.edu)
 #
 #     This program is free software: you can redistribute it and/or modify
 #     it under the terms of the GNU General Public License as published by
@@ -17,13 +17,9 @@
 
 """DispersionCurve class definition."""
 
-import logging
-
 import numpy as np
 
 from swprepost import Curve, regex
-
-logger = logging.getLogger(name=__name__)
 
 __all__ = ['DispersionCurve']
 
@@ -54,7 +50,6 @@ class DispersionCurve(Curve):
             Initialized `DispersionCurve` object.
 
         """
-        logger.info("Howdy!")
         super().__init__(x=frequency, y=velocity)
 
     @property
@@ -170,7 +165,7 @@ class DispersionCurve(Curve):
         fname : str
             Name of file, may be a relative or the full path.
         wavetype : {"rayleigh", "love"}, optional
-            Surface-wave dispersion wavetype, default is "rayleigh".
+            Surface wave dispersion wavetype, default is "rayleigh".
         mode : int, optional
             Mode integer (numbered from zero), default is 0.
         identifier : int, optional
@@ -185,10 +180,10 @@ class DispersionCurve(Curve):
 
         """
         with open(fname, "w") as f:
-            f.write( "# File written by swipp\n")
+            f.write("# File written by swprepost\n")
             f.write(f"# Layered model {identifier}: value={misfit}\n")
             f.write(f"# 1 {wavetype.capitalize()} dispersion mode(s)\n")
-            f.write(f"# CPU Time = 0 ms\n")
+            f.write("# CPU Time = 0 ms\n")
             f.write(f"# Mode {mode}\n")
             self.write_curve(f)
 

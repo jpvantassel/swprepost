@@ -1,4 +1,4 @@
-# This file is part of swprepost, a Python package for surface-wave
+# This file is part of swprepost, a Python package for surface wave
 # inversion pre- and post-processing.
 # Copyright (C) 2019-2020 Joseph P. Vantassel (jvantassel@utexas.edu)
 #
@@ -339,9 +339,7 @@ class Test_Target(TestCase):
         tar = swprepost.Target(frq, vel, velstd)
 
         fname = self.full_path+"test_csv.txt"
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            tar.to_txt_swipp(fname)
+        tar.to_csv(fname)
         new = swprepost.Target.from_csv(fname)
         self.assertEqual(tar, new)
 

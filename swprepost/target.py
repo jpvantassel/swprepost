@@ -1,6 +1,6 @@
-# This file is part of swprepost, a Python package for surface-wave
+# This file is part of swprepost, a Python package for surface wave
 # inversion pre- and post-processing.
-# Copyright (C) 2019-2020 Joseph P. Vantassel (jvantassel@utexas.edu)
+# Copyright (C) 2019-2021 Joseph P. Vantassel (jvantassel@utexas.edu)
 #
 #     This program is free software: you can redistribute it and/or modify
 #     it under the terms of the GNU General Public License as published by
@@ -21,7 +21,6 @@ import tarfile as tar
 import os
 import warnings
 import re
-import logging
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -29,14 +28,12 @@ import numpy as np
 from swprepost import Curve
 from swprepost import CurveUncertain
 
-logger = logging.getLogger(name=__name__)
-
 
 class Target(CurveUncertain):
     """Class for manipulating inversion target information.
 
     `Target` is a class for loading, manipulating, and writting
-    target information in preparation for surface-wave inversion.
+    target information in preparation for surface wave inversion.
 
     Attributes
     ----------
@@ -170,7 +167,7 @@ class Target(CurveUncertain):
         Parameters
         ----------
         fname : str
-            Name or path to file containing surface-wave dispersion.
+            Name or path to file containing surface wave dispersion.
             The file should have at a minimum two columns of frequency
             in Hz and velocity in m/s. A third column velocity standard
             deviation in m/s may also be provided.
@@ -248,10 +245,12 @@ class Target(CurveUncertain):
         frequency = velocity/wavelength
         upper = Curve(x=(velocity+velstd)/wavelength, y=velocity+velstd)
         lower = Curve(x=(velocity-velstd)/wavelength, y=velocity-velstd)
-        
+
         # Average velstd
-        a = upper.resample(xx=frequency, interp1d_kwargs=dict(fill_value="extrapolate"))[1]
-        b = lower.resample(xx=frequency, interp1d_kwargs=dict(fill_value="extrapolate"))[1]
+        a = upper.resample(xx=frequency, interp1d_kwargs=dict(
+            fill_value="extrapolate"))[1]
+        b = lower.resample(xx=frequency, interp1d_kwargs=dict(
+            fill_value="extrapolate"))[1]
         velstd = (abs(a - velocity) + abs(b - velocity))/2
         return cls(frequency, velocity, velstd=velstd)
 
@@ -604,24 +603,6 @@ class Target(CurveUncertain):
             f.write("#Frequency,Velocity,Velstd\n")
             for c_frq, c_vel, c_velstd in zip(self.frequency, self.velocity, self.velstd):
                 f.write(f"{c_frq},{c_vel},{c_velstd}\n")
-
-    def to_txt_swipp(self, fname):
-        """Write in text format readily accepted by `swprepost`.
-
-        Parameters
-        ----------
-        fname : str
-            Name of output file, may a relative or full path.
-
-        Returns
-        -------
-        None
-            Writes file to disk.
-
-        """
-        msg = "to_txt_swipp is deprecated, perfer to_csv instead."
-        warnings.warn(msg, DeprecationWarning)
-        self.to_csv(fname)
 
     def to_target(self, fname_prefix, version="3"):
         """Write info to the .target file format used by `Dinver`.

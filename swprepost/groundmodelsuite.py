@@ -1,4 +1,4 @@
-# This file is part of swprepost, a Python package for surface-wave
+# This file is part of swprepost, a Python package for surface wave
 # inversion pre- and post-processing.
 # Copyright (C) 2019-2020 Joseph P. Vantassel (jvantassel@utexas.edu)
 #
@@ -17,13 +17,9 @@
 
 """GroundModelSuite class definition."""
 
-import logging
-
 import numpy as np
 
 from swprepost import GroundModel, Suite, regex
-
-logger = logging.getLogger(__name__)
 
 
 class GroundModelSuite(Suite):
@@ -62,7 +58,6 @@ class GroundModelSuite(Suite):
             Initialized `GroundModelSuite`.
 
         """
-        logger.info("Howdy!")
         super().__init__(self.check_type(groundmodel))
 
     @property
@@ -76,7 +71,7 @@ class GroundModelSuite(Suite):
         ----------
         groundmodel : GroundModel
             refer to 
-            :meth: `__init__ <swipp.GroundModelSuite.__init__>`.
+            :meth: `__init__ <swprepost.GroundModelSuite.__init__>`.
         sort : bool
             Sort models according to misfit (smallest to largest),
             default is `True` indicating sort will be performed.
@@ -108,7 +103,7 @@ class GroundModelSuite(Suite):
 
         See Also
         --------
-        Refer to :meth: `vs30 <swipp.GroundModel.vs30>`.
+        Refer to :meth: `vs30 <swprepost.GroundModel.vs30>`.
 
         """
         nbest = self._handle_nbest(nbest)
@@ -256,12 +251,10 @@ class GroundModelSuite(Suite):
 
     @classmethod
     def _gm(cls):
-        logger.info("Using swipp, GroundModel.")
         return GroundModel
 
     @classmethod
     def _gm_suite(cls):
-        logger.info("Using swipp, GroundModelSuite.")
         return GroundModelSuite
 
     @classmethod
