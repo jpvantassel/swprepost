@@ -564,7 +564,10 @@ class Target(CurveUncertain):
 
         frqs, slos, stds = [], [], []
         for line in lines:
-            frq, slo, std = line.split("\t")
+            if line.startswith("#"):
+                continue
+            
+            frq, slo, std = line.split("\t")[:3]
             frqs.append(frq)
             slos.append(slo)
             stds.append(std)
