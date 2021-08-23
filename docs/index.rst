@@ -2,12 +2,12 @@
    Tue Nov 12 10:00:56 2019. You can adapt this file completely to your
    liking, but it should at least contain the root `toctree` directive.
 
-SWprepost Documentation
+`swprepost` Documentation
 ====================
 
-`SWprepost` is a Python package for surface-wave inversion pre- and
+`swprepost` is a Python package for surface wave inversion pre- and
 post-processing. It includes 12 class definitions to handle all aspect of
-the surface-wave inversion process.
+the surface wave inversion process.
 
 This package and the classes therein are actively being developed, so if you
 do not see a feature you would like it may very well be under development and
