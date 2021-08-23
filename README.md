@@ -1,4 +1,4 @@
-# SWprepost - A Python Package for Surface Wave Inversion Pre- and Post-Processing
+# _swprepost_ - A Python Package for Surface Wave Inversion Pre- and Post-Processing
 
 > Joseph P. Vantassel, The University of Texas at Austin
 
@@ -13,16 +13,16 @@
 
 ---
 
-- [About _SWprepost_](#About-SWprepost)
+- [About _swprepost_](#About-swprepost)
 - [A Few Examples](#A-Few-Examples)
 - [Getting Started](#Getting-Started)
 
-## About _SWprepost_
+## About _swprepost_
 
 ---
 
-`SWprepost` is a Python package for performing surface wave inversion pre- and
-post-processing. `SWprepost` was developed by Joseph P. Vantassel under the
+_swprepost_ is a Python package for performing surface wave inversion pre- and
+post-processing. _swprepost_ was developed by Joseph P. Vantassel under the
 supervision of Professor Brady R. Cox at The University of Texas at Austin. The
 package includes 11 class definitions for interacting with the various
 components required for surface wave inversion. It is designed to integrate
@@ -32,7 +32,7 @@ inversion programs. Furthermore, some of the class definitions provided such as
 `GroundModel` may even be of use to those working in the Geotechnical or
 Geophysical fields, but who do not perform surface wave inversions.
 
-If you use `SWprepost` in your research or consulting we ask you please cite the
+If you use _swprepost_ in your research or consulting we ask you please cite the
 following:
 
 > Joseph Vantassel. (2020). jpvantassel/swprepost: latest (Concept). Zenodo.
@@ -40,16 +40,16 @@ following:
 
 _Note: For software, version specific citations should be preferred to general_
 _concept citations, such as that listed above. To generate a version specific_
-_citation for `SWprepost`, please use the citation tool for that specific_
-_version on the `SWprepost` [archive](https://doi.org/10.5281/zenodo.3839998)._
+_citation for `swprepost`, please use the citation tool for that specific_
+_version on the `swprepost` [archive](https://doi.org/10.5281/zenodo.3839998)._
 
-For the motivation behind the development of `SWprepost` and its role in a
+For the motivation behind the development of _swprepost_ and its role in a
 larger project focused on developing a complete and rigorous workflow for
 surface wave inversion please refer to and consider citing the following:
 
-> Vantassel, J.P., Cox, B.R., (2020). SWinvert: A workflow for performing
-> rigorous 1D surface wave inversions. Geophysical Journal International
-> (Accepted) https://doi.org/10.1093/gji/ggaa426
+> Vantassel, J.P. and Cox, B.R. (2021). SWinvert: a workflow for performing
+> rigorous 1-D surface wave inversions. Geophysical Journal International
+> 224, 1141-1156. https://doi.org/10.1093/gji/ggaa426
 
 ## A Few Examples
 
@@ -110,7 +110,7 @@ plt.show()
 
 ---
 
-### Installing or Upgrading _SWprepost_
+### Installing or Upgrading _swprepost_
 
 1.  If you do not have Python 3.6 or later installed, you will need to do
 so. A detailed set of instructions can be found
@@ -125,21 +125,21 @@ of `swprepost` use `pip install swprepost --upgrade`.
 3.  Confirm that `swprepost` has installed/updated successfully by examining the
 last few lines of text displayed in the console.
 
-### Using _SWprepost_
+### Using _swprepost_
 
 1.  Download the contents of the
-  [examples](https://github.com/jpvantassel/swprepost/tree/master/examples)
+  [examples](https://github.com/jpvantassel/swprepost/tree/main/examples)
   directory to any location of your choice.
 
 2.  Explore the Jupyter notebooks in the
-  [basic](https://github.com/jpvantassel/swprepost/tree/master/examples/basic)
+  [basic](https://github.com/jpvantassel/swprepost/tree/main/examples/basic)
   directory for a no-coding-required introduction to the `swprepost` package.
   If you have not installed `Jupyter`, detailed instructions can be found
   [here](https://jpvantassel.github.io/python3-course/#/intro/installing_jupyter).
 
-3.  Move to the [adv](https://github.com/jpvantassel/swprepost/tree/master/examples/adv)
+3.  Move to the [adv](https://github.com/jpvantassel/swprepost/tree/main/examples/adv)
   directory and follow the Jupyter notebook title `SWinvertWorkflow.ipynb` for
   an example application of `swprepost` to the SWinvert workflow
-  (Vantassel and Cox, 2020).
+  (Vantassel and Cox, 2021).
 
 4.  Enjoy!
