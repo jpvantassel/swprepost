@@ -4,6 +4,6 @@ sphinx-build -b latex . latex
 
 cd latex
 
-pdflatex hvsrpy.tex
+pdflatex swprepost.tex
 
-pdflatex hvsrpy.tex
+pdflatex swprepost.tex

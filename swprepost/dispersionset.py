@@ -1,4 +1,4 @@
-# This file is part of swprepost, a Python package for surface-wave
+# This file is part of swprepost, a Python package for surface wave
 # inversion pre- and post-processing.
 # Copyright (C) 2019-2020 Joseph P. Vantassel (jvantassel@utexas.edu)
 #
@@ -17,13 +17,16 @@
 
 """DispersionSet class definition."""
 
+import numpy as np
+
 from swprepost import DispersionCurve, regex
 
 __all__ = ["DispersionSet"]
 
+
 class DispersionSet():
     """Class for handling sets of
-    :meth: `DispersionCurve <swipp.DispersionCurve>` objects, which all
+    :meth: `DispersionCurve <swprepost.DispersionCurve>` objects, which all
     belong to a common ground model.
 
     Attributes
@@ -89,7 +92,7 @@ class DispersionSet():
         none_count = 0
         none_count += self.check_type(rayleigh, self._dc())
         none_count += self.check_type(love, self._dc())
-        
+
         if none_count == 2:
             msg = "`rayleigh` and `love` cannot both be `None`."
             raise ValueError(msg)
@@ -120,7 +123,7 @@ class DispersionSet():
     @classmethod
     def _from_full_file(cls, data, nrayleigh="all", nlove="all"):
         """Parse the first `DispersionSet` from Geopsy-style contents.
-        
+
         Parameters
         ----------
         data : str
@@ -129,7 +132,7 @@ class DispersionSet():
             Number of Rayleigh and Love modes to extract into a
             `DispersionSet` object, default is "all" meaning all
             available modes will be extracted.
-        
+
         Returns
         -------
         DispersionSet
@@ -176,7 +179,7 @@ class DispersionSet():
             Number of Rayleigh and Love modes to extract into a
             `DispersionSet` object, default is "all" meaning all
             available modes will be extracted.
-        
+
         Returns
         -------
         DispersionSet
@@ -187,9 +190,9 @@ class DispersionSet():
             data = f.read()
         return cls._from_full_file(data, nrayleigh=nrayleigh, nlove=nlove)
 
-    def write_set(self, fileobj):
+    def write_set(self, fileobj, nrayleigh="all", nlove="all"):
         """Write `DispersionSet` to current file.
-        
+
         Parameters
         ----------
         fname : str
@@ -201,22 +204,35 @@ class DispersionSet():
             Writes file to disk.
 
         """
+        nrayleigh = np.inf if nrayleigh == "all" else int(nrayleigh)
+        nlove = np.inf if nlove == "all" else int(nlove)
+
         misfit = 0.0 if self.misfit is None else self.misfit
-        if self.rayleigh is not None:
-            fileobj.write(f"# Layered model {self.identifier}: value={misfit}\n")
-            fileobj.write(f"# {len(self.rayleigh)} Rayleigh dispersion mode(s)\n")
-            fileobj.write(f"# CPU Time = 0 ms\n")
+        if (self.rayleigh is not None) and (nrayleigh > 0):
+            fileobj.write(
+                f"# Layered model {self.identifier}: value={misfit}\n")
+            nmodes = min(len(self.rayleigh), nrayleigh)
+            # TODO (jpv): Not true is mode is missing.
+            fileobj.write(f"# {nmodes} Rayleigh dispersion mode(s)\n")
+            fileobj.write("# CPU Time = 0 ms\n")
             for key, value in self.rayleigh.items():
+                if key >= nrayleigh:
+                    continue
                 fileobj.write(f"# Mode {key}\n")
                 value.write_curve(fileobj)
-        if self.love is not None:
-            fileobj.write(f"# Layered model {self.identifier}: value={misfit}\n")
-            fileobj.write(f"# {len(self.love)} Love dispersion mode(s)\n")
-            fileobj.write(f"# CPU Time = 0 ms\n")
+        if (self.love is not None) and (nlove > 0):
+            fileobj.write(
+                f"# Layered model {self.identifier}: value={misfit}\n")
+            nmodes = min(len(self.love), nlove)
+            # TODO (jpv): Not true is mode is missing.
+            fileobj.write(f"# {nmodes} Love dispersion mode(s)\n")
+            fileobj.write("# CPU Time = 0 ms\n")
             for key, value in self.love.items():
+                if key >= nlove:
+                    continue
                 fileobj.write(f"# Mode {key}\n")
                 value.write_curve(fileobj)
-    
+
     def write_to_txt(self, fname):
         """Write `DispersionSet` to Geopsy formated file.
 
@@ -232,11 +248,11 @@ class DispersionSet():
 
         """
         with open(fname, "w") as f:
-            f.write("# File written by swipp\n")
+            f.write("# File written by swprepost\n")
             self.write_set(f)
 
     def __eq__(self, other):
-        """Define when two DispersionSet objects are equal."""
+        """Define when two `DispersionSet` objects are equal."""
         for attr in ["misfit", "identifier", "love", "rayleigh"]:
             my_attr = getattr(self, attr)
             ur_attr = getattr(other, attr)

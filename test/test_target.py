@@ -1,4 +1,4 @@
-# This file is part of swprepost, a Python package for surface-wave
+# This file is part of swprepost, a Python package for surface wave
 # inversion pre- and post-processing.
 # Copyright (C) 2019-2020 Joseph P. Vantassel (jvantassel@utexas.edu)
 #
@@ -20,6 +20,7 @@
 import os
 import logging
 import warnings
+import platform
 
 import numpy as np
 import nbformat
@@ -107,7 +108,8 @@ class Test_Target(TestCase):
 
     def test_from_csv(self):
         # With standard deviation provided.
-        tar = swprepost.Target.from_csv(self.full_path+"data/test_tar_wstd.csv")
+        tar = swprepost.Target.from_csv(
+            self.full_path+"data/test_tar_wstd.csv")
         self.assertListEqual(tar.frequency.tolist(), [1.55, 2.00])
         self.assertListEqual(tar.velocity.tolist(), [200, 500.01245])
         self.assertListEqual(tar.velstd.tolist(), [60.012111, 100.00001])
@@ -115,7 +117,8 @@ class Test_Target(TestCase):
                              [200/1.55, 500.01245/2.00])
 
         # Without standard deviation provided.
-        tar = swprepost.Target.from_csv(self.full_path+"data/test_tar_wostd.csv")
+        tar = swprepost.Target.from_csv(
+            self.full_path+"data/test_tar_wostd.csv")
         self.assertListEqual(tar.frequency.tolist(), [1.55, 2.00])
         self.assertListEqual(tar.velocity.tolist(), [200, 500.01245])
         self.assertListEqual(tar.velstd.tolist(), [0, 0])
@@ -213,8 +216,8 @@ class Test_Target(TestCase):
         fname = self.full_path+"data/test_tar_wstd_linear.csv"
         tar = swprepost.Target.from_csv(fname)
         returned = tar.easy_resample(pmin=0.5, pmax=4.5, pn=5,
-                                res_type='linear', domain="frequency",
-                                inplace=False).frequency
+                                     res_type='linear', domain="frequency",
+                                     inplace=False).frequency
         expected = np.array([0.5, 1.5, 2.5, 3.5, 4.5])
         self.assertArrayAlmostEqual(expected, returned, places=1)
 
@@ -223,16 +226,16 @@ class Test_Target(TestCase):
         tar = swprepost.Target.from_csv(fname)
         expected = np.array([2., 2.8, 4.0])
         returned = tar.easy_resample(pmin=2, pmax=4, pn=3,
-                                res_type='log', domain="frequency",
-                                inplace=False).frequency
+                                     res_type='log', domain="frequency",
+                                     inplace=False).frequency
         self.assertArrayAlmostEqual(expected, returned, places=1)
 
         # Non-linear w/ VelStd
         fname = self.full_path+"data/test_tar_wstd_nonlin_0.csv"
         tar = swprepost.Target.from_csv(fname)
         new_tar = tar.easy_resample(pmin=50, pmax=100, pn=5,
-                               res_type='log', domain="wavelength",
-                               inplace=False)
+                                    res_type='log', domain="wavelength",
+                                    inplace=False)
         expected = np.array([112.5, 118.1, 125.5, 135.6, 150])
         returned = new_tar.velocity
         self.assertArrayAlmostEqual(expected, returned, places=1)
@@ -247,7 +250,7 @@ class Test_Target(TestCase):
 
         for pmin, pmax in [(0.1, 0.5), (0.5, 0.1)]:
             tar.easy_resample(pmin=pmin, pmax=pmax, pn=5, domain="frequency",
-                         res_type="linear", inplace=True)
+                              res_type="linear", inplace=True)
 
             expected = np.array([0.1, 0.2, 0.3, 0.4, 0.5])
             for attr in ["frequency", "velocity", "velstd"]:
@@ -255,7 +258,8 @@ class Test_Target(TestCase):
                 self.assertArrayAlmostEqual(expected, returned)
 
         # Bad pn
-        self.assertRaises(ValueError, tar.easy_resample, pmin=0.1, pmax=0.5, pn=-1)
+        self.assertRaises(ValueError, tar.easy_resample,
+                          pmin=0.1, pmax=0.5, pn=-1)
 
         # Bad res_type
         self.assertRaises(NotImplementedError, tar.easy_resample, pmin=0.1,
@@ -283,13 +287,17 @@ class Test_Target(TestCase):
         tar.to_target(fname_prefix=prefix+"_swprepost_v3", version="3")
         tar.to_target(fname_prefix=prefix+"_swprepost_v2", version="2")
 
-        tar_swprepost = swprepost.Target.from_target(prefix+"_swprepost_v3", version="3")
-        tar_geopsy = swprepost.Target.from_target(prefix+"_geopsy_v3", version="3")
+        tar_swprepost = swprepost.Target.from_target(
+            prefix+"_swprepost_v3", version="3")
+        tar_geopsy = swprepost.Target.from_target(
+            prefix+"_geopsy_v3", version="3")
         self.assertEqual(tar_geopsy, tar_swprepost)
         os.remove(prefix+"_swprepost_v3.target")
 
-        tar_swprepost = swprepost.Target.from_target(prefix+"_swprepost_v2", version="2")
-        tar_geopsy = swprepost.Target.from_target(prefix+"_geopsy_v2", version="2")
+        tar_swprepost = swprepost.Target.from_target(
+            prefix+"_swprepost_v2", version="2")
+        tar_geopsy = swprepost.Target.from_target(
+            prefix+"_geopsy_v2", version="2")
         self.assertEqual(tar_geopsy, tar_swprepost)
         os.remove(prefix+"_swprepost_v2.target")
 
@@ -315,7 +323,7 @@ class Test_Target(TestCase):
                 returned = getattr(new, attr)
                 self.assertArrayAlmostEqual(expected, returned, places=0)
 
-        # Bad verison
+        # Bad version.
         version = "1245"
         self.assertRaises(NotImplementedError, tar.to_txt_dinver,
                           fname, version=version)
@@ -331,9 +339,7 @@ class Test_Target(TestCase):
         tar = swprepost.Target(frq, vel, velstd)
 
         fname = self.full_path+"test_csv.txt"
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            tar.to_txt_swipp(fname)
+        tar.to_csv(fname)
         new = swprepost.Target.from_csv(fname)
         self.assertEqual(tar, new)
 
@@ -366,6 +372,8 @@ class Test_Target(TestCase):
         tar2 = swprepost.Target(y, y, y)
         self.assertFalse(tar1 == tar2)
 
+    @unittest.skipIf(platform.python_version().startswith("3.8"),
+                     "Unresolved issue with ExecutePreprocessor")
     def test_notebook(self):
         fname = "../examples/basic/Targets.ipynb"
         with open(self.full_path+fname) as f:
@@ -375,8 +383,8 @@ class Test_Target(TestCase):
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
                 ep = ExecutePreprocessor(timeout=600, kernel_name='python3')
-                ep.preprocess(
-                    nb, {'metadata': {'path': self.full_path+"../examples/basic"}})
+                ep.preprocess(nb,
+                              {'metadata':{'path': self.full_path+"../examples/basic"}})
         finally:
             with open(self.full_path+fname, 'w', encoding='utf-8') as f:
                 nbformat.write(nb, f)

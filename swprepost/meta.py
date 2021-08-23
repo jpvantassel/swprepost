@@ -1,6 +1,6 @@
 # This file is part of swprepost, a Python package for surface wave
 # inversion pre- and post-processing.
-# Copyright (C) 2019-2021 Joseph P. Vantassel (jvantassel@utexas.edu)
+# Copyright (C) 2019-2020 Joseph P. Vantassel (jvantassel@utexas.edu)
 #
 #     This program is free software: you can redistribute it and/or modify
 #     it under the terms of the GNU General Public License as published by
@@ -15,21 +15,6 @@
 #     You should have received a copy of the GNU General Public License
 #     along with this program.  If not, see <https: //www.gnu.org/licenses/>.
 
-"""Import class definitions into the swprepost package namespace."""
+"""Metadata for swprepost."""
 
-from .curve import Curve
-from .curveuncertain import CurveUncertain
-from .dispersioncurve import DispersionCurve
-
-from .dispersionset import DispersionSet
-
-from .suite import Suite
-from .dispersionsuite import DispersionSuite
-
-from .groundmodel import GroundModel
-from .groundmodelsuite import GroundModelSuite
-
-from .parameter import Parameter
-from .parameterization import Parameterization
-
-from .target import Target
+__version__ = "1.0.0rc0"

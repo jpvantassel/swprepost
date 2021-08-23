@@ -1,4 +1,4 @@
-# This file is part of swprepost, a Python package for surface-wave
+# This file is part of swprepost, a Python package for surface wave
 # inversion pre- and post-processing.
 # Copyright (C) 2019-2020 Joseph P. Vantassel (jvantassel@utexas.edu)
 #
@@ -120,6 +120,7 @@ class DispersionSuite(Suite):
             Instantiated `DispersionSuite` object.
 
         """
+        # TODO (jpv): Add warning if nsets < navailable.
         with open(fname, "r") as f:
             lines = f.read()
 
@@ -186,7 +187,7 @@ class DispersionSuite(Suite):
                 obj.append(dc_set, sort=sort)
         return obj
 
-    def write_to_txt(self, fname, nbest="all"):
+    def write_to_txt(self, fname, nbest="all", nrayleigh="all", nlove="all"):
         """Write to text file, following the Geopsy format.
 
         Parameters
@@ -196,6 +197,9 @@ class DispersionSuite(Suite):
         nbest : {int, 'all'}, optional
             Number of best models to write to file, default is 'all'
             indicating all models will be written.
+        nrayleigh, nlove : {int, 'all'}, optional
+            Number of modes to write to file, default is 'all'
+            indicating all available modes will be written.
 
         Returns
         -------
@@ -207,7 +211,7 @@ class DispersionSuite(Suite):
         with open(fname, "w") as f:
             f.write("# File written by swprepost\n")
             for cit in self.sets[:nbest]:
-                cit.write_set(f)
+                cit.write_set(f, nrayleigh=nrayleigh, nlove=nlove)
 
     def __getitem__(self, slce):
         """Define slicing behavior"""

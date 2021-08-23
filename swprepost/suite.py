@@ -1,4 +1,4 @@
-# This file is part of swprepost, a Python package for surface-wave
+# This file is part of swprepost, a Python package for surface wave
 # inversion pre- and post-processing.
 # Copyright (C) 2019-2020 Joseph P. Vantassel (jvantassel@utexas.edu)
 #
@@ -88,13 +88,13 @@ class Suite(ABC):
         ----------
         nmodels : {int, "all"}, optional
             Number of models to consider, default is 'all' so all
-            avaiable models will be considered.
+            available models will be considered.
 
         Returns
         -------
         float, tuple
             If `nmodels==1`, returns `float` corresponding to the single
-            best misfit, otherwise returns `tupele` of the form 
+            best misfit, otherwise returns `tuple` of the form 
             (min_msft, max_msft).
 
         """
@@ -112,9 +112,9 @@ class Suite(ABC):
         ----------
         nmodels : {int, "all"}, optional
             Number of models to consider, default is 'all' so all
-            avaiable models will be considered.
+            available models will be considered.
         **kwargs
-            Optional keyword arguements for `np.format_float_positional`
+            Optional keyword arguments for `np.format_float_positional`
             https://docs.scipy.org/doc/numpy-1.15.1/reference/generated/numpy.format_float_positional.html
 
         Returns
@@ -135,7 +135,7 @@ class Suite(ABC):
             return f"[{prep(min_msft)}-{prep(max_msft)}]"
 
     def __eq__(self, other):
-        """Define when two Suite objects are equal."""
+        """Define when two `Suite` objects are equal."""
         if self.size != other.size:
             return False
         for my, ur in zip(self._items, other._items):

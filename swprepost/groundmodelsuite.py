@@ -1,4 +1,4 @@
-# This file is part of swprepost, a Python package for surface-wave
+# This file is part of swprepost, a Python package for surface wave
 # inversion pre- and post-processing.
 # Copyright (C) 2019-2020 Joseph P. Vantassel (jvantassel@utexas.edu)
 #
@@ -17,13 +17,9 @@
 
 """GroundModelSuite class definition."""
 
-import logging
-
 import numpy as np
 
 from swprepost import GroundModel, Suite, regex
-
-logger = logging.getLogger(__name__)
 
 
 class GroundModelSuite(Suite):
@@ -62,7 +58,6 @@ class GroundModelSuite(Suite):
             Initialized `GroundModelSuite`.
 
         """
-        logger.info("Howdy!")
         super().__init__(self.check_type(groundmodel))
 
     @property
@@ -76,7 +71,7 @@ class GroundModelSuite(Suite):
         ----------
         groundmodel : GroundModel
             refer to 
-            :meth: `__init__ <swipp.GroundModelSuite.__init__>`.
+            :meth: `__init__ <swprepost.GroundModelSuite.__init__>`.
         sort : bool
             Sort models according to misfit (smallest to largest),
             default is `True` indicating sort will be performed.
@@ -108,7 +103,7 @@ class GroundModelSuite(Suite):
 
         See Also
         --------
-        Refer to :meth: `vs30 <swipp.GroundModel.vs30>`.
+        Refer to :meth: `vs30 <swprepost.GroundModel.vs30>`.
 
         """
         nbest = self._handle_nbest(nbest)
@@ -142,14 +137,39 @@ class GroundModelSuite(Suite):
         nbest = self._handle_nbest(nbest)
         gms = self.gms[:nbest]
 
-        thk, par = gms[0].simplify(parameter)
-        thks = np.zeros((len(thk), nbest))
-        pars = np.zeros((len(par), nbest))
+        # Assume one model does not require simplification.
+        # This model will have minimum number of layers, and this will
+        # equal the true number of layers in the parameterization.
+        nlay = 1E6
+        for gm in gms:
+            nlay = min(nlay, len(getattr(gm, "thickness")))
+        
+        # Comfirm that the model does not require simplification.
+        # TODO (jpv): Consider checking model
+
+        # Preallocate space for models.
+        thks = np.zeros((nlay, nbest))
+        pars = np.zeros((nlay, nbest))
 
         for ncol, gm in enumerate(gms):
-            thk, par = gm.simplify(parameter)
-            thks[:, ncol] = thk
-            pars[:, ncol] = par
+            # If model has the correct number of layers (i.e., the same)
+            # as the minimum number of layers, then accept.
+            if len(getattr(gm, parameter)) == nlay:
+                thks[:, ncol] = getattr(gm, "thickness")
+                pars[:, ncol] = getattr(gm, parameter)
+            # Otherwise, simplify the profile. In most cases this should
+            # result in a simplified profile with the proper number of
+            # layers, however this is not guaranteed. If the
+            # simplification fails, the model will be printed and an
+            # error raised.
+            else:
+                thk, par = gm.simplify(parameter)
+                try:
+                    thks[:, ncol] = thk
+                    pars[:, ncol] = par
+                except ValueError as e:
+                    msg = f"The simplified model {thks}, {pars} contains too few layers. The original model was {gm}. Please report this issue."
+                    raise ValueError(msg) from e
 
         return (np.median(thks, axis=1).tolist(),
                 np.median(pars, axis=1).tolist())
@@ -231,12 +251,10 @@ class GroundModelSuite(Suite):
 
     @classmethod
     def _gm(cls):
-        logger.info("Using swipp, GroundModel.")
         return GroundModel
 
     @classmethod
     def _gm_suite(cls):
-        logger.info("Using swipp, GroundModelSuite.")
         return GroundModelSuite
 
     @classmethod
@@ -316,6 +334,8 @@ class GroundModelSuite(Suite):
             Initialized `GroundModelSuite`.
 
         """
+        # TODO (jpv): Add warning if nsets < navailable.
+        # TODO (jpv): Strange if statement below.
         if nmodels == "all":
             nmodels = 1E9
 
@@ -340,11 +360,13 @@ class GroundModelSuite(Suite):
         if isinstance(sliced, slice):
             return self._gm_suite().from_list(self.gms[sliced])
 
+    def __len__(self):
+        return len(self.gms)
+
     def __str__(self):
         """Human-readable representation of a `GroundModelSuite`."""
         return f"GroundModelSuite with {len(self.gms)} GroundModels."
 
     def __repr__(self):
-        """Unambiguos representation of a `GroundModelSuite`."""
-        return f"GroundModelSuite at {id(self)}."
-    
+        """Unambiguous representation of a `GroundModelSuite`."""
+        return f"GroundModelSuite with {len(self.gms)} GroundModels at {id(self)}."

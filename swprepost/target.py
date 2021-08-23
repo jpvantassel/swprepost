@@ -1,6 +1,6 @@
-# This file is part of swprepost, a Python package for surface-wave
+# This file is part of swprepost, a Python package for surface wave
 # inversion pre- and post-processing.
-# Copyright (C) 2019-2020 Joseph P. Vantassel (jvantassel@utexas.edu)
+# Copyright (C) 2019-2021 Joseph P. Vantassel (jvantassel@utexas.edu)
 #
 #     This program is free software: you can redistribute it and/or modify
 #     it under the terms of the GNU General Public License as published by
@@ -21,21 +21,19 @@ import tarfile as tar
 import os
 import warnings
 import re
-import logging
 
 import matplotlib.pyplot as plt
 import numpy as np
 
+from swprepost import Curve
 from swprepost import CurveUncertain
-
-logger = logging.getLogger(name=__name__)
 
 
 class Target(CurveUncertain):
     """Class for manipulating inversion target information.
 
     `Target` is a class for loading, manipulating, and writting
-    target information in preparation for surface-wave inversion.
+    target information in preparation for surface wave inversion.
 
     Attributes
     ----------
@@ -47,19 +45,18 @@ class Target(CurveUncertain):
     """
 
     def __init__(self, frequency, velocity, velstd=0.05):
-        """Instantiate a Target object.
+        """Initialize a `Target` object.
 
         Parameters
         ----------
         frequency, velocity : array-like
             Vector of frequency and velocity values respectively
             in the experimental dispersion curve (one per point).
-        velstd : None, float, array-like, optional
+        velstd : float, array-like, optional
             Velocity standard deviation of the experimental
-            dispersion curve. If `None`, no standard deviation is
-            defined. If `float`, a constant coefficient of variation
-            (COV) is applied, the default is 0.05. If `array-like`,
-            standard deviation is defined point-by-point.
+            dispersion curve. If `float`, a constant coefficient of
+            variation (COV) is applied, the default is 0.05. If
+            `array-like`, standard deviation is defined point-by-point.
 
         Returns
         -------
@@ -75,10 +72,6 @@ class Target(CurveUncertain):
             If `velstd` is `float` and the value is less than zero.
 
         """
-        logger.info("Howdy!")
-
-        # if velstd is None:
-        #     velstd = np.zeros_like(velocity, dtype=np.double).tolist()
         if isinstance(velstd, float):
             velstd = (np.array(velocity, dtype=np.double)*velstd).tolist()
 
@@ -174,7 +167,7 @@ class Target(CurveUncertain):
         Parameters
         ----------
         fname : str
-            Name or path to file containing surface-wave dispersion.
+            Name or path to file containing surface wave dispersion.
             The file should have at a minimum two columns of frequency
             in Hz and velocity in m/s. A third column velocity standard
             deviation in m/s may also be provided.
@@ -210,12 +203,56 @@ class Target(CurveUncertain):
                 a, b = line.split(",")
                 c = 0
             else:
-                msg = "Format of input file not recognized. Refer to documentation."
+                msg = f"Format of input file {fname} not recognized. Refer to documentation."
                 raise ValueError(msg)
             frequency.append(float(a))
             velocity.append(float(b))
             velstd.append(float(c))
         return cls(frequency, velocity, velstd)
+
+    @classmethod
+    def from_wavelength(cls, wavelength, velocity, velstd=0.05):
+        """Create from data processed in terms of wavelength.
+
+        Parameters
+        ----------
+        wavelength, velocity : array-like
+            Vector of wavelength and velocity values respectively
+            in the experimental dispersion curve (one per point).
+        velstd : None, float, array-like, optional
+            Velocity standard deviation of the experimental
+            dispersion curve. If `None`, no standard deviation is
+            defined. If `float`, a constant coefficient of variation
+            (COV) is applied, the default is 0.05. If `array-like`,
+            standard deviation is defined point-by-point.
+
+        Returns
+        -------
+        Target
+            Instantiated `Target` object.
+
+        """
+        # Sterilize inputs.
+        wavelength = np.array(wavelength)
+        velocity = np.array(velocity)
+        if velstd is None:
+            velstd = np.zeros_like(velocity)
+        elif isinstance(velstd, float):
+            velstd = velocity*velstd
+        else:
+            velstd = np.array(velstd)
+
+        frequency = velocity/wavelength
+        upper = Curve(x=(velocity+velstd)/wavelength, y=velocity+velstd)
+        lower = Curve(x=(velocity-velstd)/wavelength, y=velocity-velstd)
+
+        # Average velstd
+        a = upper.resample(xx=frequency, interp1d_kwargs=dict(
+            fill_value="extrapolate"))[1]
+        b = lower.resample(xx=frequency, interp1d_kwargs=dict(
+            fill_value="extrapolate"))[1]
+        velstd = (abs(a - velocity) + abs(b - velocity))/2
+        return cls(frequency, velocity, velstd=velstd)
 
     def setcov(self, cov):
         """Set coefficient of variation (COV) to a constant value.
@@ -290,7 +327,7 @@ class Target(CurveUncertain):
 
         This method, along with :meth: `pseudo-vs`, may be useful to
         create plots of pseudo-Vs vs pseudo-depth for selecting
-        approprate boundaries for parameter limits in the inverison
+        appropriate boundaries for parameter limits in the inversion
         stage.
 
         Parameters
@@ -316,7 +353,7 @@ class Target(CurveUncertain):
 
         This method, along with :meth: `pseudo-depth`, may be useful to
         create plots of pseudo-Vs vs pseudo-depth for selecting
-        approprate boundaries for parameter limits.
+        appropriate boundaries for parameter limits.
 
         Parameters
         ----------
@@ -333,7 +370,7 @@ class Target(CurveUncertain):
 
         """
         if (velocity_factor > 1.2) | (velocity_factor < 1):
-            msg = "`velocity_factor` is outside the typical range. See documenation."
+            msg = "`velocity_factor` is outside the typical range. See documentation."
             warnings.warn(msg)
         return self.velocity*velocity_factor
 
@@ -478,7 +515,7 @@ class Target(CurveUncertain):
             warnings.warn("A wavelength of 40m is out of range.")
 
     def to_txt_dinver(self, fname, version="3"):
-        """Write in text format accepted by `Dinver's` pre-processor.
+        """Write in text format accepted by `Dinver`.
 
         Parameters
         ----------
@@ -507,7 +544,7 @@ class Target(CurveUncertain):
 
     @classmethod
     def from_txt_dinver(cls, fname, version="3"):
-        """Create from text format accepted by `Dinver's` pre-processor.
+        """Create from text format accepted by `Dinver`.
 
         Parameters
         ----------
@@ -527,7 +564,10 @@ class Target(CurveUncertain):
 
         frqs, slos, stds = [], [], []
         for line in lines:
-            frq, slo, std = line.split("\t")
+            if line.startswith("#"):
+                continue
+            
+            frq, slo, std = line.split()[:3]
             frqs.append(frq)
             slos.append(slo)
             stds.append(std)
@@ -538,7 +578,7 @@ class Target(CurveUncertain):
         std = np.array(stds, dtype=np.double)
 
         if version == "2":
-            velstd = (1 - np.sqrt(1 - 4*std*std*vel*vel))/(2*std)
+            velstd = (-1 + np.sqrt(1 + 4*std*std*vel*vel))/(2*std)
         elif version == "3":
             cov = std - np.sqrt(std*std - 2*std + 2)
             velstd = cov*vel
@@ -566,24 +606,6 @@ class Target(CurveUncertain):
             f.write("#Frequency,Velocity,Velstd\n")
             for c_frq, c_vel, c_velstd in zip(self.frequency, self.velocity, self.velstd):
                 f.write(f"{c_frq},{c_vel},{c_velstd}\n")
-
-    def to_txt_swipp(self, fname):
-        """Write in text format readily accepted by `swprepost`.
-
-        Parameters
-        ----------
-        fname : str
-            Name of output file, may a relative or full path.
-
-        Returns
-        -------
-        None
-            Writes file to disk.
-
-        """
-        msg = "to_txt_swipp is deprecated, perfer to_csv instead."
-        warnings.warn(msg, DeprecationWarning)
-        self.to_csv(fname)
 
     def to_target(self, fname_prefix, version="3"):
         """Write info to the .target file format used by `Dinver`.
@@ -865,7 +887,7 @@ class Target(CurveUncertain):
             Additional keyword arguments defining the `Figure`. Ignored
             if `ax` is defined.
         errorbarkwargs : dict
-            Additional keyword arguements defining the sytling of the
+            Additional keyword arguments defining the styling of the
             errorbar plot.
 
 
@@ -881,6 +903,8 @@ class Target(CurveUncertain):
         ax_was_none = False
         if ax is None:
             figdefaults = dict(figsize=(4, 3), dpi=150)
+            if figkwargs is None:
+                figkwargs = {}
             _figkwargs = {**figdefaults, **figkwargs}
             fig, ax = plt.subplots(**_figkwargs)
             ax_was_none = True
@@ -897,16 +921,16 @@ class Target(CurveUncertain):
                     yerr=getattr(self, yerr), **_errorbarkwargs)
 
         if x == "frequency":
-            xlabeltext = "Frequency, "+r"$f$"+" "+r"$(Hz)$"
+            xlabeltext = r"Frequency (Hz)"
         elif x == "wavelength":
-            xlabeltext = "Wavelength, "+r"$\lambda$"+" "+r"$(m)$"
+            xlabeltext = r"Wavelength (m)"
         else:
             xlabeltext = ""
 
         if y == "velocity":
-            ylabeltext = "Rayleigh Phase Velocity, "+r"$V_R$"+" "+r"$(m/s)$"
+            ylabeltext = r"Phase Velocity (m/s)"
         elif y == "slowness":
-            ylabeltext = "Slowness, "+r"$p$"+" "+r"$(s/m)$"
+            ylabeltext = r"Slowness (s/m)"
         else:
             ylabeltext = ""
 
