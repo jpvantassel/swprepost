@@ -15,14 +15,27 @@ import sys
 
 sys.path.insert(0, os.path.abspath('../swprepost'))
 
+
+def parse_meta(path_to_meta):
+    with open(path_to_meta) as f:
+        meta = {}
+        for line in f.readlines():
+            if line.startswith("__version__"):
+                meta["__version__"] = line.split('"')[1]
+    return meta
+
+
+meta = parse_meta("../swprepost/meta.py")
+
+
 # -- Project information -----------------------------------------------------
 
 project = 'swprepost'
-copyright = '2019 - 2020, Joseph P. Vantassel'
+copyright = '2019 - 2021, Joseph P. Vantassel'
 author = 'Joseph P. Vantassel'
 
 # The full version, including alpha/beta/rc tags
-release = '0.3.0'
+release = meta['__version__'] 
 
 # -- General configuration ---------------------------------------------------
 
