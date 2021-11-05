@@ -666,7 +666,7 @@ class Parameter():
         return ([left, left, right, right],
                 [upper, lower, lower, upper])
 
-    def plot(self, ax=None, show_example=True):
+    def plot(self, ax=None, show_example=True): # pragma: no cover
         # TODO (jpv): Add docstring.
         if ax is None:
             ax_was_none = True
