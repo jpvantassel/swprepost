@@ -76,7 +76,7 @@ class DispersionCurve(Curve):
         ----------
         dc_data : str
             Dispersion curve data of the form `frequency, slowness`.
-            It is assumed that frequencies increases monitonically. If
+            It is assumed that frequencies increases monotonically. If
             this assumption is not true, incorrect results will result.
             See example below.
 

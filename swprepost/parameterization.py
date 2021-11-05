@@ -129,7 +129,7 @@ class Parameterization():
 
                 If type = 'LR' 
                     Layering follows the Layering Ratio, the next
-                    arguement is the layering ratio followed by
+                    argument is the layering ratio followed by
                     min, max, and bool.
 
                 Ex. ['LR', lr, min, max, reversal]
@@ -354,7 +354,7 @@ indicate by setting `full_version='2.9.0'`, otherwise no action is required."
         Returns
         -------
         Parameterization
-            Instantitated `Parameterization` object.
+            Instantiated `Parameterization` object.
 
         Raises
         ------

@@ -113,7 +113,7 @@ class Parameter():
             Indicate whether to allow parameter reversals, one
             `bool` per layer.
         lay_type : {'thickness', 'depth'}, optional
-            Inidcate whether the layers are defined in terms of
+            Indicate whether the layers are defined in terms of
             depth or thickness.
         """
         if lay_type == "thickness":
@@ -156,7 +156,7 @@ class Parameter():
             raise TypeError(msg)
 
         if value <= 0:
-            raise ValueError("`value` must be postive.")
+            raise ValueError("`value` must be positive.")
 
         obj = cls(lay_min=[1824], lay_max=[1883],
                   par_min=[value], par_max=[value], par_rev=[False])
@@ -245,7 +245,7 @@ class Parameter():
     def from_ftl(cls, nlayers, thickness, par_min, par_max, par_rev=False):
         """Alternate constructor to instantiate a `Parameter` using FTL.
 
-        Use Fixed Thickenss Layering (FTL) to define the
+        Use Fixed Thickness Layering (FTL) to define the
         parameterization.
 
         Parameters
@@ -294,12 +294,12 @@ class Parameter():
         ----------
         wmin, wmax : float
             Minimum and maximum measured wavelengths from the
-            fundemental mode Rayleigh wave dispersion respectively.
+            fundamental mode Rayleigh wave dispersion respectively.
         nlayers : int
             Desired number of layers.
         depth_factor : [float, int], optional
             Factor by which the maximum wavelength is
-            divided to estimate the maxium depth of profiling,
+            divided to estimate the maximum depth of profiling,
             default is 2.
         increasing : bool, optional
             Indicate whether the layering thickness should be
@@ -342,7 +342,7 @@ class Parameter():
         ----------
         wmin, wmax : float
             Minimum and maximum measured wavelength from the
-            fundemental mode Rayleigh wave disperison.
+            fundamental mode Rayleigh wave disperison.
         nlayers : int
             Desired number of layers.
         par_min, par_max : float
@@ -353,7 +353,7 @@ class Parameter():
             default is `False` (i.e., no reversal allowed).
         depth_factor : [float, int], optional
             Factor by which the maximum wavelength is
-            divided to estimate the maxium depth of profiling,
+            divided to estimate the maximum depth of profiling,
             default is 2.
         increasing : bool, optional
             Determines whether LN or LNI layering is used, default
@@ -361,7 +361,7 @@ class Parameter():
         increasing_factor : float, optional
             Factor by which each subsequent layer must be thicker
             than the previous layer previous layer, default is 1.2.
-            Arguement is only used if `increasing=True`.
+            Argument is only used if `increasing=True`.
 
         Returns
         -------
@@ -398,12 +398,12 @@ class Parameter():
         ----------
         wmin, wmax : float
             Minimum and maximum measured wavelength from the
-            fundemental mode Rayleigh wave disperison.
+            fundamental mode Rayleigh wave disperison.
         nlayers : int
             Desired number of layers.
         depth_factor : [float, int], optional
             Factor by which the maximum wavelength is
-            divided to estimate the maxium depth of profiling,
+            divided to estimate the maximum depth of profiling,
             default is 2.
 
         Returns
@@ -451,7 +451,7 @@ class Parameter():
         ----------
         wmin, wmax : float
             Minimum and maximum measured wavelength from the
-            fundemental mode Rayleigh wave disperison.
+            fundamental mode Rayleigh wave disperison.
         nlayers : int
             Desired number of layers.
         par_min, par_max : float
@@ -462,7 +462,7 @@ class Parameter():
             default is `False` (i.e., no reversal allowed).
         depth_factor : [float, int], optional
             Factor by which the maximum wavelength is
-            divided to estimate the maxium depth of profiling,
+            divided to estimate the maximum depth of profiling,
             default is 2.
 
         Returns
@@ -497,14 +497,14 @@ class Parameter():
         ----------
         wmin, wmax : float
             Minimum and maximum measured wavelength from the
-            fundemental mode Rayleigh wave dispersion.
+            fundamental mode Rayleigh wave dispersion.
         lr : float
             Layering Ratio, this controls the number of layers and
             their potential thicknesses, refer to Cox and Teague
             2016 for details.
         depth_factor : [float, int], optional
             Factor by which the maximum wavelength is
-            divided to estimate the maxium depth of profiling,
+            divided to estimate the maximum depth of profiling,
             default is 2.
 
         Returns
@@ -549,7 +549,7 @@ class Parameter():
             layer_maxdepth.append(dmax+1)  # Half-space
         # ---> Otherwise, extend the current last layer
         else:
-            # Extend the deepest potential depth of the bottomost layer
+            # Extend the deepest potential depth of the bottom-most layer
             # to dmax.
             layer_maxdepth[-2] = dmax
             # Set the old last layer to the half-space
@@ -568,7 +568,7 @@ class Parameter():
         ----------
         wmin, wmax : float
             Minimum and maximum measured wavelength from the
-            fundemental mode Rayleigh wave dispersion.
+            fundamental mode Rayleigh wave dispersion.
         lr : float
             Layering Ratio, this controls the number of layers and
             their potential thicknesses, refer to Cox and Teague
@@ -581,7 +581,7 @@ class Parameter():
             default is `False` (i.e., no reversal allowed).
         depth_factor : [float, int], optional
             Factor by which the maximum wavelength is
-            divided to estimate the maxium depth of profiling,
+            divided to estimate the maximum depth of profiling,
             default is 2.
 
         Returns
@@ -628,7 +628,7 @@ class Parameter():
             Instantiated `Parameter` object to which you wish to link
             the current parameter. 
         ptype : {'vs', 'pr', 'rh', 'vp'}, optional
-            Inversion parameter, representated by the
+            Inversion parameter, represented by the
             `existing_parameter`, default is `vs`.
 
         Returns

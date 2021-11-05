@@ -3,11 +3,13 @@
 > Joseph P. Vantassel, The University of Texas at Austin
 
 [![DOI](https://zenodo.org/badge/222287042.svg)](https://zenodo.org/badge/latestdoi/222287042)
+[![PyPI - License](https://img.shields.io/pypi/l/hvsrpy)](https://github.com/jpvantassel/swprepost/blob/main/LICENSE.txt)
 [![CircleCI](https://circleci.com/gh/jpvantassel/swprepost.svg?style=svg)](https://circleci.com/gh/jpvantassel/swprepost)
 [![Documentation Status](https://readthedocs.org/projects/swprepost/badge/?version=latest)](https://swprepost.readthedocs.io/en/latest/?badge=latest)
 [![Language grade: Python](https://img.shields.io/lgtm/grade/python/g/jpvantassel/swprepost.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/jpvantassel/swprepost/context:python)
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/150eb75dee3848f5bbfac0d9f2c33644)](https://www.codacy.com/manual/jpvantassel/swprepost?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=jpvantassel/swprepost&amp;utm_campaign=Badge_Grade)
-[![codecov](https://codecov.io/gh/jpvantassel/swprepost/branch/master/graph/badge.svg)](https://codecov.io/gh/jpvantassel/swprepost)
+[![codecov](https://codecov.io/gh/jpvantassel/swprepost/branch/main/graph/badge.svg?token=N5kQxjr2RB)](https://codecov.io/gh/jpvantassel/swprepost)
+![PyPI - Python Version](https://img.shields.io/pypi/pyversions/swprepost)
 
 ## Table of Contents
 

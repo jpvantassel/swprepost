@@ -335,9 +335,8 @@ class GroundModelSuite(Suite):
 
         """
         # TODO (jpv): Add warning if nsets < navailable.
-        # TODO (jpv): Strange if statement below.
         if nmodels == "all":
-            nmodels = 1E9
+            nmodels = np.inf
 
         with open(fname, "r") as f:
             lines = f.read()
