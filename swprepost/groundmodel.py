@@ -15,7 +15,7 @@
 #     You should have received a copy of the GNU General Public License
 #     along with this program.  If not, see <https: //www.gnu.org/licenses/>.
 
-"""GroundModel class definiton."""
+"""GroundModel class definition."""
 
 import logging
 
@@ -85,7 +85,7 @@ class GroundModel():
         Specifically:
         1. Check that all `GroundModel` parameters are greater than
         zero.
-        2. Check that identifer and misfit are greater than zero.
+        2. Check that identifier and misfit are greater than zero.
         3. Check that `vp` > `vs`.
 
         Parameters
@@ -357,7 +357,7 @@ class GroundModel():
         dmax : float
             Maximum depth of discretization.
         dy : float, optional
-            Linear step of discretizaton in terms of depth, default
+            Linear step of discretization in terms of depth, default
             is 0.5 meter.
         parameter : {'vp', 'vs', 'rh', 'pr'}, optional
             Parameter to be discretized, default is 'vs'.
@@ -613,7 +613,7 @@ class GroundModel():
 
     @classmethod
     def _gm(cls):
-        """Helper to allow conveinient subclassing."""
+        """Helper to allow convenient subclassing."""
         return GroundModel
 
     @classmethod
@@ -630,7 +630,7 @@ class GroundModel():
             defining multiple GroundModels is provided only the first
             one is parsed.
         identifier : str
-            Indentifier string.
+            Identifier string.
         misfit : str
             Misfit string.
 

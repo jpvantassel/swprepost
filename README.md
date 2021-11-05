@@ -3,11 +3,13 @@
 > Joseph P. Vantassel, The University of Texas at Austin
 
 [![DOI](https://zenodo.org/badge/222287042.svg)](https://zenodo.org/badge/latestdoi/222287042)
+[![PyPI - License](https://img.shields.io/pypi/l/hvsrpy)](https://github.com/jpvantassel/swprepost/blob/main/LICENSE.txt)
 [![CircleCI](https://circleci.com/gh/jpvantassel/swprepost.svg?style=svg)](https://circleci.com/gh/jpvantassel/swprepost)
 [![Documentation Status](https://readthedocs.org/projects/swprepost/badge/?version=latest)](https://swprepost.readthedocs.io/en/latest/?badge=latest)
 [![Language grade: Python](https://img.shields.io/lgtm/grade/python/g/jpvantassel/swprepost.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/jpvantassel/swprepost/context:python)
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/150eb75dee3848f5bbfac0d9f2c33644)](https://www.codacy.com/manual/jpvantassel/swprepost?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=jpvantassel/swprepost&amp;utm_campaign=Badge_Grade)
-[![codecov](https://codecov.io/gh/jpvantassel/swprepost/branch/master/graph/badge.svg)](https://codecov.io/gh/jpvantassel/swprepost)
+[![codecov](https://codecov.io/gh/jpvantassel/swprepost/branch/main/graph/badge.svg?token=N5kQxjr2RB)](https://codecov.io/gh/jpvantassel/swprepost)
+![PyPI - Python Version](https://img.shields.io/pypi/pyversions/swprepost)
 
 ## Table of Contents
 
@@ -40,8 +42,8 @@ following:
 
 _Note: For software, version specific citations should be preferred to general_
 _concept citations, such as that listed above. To generate a version specific_
-_citation for `swprepost`, please use the citation tool for that specific_
-_version on the `swprepost` [archive](https://doi.org/10.5281/zenodo.3839998)._
+_citation for _swprepost_, please use the citation tool for that specific_
+_version on the _swprepost_ [archive](https://doi.org/10.5281/zenodo.3839998)._
 
 For the motivation behind the development of _swprepost_ and its role in a
 larger project focused on developing a complete and rigorous workflow for
@@ -116,11 +118,11 @@ plt.show()
 so. A detailed set of instructions can be found
 [here](https://jpvantassel.github.io/python3-course/#/intro/installing_python).
 
-2.  If you have not installed `swprepost` previously use
+2.  If you have not installed _swprepost_ previously use
 `pip install swprepost`. If you are not familiar with `pip`, a useful tutorial
 can be found [here](https://jpvantassel.github.io/python3-course/#/intro/pip).
 If you have an earlier version and would like to upgrade to the latest version
-of `swprepost` use `pip install swprepost --upgrade`.
+of _swprepost_ use `pip install swprepost --upgrade`.
 
 3.  Confirm that `swprepost` has installed/updated successfully by examining the
 last few lines of text displayed in the console.
@@ -133,13 +135,13 @@ last few lines of text displayed in the console.
 
 2.  Explore the Jupyter notebooks in the
   [basic](https://github.com/jpvantassel/swprepost/tree/main/examples/basic)
-  directory for a no-coding-required introduction to the `swprepost` package.
+  directory for a no-coding-required introduction to the _swprepost_ package.
   If you have not installed `Jupyter`, detailed instructions can be found
   [here](https://jpvantassel.github.io/python3-course/#/intro/installing_jupyter).
 
 3.  Move to the [adv](https://github.com/jpvantassel/swprepost/tree/main/examples/adv)
-  directory and follow the Jupyter notebook title `SWinvertWorkflow.ipynb` for
-  an example application of `swprepost` to the SWinvert workflow
+  directory and follow the Jupyter notebook title `example_swinvert_workflow.ipynb` for
+  an example application of _swprepost_ to the SWinvert workflow
   (Vantassel and Cox, 2021).
 
 4.  Enjoy!
