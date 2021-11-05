@@ -3,6 +3,6 @@
 Installation
 ============
 
-``pip install swprepost``
+``pip install swprepost`` or ``pip install swprepost --upgrade``
 
 ``pip`` will handle the rest!
