@@ -140,12 +140,20 @@ class DispersionSet():
 
         """
         if nrayleigh == 0 and nlove == 0:
-            raise ValueError(f"`nrayleigh` and `nlove` cannot both be 0.")
+            raise ValueError("`nrayleigh` and `nlove` cannot both be 0.")
 
         rayleigh, love = None, None
         previous_id, previous_misfit = "start", "0"
         for model_info in regex.dcset.finditer(data):
-            identifier, misfit, wave_type, dcs_data = model_info.groups()
+            groups = model_info.groups()
+            # Value come out of the regex in two different orders depending on the order
+            # of the metadata.
+            if groups[0] is None:
+                wave_type, identifier, misfit = groups[3:6]
+            else:
+                identifier, misfit, wave_type = groups[:3]
+
+            dcs_data = groups[-1]
 
             if identifier == previous_id or previous_id == "start":
                 if wave_type == "Rayleigh":

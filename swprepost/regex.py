@@ -23,10 +23,17 @@ number = r"\d+.?\d*[eE]?[+-]?\d*"
 
 # DC
 pair = f"{number} {number}\n"
-model_txt = r"# Layered model (\d+): value=(\d+.?\d*)"
-wave_txt = r"# \d+ (Rayleigh|Love) dispersion mode\(s\)"
+model_txt = r"# Layered model (\d+): value=(\d+.?\d*)\n"
+wave_txt = r"# \d+ (Rayleigh|Love) dispersion mode\(s\)\n"
 mode_txt = r"# Mode \d+\n"
-dcset_txt = f"{model_txt}\n{wave_txt}\n.*\n((?:{mode_txt}(?:{pair})+)+)"
+cpu_txt = r"# CPU Time=.* ms\n"
+
+# Metadata is in two orders on some systems
+dcset_txt = (
+        f"(?:(?:{model_txt}{wave_txt}{cpu_txt})|"
+            f"(?:{wave_txt}{cpu_txt}{model_txt}))"
+        f"((?:{mode_txt}(?:{pair})+)+)"
+        )
 
 model = re.compile(model_txt)
 mode = re.compile(mode_txt)
@@ -35,7 +42,7 @@ dc_data = re.compile(f"({number}) ({number})")
 
 # GM
 quad = f"{number} {number} {number} {number}\n"
-gm_txt = f"{model_txt}\n\d+\n((?:{quad})+)"
+gm_txt = f"{model_txt}\n\\d+\n((?:{quad})+)"
 
 gm = re.compile(gm_txt)
 gm_data = re.compile(f"({number}) ({number}) ({number}) ({number})")
