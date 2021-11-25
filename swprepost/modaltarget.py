@@ -452,7 +452,7 @@ class ModalTarget(CurveUncertain):
             self._y = new_vel
             self._yerr = new_velstd
         else:
-            return Target(new_frq, new_vel, new_velstd)
+            return ModalTarget(new_frq, new_vel, new_velstd, type=self.type, mode=self.mode)
 
     def easy_resample(self, pmin, pmax, pn, res_type="log", domain="wavelength", inplace=False):
         """Resample dispersion curve.
@@ -705,13 +705,19 @@ class ModalTarget(CurveUncertain):
 
     def __eq__(self, obj):
         """Check if two target objects are equal."""
-        if self.frequency.size == obj.frequency.size:
-            for attr in ["frequency", "velocity", "velstd"]:
-                for f1, f2 in zip(np.round(getattr(self, attr), 6), np.round(getattr(obj, attr), 6)):
-                    if f1 != f2:
-                        return False
-        else:
+        # TODO (jpv): Add optional attr to attrs when deprecate Target.
+        for opt_attr in ["mode", "type"]:
+            if getattr(self, opt_attr) != getattr(obj, opt_attr):
+                return False
+
+        if self.frequency.size != obj.frequency.size:
             return False
+
+        for attr in ["frequency", "velocity", "velstd"]:
+            for f1, f2 in zip(np.round(getattr(self, attr), 6), np.round(getattr(obj, attr), 6)):
+                if f1 != f2:
+                    return False
+
         return True
 
     def __repr__(self):
