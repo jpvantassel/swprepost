@@ -32,4 +32,4 @@ from .groundmodelsuite import GroundModelSuite
 from .parameter import Parameter
 from .parameterization import Parameterization
 
-from .target import Target
+from .modaltarget import Target, ModalTarget

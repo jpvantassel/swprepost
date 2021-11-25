@@ -29,7 +29,7 @@ from swprepost import Curve
 from swprepost import CurveUncertain
 
 
-class Target(CurveUncertain):
+class ModalTarget(CurveUncertain):
     """Class for manipulating inversion target information.
 
     `Target` is a class for loading, manipulating, and writting
@@ -44,7 +44,7 @@ class Target(CurveUncertain):
 
     """
 
-    def __init__(self, frequency, velocity, velstd=0.05):
+    def __init__(self, frequency, velocity, velstd=0.05, type="rayleigh", mode=(0,)):
         """Initialize a `Target` object.
 
         Parameters
@@ -57,6 +57,11 @@ class Target(CurveUncertain):
             dispersion curve. If `float`, a constant coefficient of
             variation (COV) is applied, the default is 0.05. If
             `array-like`, standard deviation is defined point-by-point.
+        type : {"rayleigh", "love"}, optional
+            Type of modal target, default is "rayleigh".
+        mode : {list}, optional
+            Mode numbers associated with target data, default is (0,)
+            for the fundamental mode.
 
         Returns
         -------
@@ -79,6 +84,9 @@ class Target(CurveUncertain):
 
         self._sort_data()
         self.dc_weight = 1
+
+        self.type = str(type)
+        self.mode = list(mode)
 
     def _sort_data(self):
         """Sort attributes by frequency from smallest to largest."""
@@ -158,7 +166,7 @@ class Target(CurveUncertain):
         return 0.5*(((p+pstd)/p) + (p/(p-pstd)))
 
     @classmethod
-    def from_csv(cls, fname, commentcharacter="#"):
+    def from_csv(cls, fname, commentcharacter="#", type="rayleigh", mode=(0,)):
         """Construct instance from csv file.
 
         Read a comma seperated values (csv) file with header line(s) to
@@ -208,10 +216,10 @@ class Target(CurveUncertain):
             frequency.append(float(a))
             velocity.append(float(b))
             velstd.append(float(c))
-        return cls(frequency, velocity, velstd)
+        return cls(frequency, velocity, velstd, type=type, mode=mode)
 
     @classmethod
-    def from_wavelength(cls, wavelength, velocity, velstd=0.05):
+    def from_wavelength(cls, wavelength, velocity, velstd=0.05, type="rayleigh", mode=(0,)):
         """Create from data processed in terms of wavelength.
 
         Parameters
@@ -252,7 +260,7 @@ class Target(CurveUncertain):
         b = lower.resample(xx=frequency, interp1d_kwargs=dict(
             fill_value="extrapolate"))[1]
         velstd = (abs(a - velocity) + abs(b - velocity))/2
-        return cls(frequency, velocity, velstd=velstd)
+        return cls(frequency, velocity, velstd=velstd, type=type, mode=mode)
 
     def setcov(self, cov):
         """Set coefficient of variation (COV) to a constant value.
@@ -654,9 +662,9 @@ class Target(CurveUncertain):
                          f"        <log>swprepost by Joseph P. Vantassel</log>",
                          f"        <Mode>",
                          f"          <slowness>Phase</slowness>",
-                         f"          <polarisation>Rayleigh</polarisation>",
+                         f"          <polarisation>{self.type.capitalize()}</polarisation>",
                          f"          <ringIndex>0</ringIndex>",
-                         f"          <index>0</index>",
+                         f"          <index>{self.mode[0]}</index>",
                          f"        </Mode>"]
         elif version in ["3"]:
             contents += [f"  <TargetList>",
@@ -672,9 +680,9 @@ class Target(CurveUncertain):
                          f"        <enabled>true</enabled>",
                          f"        <Mode>",
                          f"          <slowness>Phase</slowness>",
-                         f"          <polarization>Rayleigh</polarization>",
+                         f"          <polarization>{self.type.capitalize()}</polarization>",
                          f"          <ringIndex>0</ringIndex>",
-                         f"          <index>0</index>",
+                         f"          <index>>{self.mode[0]}</index>",
                          f"        </Mode>"]
         else:
             raise NotImplementedError
@@ -940,3 +948,6 @@ class Target(CurveUncertain):
 
         if ax_was_none:
             return (fig, ax)
+
+# for backwards compatability
+Target = ModalTarget
