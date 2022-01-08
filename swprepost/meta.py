@@ -17,4 +17,9 @@
 
 """Metadata for swprepost."""
 
+# TODO (jpv): Update before next release.
 __version__ = "1.0.0"
+
+# These versions are those consistent with the current and prior
+# version(s) of the high-performance computing application swbatch.
+SUPPORTED_GEOPSY_VERSIONS = ["2.10.1", "3.4.2"]

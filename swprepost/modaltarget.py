@@ -20,52 +20,50 @@
 import tarfile as tar
 import os
 import warnings
-import re
 
 import matplotlib.pyplot as plt
 import numpy as np
+from numpy.core.defchararray import mod
 
 from swprepost import Curve
 from swprepost import CurveUncertain
+from swprepost.check_utils import check_geopsy_version
+from .regex import polarization_exec, modenumber_exec, statpoint_exec
 
 class ModalTarget(CurveUncertain):
-    """Class for manipulating inversion target information.
+    """Target information for a surface wave mode.
 
-    `Target` is a class for loading, manipulating, and writting
-    target information in preparation for surface wave inversion.
-
-    Attributes
-    ----------
-    frequency, velocity, velstd : array-like
-        Vectors of frequency, velocity, and velocity standard
-        deviation values in the experimental dispersion
-        curve (one per point).
+    `ModalTarget` is a class for loading, manipulating, and writting
+    surface wave target information for a single mode in preparation
+    for surface wave inversion.
 
     """
 
-    def __init__(self, frequency, velocity, velstd=0.05, type="rayleigh", mode=(0,)):
-        """Initialize a `Target` object.
+    def __init__(self, frequency, velocity, velstd, description=(("rayleigh", 0),)):
+        """Initialize a `ModalTarget` object.
 
         Parameters
         ----------
-        frequency, velocity : array-like
-            Vector of frequency and velocity values respectively
-            in the experimental dispersion curve (one per point).
-        velstd : float, array-like, optional
-            Velocity standard deviation of the experimental
-            dispersion curve. If `float`, a constant coefficient of
-            variation (COV) is applied, the default is 0.05. If
-            `array-like`, standard deviation is defined point-by-point.
-        type : {"rayleigh", "love"}, optional
-            Type of modal target, default is "rayleigh".
-        mode : {list}, optional
-            Mode numbers associated with target data, default is (0,)
-            for the fundamental mode.
+        frequency, velocity, velstd : array-like
+            Arrays of frequency, velocity, and velocity standard
+            deviation values to fully describe a mode of
+            experimental dispersion data (one per point).
+        description : tuple of tuples
+            Each `ModalTarget` may describe one or more wavetypes and/or
+            one or more modes. Each potential description of the
+            ModalTarget is listed as tuple of the form
+            `(wavetype, modenumber)` where `wavetype` is either
+            "rayleigh" or "love" and `modenumber` is a non-negative
+            integer. A mode number of zero refers to the fundamental
+            mode. The potential descriptions of a mode are grouped into
+            a tuple containing all possible descriptions. The default
+            description is that of the fundamental Rayleigh mode
+            expressed as `(("rayleigh", 0),)`.
 
         Returns
         -------
-        Target
-            Instantiated `Target` object.
+        ModalTarget
+            Instantiated `ModalTarget` object.
 
         Raises
         ------
@@ -76,16 +74,32 @@ class ModalTarget(CurveUncertain):
             If `velstd` is `float` and the value is less than zero.
 
         """
+        # TODO(jpv): To remove in version >1.1.0.
         if isinstance(velstd, float):
-            velstd = (np.array(velocity, dtype=np.double)*velstd).tolist()
+            msg = f"Setting velstd as a float is deprecated and will be removed after v1.1.0"
+            warnings.warn(msg, category=DeprecationWarning)
+            velstd = np.array(velocity, dtype=np.double)*velstd
 
         super().__init__(x=frequency, y=velocity, yerr=velstd, xerr=None)
 
         self._sort_data()
         self.dc_weight = 1
 
-        self.type = str(type)
-        self.mode = list(mode)
+        self.description = self._check_description(description)
+
+    # TODO(jpv): Replace with Typing.
+    def _check_description(self, description):
+        """Check description complies with expected format."""
+        polarizations = ["rayleigh", "love"]
+        for _description in description:
+            polarization, modenumber = _description
+            if polarization not in polarizations:
+                raise ValueError(f"polarization={polarization} is not recognized, must be in {polarizations}.")
+            if isinstance(modenumber, (int,)):
+                raise TypeError(f"modenumber must be non-negative integer, not type {type(modenumber)}.")
+            if modenumber < 0:
+                raise ValueError(f"modenumber={modenumber} is negative, must be non-negative integer.")
+        return description
 
     def _sort_data(self):
         """Sort attributes by frequency from smallest to largest."""
@@ -614,7 +628,7 @@ class ModalTarget(CurveUncertain):
             for c_frq, c_vel, c_velstd in zip(self.frequency, self.velocity, self.velstd):
                 f.write(f"{c_frq},{c_vel},{c_velstd}\n")
 
-    def to_target(self, fname_prefix, version="3"):
+    def to_target(self, fname_prefix, version="3.4.2"):
         """Write info to the .target file format used by `Dinver`.
 
         Parameters
@@ -622,8 +636,8 @@ class ModalTarget(CurveUncertain):
         fname_prefix : str
             Name of target file without the .target suffix, a
             relative or full path may be provided.
-        version : {'3', '2'}, optional
-            Major version of Geopsy, default is version 3.
+        version : {'3.4.2', '2.10.1'}, optional
+            Version of Geopsy, default is version '3.4.2'.
 
         Returns
         -------
@@ -635,12 +649,23 @@ class ModalTarget(CurveUncertain):
         NotImplementedError
             If `version` does not match the options provided.
 
+        Notes
+        -----
+        In previous versions of `swprepost` (v1.0.0 and earlier) an
+        attempt was made to support all versions of Dinver's .target
+        and .param formats. However, this has become untenable due to
+        the number and frequency of breaking changes that occur to these
+        formats. Therefore, in lieu of supporting all versions,
+        `swprepost` will seek to support only those versions directly
+        associated with the open-source high-performance computing
+        application `swbatch`.
+
         """
         from swprepost import TargetSet
         TargetSet([self]).to_target(fname_prefix=fname_prefix, version=version)
 
     @classmethod
-    def from_target(cls, fname_prefix, version="3"):
+    def from_target(cls, fname_prefix, version="3.4.2"):
         """Create from target file.
 
         Note that this method is still largely experimental and may
@@ -651,89 +676,111 @@ class ModalTarget(CurveUncertain):
         fname_prefix : str
             Name of target file to be opened excluding the `.target`
             suffix, may include the relative or full path.
-        version : {'2', '3'}, optional
+        version : {'2.10.1', '3.10.2'}, optional
             Major version of Geopsy that was used to write the target
-            file, default is '3'.
+            file, default is '3.4.2'.
 
         Returns
         -------
-            Instantiated `Target` object.
+        ModalTarget
+            Instantiated `ModalTarget` object.
 
         """
-        with tar.open(fname_prefix+".target", "r:gz") as a:
-            a.extractall()
+        from swprepost import TargetSet
+        targetset = TargetSet.from_target(fname_prefix=fname_prefix, version=version)
+        ntargets = len(targetset.targets)
 
-        try:
-            with open("contents.xml", "r", encoding="utf-8") as f:
-                lines = f.read()
-            if "<Dinver>" not in lines[:10]:
-                raise RuntimeError
-        except (UnicodeDecodeError, RuntimeError):
-            with open("contents.xml", "r", encoding="utf_16_le") as f:
-                lines = f.read()
-            if "<Dinver>" not in lines[:10]:
-                raise ValueError("File encoding not recognized.")
+        if ntargets > 0:
+            msg = f"{fname_prefix}.target contains {ntargets} ModalTargets, only returning the first."
+            warnings.warn(msg, category=RuntimeWarning)
 
-        os.remove("contents.xml")
+        return targetset.targets[0]
 
-        number = f"(-?\d+.?\d*[eE]?[+-]?\d*)"
-        newline = r"\W+"
-        regex = f"<x>{number}</x>{newline}<mean>{number}</mean>{newline}<stddev>{number}</stddev>"
-        search = re.findall(regex, lines)
-        xs, means, stddevs = np.zeros(len(search)), np.zeros(
-            len(search)), np.zeros(len(search))
-        for cid, item in enumerate(search):
-            tmp_x, tmp_mean, tmp_stddev = item
-            xs[cid] = float(tmp_x)
-            means[cid] = float(tmp_mean)
-            stddevs[cid] = float(tmp_stddev)
+    def _parse_modeltarget_from_text(self, mc_text, version):
+        """Parse information from ModalCurveTarget text.
+        
+        Paramters
+        ---------
+        mc_text : str
+            Text for ModalCurveTarget that spans from
+            <ModalCurveTarget> to </ModalCurveTarget> in .target xml.
+        version : {'2.10.1', '3.4.2'}
+            Version of Geopsy that was used to write the target file.
+
+        Returns
+        -------
+        Tuple
+            Of the form `(frequency, velocity, velstd, description)`
+            which can be used to create a `ModalTarget`.
+
+        """
+        version = check_geopsy_version(version)
+
+        # Polarization -> return {rayleigh, love}
+        polarization = polarization_exec.finall(mc_text)
+
+        # Mode -> return int
+        modenumber = modenumber_exec.findall(mc_text)
+
+        # StatPoints {ndarray}
+        statpoints = statpoint_exec.findall(mc_text)
+        xs = np.empty(len(statpoints))
+        means = np.empty(len(statpoints))
+        stddevs =   np.empty(len(statpoints))
+        for cid, statpoint in enumerate(statpoints):
+            _x, _mean, _stddev = statpoint
+            xs[cid] = float(_x)
+            means[cid] = float(_mean)
+            stddevs[cid] = float(_stddev)
 
         frequency = xs
         velocity = 1/means
-        if version == "2":
+        if version == "2.10.1":
             inv_stddevs = 1/stddevs
             velstd = 0.5*(np.sqrt(inv_stddevs*inv_stddevs +
                                   4*velocity*velocity) - inv_stddevs)
-        elif version == "3":
+        elif version == "3.4.2":
             cov = stddevs - np.sqrt(stddevs*stddevs - 2*stddevs + 2)
             velstd = cov*velocity
         else:
-            msg = f"version={version}, is not recognized, refer to documentation for accepted versions."
-            raise NotImplementedError(msg)
+            pass
 
-        return cls(frequency, velocity, velstd)
+        description = []
+        for _polarization, _modenumber in zip(polarization, modenumber):
+            description.append((_polarization, _modenumber))
+
+        return (frequency, velocity, velstd, description)
 
     def __eq__(self, obj):
-        """Check if two target objects are equal."""
-        # TODO (jpv): Add optional attr to attrs when deprecate Target.
-        for opt_attr in ["mode", "type"]:
-            if getattr(self, opt_attr) != getattr(obj, opt_attr):
-                return False
-
-        if self.frequency.size != obj.frequency.size:
+        """Check if two `ModalTarget`s are equal."""
+        if not isinstance(obj, ModalTarget):
             return False
 
-        for attr in ["frequency", "velocity", "velstd"]:
-            for f1, f2 in zip(np.round(getattr(self, attr), 6), np.round(getattr(obj, attr), 6)):
-                if f1 != f2:
+        for pot_self_dsc, pot_obj_dsc in zip(self.description, obj.description):
+            for _self_dsc, _obj_dsc in zip(pot_self_dsc, pot_obj_dsc):
+                if _self_dsc != _obj_dsc:
                     return False
+
+        for attr in ["frequency", "velocity", "velstd"]:
+            if not np.allclose(getattr(self, attr), getattr(obj, attr)):
+                return False
 
         return True
 
     def __repr__(self):
-        """Unambiguous representation of Target object."""
+        """Unambiguous representation of a `ModalTarget`."""
         frq_str = str(np.round(self.frequency, 2))
         vel_str = str(np.round(self.velocity, 2))
         std_str = str(np.round(self.velstd, 2))
-        return f"Target(frequency={frq_str}, velocity={vel_str}, velstd={std_str})"
+        return f"ModalTarget(frequency={frq_str}, velocity={vel_str}, velstd={std_str}, description={self.description})"
 
     def __str__(self):
-        """Human readable represetnation of a Target object."""
-        return f"Target with {len(self.frequency)} frequency/wavelength points"
+        """Human readable representation of a `ModalTarget`."""
+        return f"ModalTarget with {len(self.frequency)} frequency points."
 
     def plot(self, x="frequency", y="velocity", yerr="velstd", ax=None,
              figkwargs=None, errorbarkwargs=None):  # pragma: no cover
-        """Plot `Target` information.
+        """Plot `ModalTarget` information.
 
         Parameters
         ----------
@@ -755,7 +802,6 @@ class ModalTarget(CurveUncertain):
         errorbarkwargs : dict
             Additional keyword arguments defining the styling of the
             errorbar plot.
-
 
         Returns
         -------
@@ -807,5 +853,5 @@ class ModalTarget(CurveUncertain):
         if ax_was_none:
             return (fig, ax)
 
-# for backwards compatability
+# TODO(jpv): remove in version after 1.1.0, here for backwards comptability.
 Target = ModalTarget

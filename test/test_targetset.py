@@ -41,8 +41,7 @@ class Test_Target(TestCase):
         self.assertTrue(isinstance(targetset, swprepost.TargetSet))
 
     def test_to_target(self):
-        for version in ["2", "3"]:
-            # v2
+        for version in ["2.10.1", "3.4.2"]:
             r0 = swprepost.ModalTarget(frequency=[1, 3, 10], velocity=[
                                        100, 200, 300], velstd=[10, 20, 30], type="rayleigh", mode=(0,))
             r1 = swprepost.ModalTarget(frequency=[1, 3, 10], velocity=[
@@ -55,7 +54,6 @@ class Test_Target(TestCase):
                 targetset.to_target(fname_prefix, version=version)
                 self.assertTrue(os.path.exists(fname))
             finally:
-                # pass
                 os.remove(fname)
 
             r0 = swprepost.ModalTarget(frequency=[1, 3, 10], velocity=[
@@ -70,7 +68,6 @@ class Test_Target(TestCase):
                 targetset.to_target(fname_prefix, version=version)
                 self.assertTrue(os.path.exists(fname))
             finally:
-                # pass
                 os.remove(fname)
 
     # TODO (jpv): Validate content of the write, presently only checking if the write was successful.

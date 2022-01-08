@@ -19,10 +19,11 @@
 
 import re
 
-number = r"\d+.?\d*[eE]?[+-]?\d*"
+NUMBER = r"\d+.?\d*[eE]?[+-]?\d*"
+NEWLINE = r"\W+"
 
 # DC
-pair = f"{number} {number}\n"
+pair = f"{NUMBER} {NUMBER}\n"
 model_txt = r"# Layered model (\d+): value=(\d+.?\d*)"
 wave_txt = r"# \d+ (Rayleigh|Love) dispersion mode\(s\)"
 mode_txt = r"# Mode \d+\n"
@@ -31,11 +32,32 @@ dcset_txt = f"{model_txt}\n{wave_txt}\n.*\n((?:{mode_txt}(?:{pair})+)+)"
 model = re.compile(model_txt)
 mode = re.compile(mode_txt)
 dcset = re.compile(dcset_txt)
-dc_data = re.compile(f"({number}) ({number})")
+dc_data = re.compile(f"({NUMBER}) ({NUMBER})")
 
 # GM
-quad = f"{number} {number} {number} {number}\n"
+quad = f"{NUMBER} {NUMBER} {NUMBER} {NUMBER}\n"
 gm_txt = f"{model_txt}\n\d+\n((?:{quad})+)"
 
 gm = re.compile(gm_txt)
-gm_data = re.compile(f"({number}) ({number}) ({number}) ({number})")
+gm_data = re.compile(f"({NUMBER}) ({NUMBER}) ({NUMBER}) ({NUMBER})")
+
+# TargetSet
+# ---------
+# Identify the text associated with a single `ModalCurve`.
+modalcurve_expr = r"<ModalCurve>(.*?)</ModalCurve>"
+modalcurve_exec = re.compile(modalcurve_expr, re.DOTALL)
+
+# ModalTarget
+# -----------
+# Given the text associated with a single `ModalCurve` ->
+# Find the associated polarization (str).
+polarization_expr = r"<polarisation>(Rayleigh|Love)</polarisation>"
+polarization_exec = re.compile(polarization_expr)
+
+# Find the associated Mode (number).
+modenumber_expr = r"<index>(\d+)</index>"
+modenumber_exec = re.compile(modenumber_expr)
+
+# Find the associated StatPoints (tuple).
+statpoint_expr = f"<x>({NUMBER})</x>{NEWLINE}<mean>({NUMBER})</mean>{NEWLINE}<stddev>({NUMBER})</stddev>"
+statpoint_exec = re.compile(statpoint_expr)
