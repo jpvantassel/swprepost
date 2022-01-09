@@ -21,32 +21,39 @@ import warnings
 
 from .meta import SUPPORTED_GEOPSY_VERSIONS
 
+
 def check_geopsy_version(version):
     """Check if Geopsy version is supported by `swprepost`.
-    
+
     Parameters
     ----------
     version : str
         Full version of Geopsy of the form `Major.Minor.Micro`.
-    
+
     Returns
     -------
     str
         Version specified if valid, raise `NotImplementedError` otherwise. 
 
     """
-    # TODO (jpv): Remove in swprocess version 1.3.0 or later.
+    # TODO (jpv): Remove in swprocess version >1.1.0.
     # Provides backwards compatability to v1.0.0 and earlier.
     if version == "2":
         version = "2.10.1"
-        warnings.warn(f"Only specifying the major version is no longer permitted, setting version to {version}.")
+        msg = f"Proving only Geopsy's major version is no longer permitted, "
+        msg += f"setting version to {version}."
+        warnings.warn(msg, DeprecationWarning)
     elif version == "3":
         version = "3.4.2"
-        warnings.warn(f"Only specifying the major version is no longer permitted, setting version to {version}.")
+        msg = f"Proving only Geopsy's major version is no longer permitted, "
+        msg += f"setting version to {version}."
+        warnings.warn(msg, DeprecationWarning)
     else:
         pass
 
     if version in SUPPORTED_GEOPSY_VERSIONS:
         return version
     else:
-        raise NotImplementedError(f"The version {version} is not supported, use one of the following {SUPPORTED_GEOPSY_VERSIONS}.")
+        msg = f"The version {version} is not supported, "
+        msg += f"use one of the following {SUPPORTED_GEOPSY_VERSIONS}."
+        raise NotImplementedError(msg)

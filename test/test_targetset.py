@@ -26,58 +26,77 @@ from testtools import unittest, TestCase, get_full_path
 import swprepost
 
 
-class Test_Target(TestCase):
+class Test_TargetSet(TestCase):
 
     def setUp(self):
         self.full_path = get_full_path(__file__)
 
     def test_init(self):
-        r0 = swprepost.ModalTarget(frequency=[1, 3, 10], velocity=[
-                                   100, 200, 300], velstd=[10, 20, 30], type="rayleigh", mode=(0,))
-        r1 = swprepost.ModalTarget(frequency=[1, 3, 10], velocity=[
-                                   200, 300, 400], velstd=[20, 30, 40], type="rayleigh", mode=(1,))
+        r0 = swprepost.ModalTarget(frequency=[1, 3, 10],
+                                   velocity=[100, 200, 300],
+                                   velstd=[10, 20, 30],
+                                   description=(("rayleigh", 0),))
+        r1 = swprepost.ModalTarget(frequency=[1, 3, 10],
+                                   velocity=[200, 300, 400],
+                                   velstd=[20, 30, 40],
+                                   description=(("rayleigh", 1),))
         targets = [r0, r1]
         targetset = swprepost.TargetSet(targets)
         self.assertTrue(isinstance(targetset, swprepost.TargetSet))
 
-    def test_to_target(self):
+    # def test_from_target(self):
+
+    def test_to_and_from_target(self):
         for version in ["2.10.1", "3.4.2"]:
-            r0 = swprepost.ModalTarget(frequency=[1, 3, 10], velocity=[
-                                       100, 200, 300], velstd=[10, 20, 30], type="rayleigh", mode=(0,))
-            r1 = swprepost.ModalTarget(frequency=[1, 3, 10], velocity=[
-                                       200, 300, 400], velstd=[20, 30, 40], type="rayleigh", mode=(1,))
+            r0 = swprepost.ModalTarget(frequency=[1, 3, 10],
+                                       velocity=[100, 200, 300],
+                                       velstd=[10, 20, 30],
+                                       description=(("rayleigh", 0),))
+            r1 = swprepost.ModalTarget(frequency=[1, 3, 10],
+                                       velocity=[200, 300, 400],
+                                       velstd=[20, 30, 40],
+                                       description=(("rayleigh", 1),))
             targets = [r0, r1]
-            targetset = swprepost.TargetSet(targets)
+            expected = swprepost.TargetSet(targets)
             fname_prefix = "r0r1"
             fname = f"{fname_prefix}.target"
             try:
-                targetset.to_target(fname_prefix, version=version)
-                self.assertTrue(os.path.exists(fname))
+                expected.to_target(fname_prefix, version=version)
+                returned = swprepost.TargetSet.from_target(fname_prefix,
+                                                           version=version)
+                self.assertEqual(expected, returned)
             finally:
                 os.remove(fname)
 
-            r0 = swprepost.ModalTarget(frequency=[1, 3, 10], velocity=[
-                                       100, 200, 300], velstd=[10, 20, 30], type="rayleigh", mode=(0,))
-            l0 = swprepost.ModalTarget(frequency=[1, 3, 10], velocity=[
-                                       200, 300, 400], velstd=[20, 30, 40], type="love", mode=(0,))
+            r0 = swprepost.ModalTarget(frequency=[1, 3, 10],
+                                       velocity=[100, 200, 300],
+                                       velstd=[10, 20, 30],
+                                       description=(("rayleigh", 0),))
+            l0 = swprepost.ModalTarget(frequency=[1, 3, 10],
+                                       velocity=[200, 300, 400],
+                                       velstd=[20, 30, 40],
+                                       description=(("love", 0),))
             targets = [r0, l0]
-            targetset = swprepost.TargetSet(targets)
+            expected = swprepost.TargetSet(targets)
             fname_prefix = "r0l0"
             fname = f"{fname_prefix}.target"
             try:
-                targetset.to_target(fname_prefix, version=version)
-                self.assertTrue(os.path.exists(fname))
+                expected.to_target(fname_prefix, version=version)
+                returned = swprepost.TargetSet.from_target(fname_prefix,
+                                                           version=version)
+                self.assertEqual(expected, returned)
             finally:
                 os.remove(fname)
 
-    # TODO (jpv): Validate content of the write, presently only checking if the write was successful.
-    # This can easily be done after implementing `from_target` classmethod for TargetSet.
-
     def test_cut(self):
-        r0 = swprepost.ModalTarget(frequency=[1, 3, 10], velocity=[
-                                   100, 200, 300], velstd=[10, 20, 30], type="rayleigh", mode=(0,))
-        r1 = swprepost.ModalTarget(frequency=[1, 3, 10], velocity=[
-                                   200, 300, 400], velstd=[20, 30, 40], type="rayleigh", mode=(1,))
+        r0 = swprepost.ModalTarget(frequency=[1, 3, 10],
+                                   velocity=[100, 200, 300],
+                                   velstd=[10, 20, 30],
+                                   description=(("rayleigh", 0),))
+        r1 = swprepost.ModalTarget(frequency=[1, 3, 10],
+                                   velocity=[200, 300, 400],
+                                   velstd=[20, 30, 40],
+                                   description=(("rayleigh", 1),))
         targets = [r0, r1]
         targetset = swprepost.TargetSet(targets)
         targetset.cut(2, 8, domain="frequency")
@@ -85,13 +104,11 @@ class Test_Target(TestCase):
         expected_r0 = swprepost.ModalTarget(frequency=[3],
                                             velocity=[200],
                                             velstd=[20],
-                                            type="rayleigh",
-                                            mode=(0,))
+                                            description=(("rayleigh", 0),))
         expected_r1 = swprepost.ModalTarget(frequency=[3],
                                             velocity=[300],
                                             velstd=[30],
-                                            type="rayleigh",
-                                            mode=(1,))
+                                            description=(("rayleigh", 1),))
         returned_r0, returned_r1 = targetset.targets
         self.assertEqual(returned_r0, expected_r0)
         self.assertEqual(returned_r1, expected_r1)
@@ -100,11 +117,11 @@ class Test_Target(TestCase):
         r0 = swprepost.ModalTarget(frequency=np.linspace(1, 9, 10),
                                    velocity=np.linspace(100, 300, 10),
                                    velstd=np.linspace(10, 30, 10),
-                                   type="rayleigh", mode=(0,))
+                                   description=(("rayleigh", 0),))
         r1 = swprepost.ModalTarget(frequency=np.linspace(1, 9, 10),
                                    velocity=np.linspace(200, 400, 10),
                                    velstd=np.linspace(20, 40, 10),
-                                   type="rayleigh", mode=(1,))
+                                   description=(("rayleigh", 1),))
         targets = [r0, r1]
         targetset = swprepost.TargetSet(targets)
 
@@ -123,11 +140,11 @@ class Test_Target(TestCase):
             expected_r0 = swprepost.ModalTarget(frequency=fs,
                                                 velocity=fs*25+75,
                                                 velstd=fs*2.5+7.5,
-                                                type="rayleigh", mode=(0,))
+                                                description=(("rayleigh", 0),))
             expected_r1 = swprepost.ModalTarget(frequency=fs,
                                                 velocity=fs*25+175,
                                                 velstd=fs*2.5+17.5,
-                                                type="rayleigh", mode=(1,))
+                                                description=(("rayleigh", 1),))
             returned_r0, returned_r1 = targetset.targets
 
             self.assertEqual(returned_r0, expected_r0)
@@ -137,11 +154,11 @@ class Test_Target(TestCase):
         r0 = swprepost.ModalTarget(frequency=np.linspace(1, 9, 10),
                                    velocity=np.linspace(100, 300, 10),
                                    velstd=np.linspace(10, 30, 10),
-                                   type="rayleigh", mode=(0,))
+                                   description=(("rayleigh", 0),))
         r1 = swprepost.ModalTarget(frequency=np.linspace(1, 9, 10),
                                    velocity=np.linspace(200, 400, 10),
                                    velstd=np.linspace(20, 40, 10),
-                                   type="rayleigh", mode=(1,))
+                                   description=(("rayleigh", 1),))
         targets = [r0, r1]
         targetset = swprepost.TargetSet(targets)
 
@@ -164,11 +181,11 @@ class Test_Target(TestCase):
             expected_r0 = swprepost.ModalTarget(frequency=fs,
                                                 velocity=fs*25+75,
                                                 velstd=fs*2.5+7.5,
-                                                type="rayleigh", mode=(0,))
+                                                description=(("rayleigh", 0),))
             expected_r1 = swprepost.ModalTarget(frequency=fs,
                                                 velocity=fs*25+175,
                                                 velstd=fs*2.5+17.5,
-                                                type="rayleigh", mode=(1,))
+                                                description=(("rayleigh", 1),))
             returned_r0, returned_r1 = targetset.targets
 
             # print(expected_r0.__repr__())
@@ -183,23 +200,19 @@ class Test_Target(TestCase):
         r0 = swprepost.ModalTarget(frequency=[1, 3, 10],
                                    velocity=[100, 200, 300],
                                    velstd=[10, 20, 30],
-                                   type="rayleigh",
-                                   mode=(0,))
+                                   description=(("rayleigh", 0),))
         r1 = swprepost.ModalTarget(frequency=[1, 3, 10],
                                    velocity=[200, 300, 400],
                                    velstd=[20, 30, 40],
-                                   type="rayleigh",
-                                   mode=(1,))
+                                   description=(("rayleigh", 1),))
         l0 = swprepost.ModalTarget(frequency=[1, 3, 10],
                                    velocity=[100, 200, 300],
                                    velstd=[10, 20, 30],
-                                   type="love",
-                                   mode=(0,))
+                                   description=(("love", 0),))
         l1 = swprepost.ModalTarget(frequency=[1, 3, 10],
                                    velocity=[200, 300, 400],
                                    velstd=[20, 30, 40],
-                                   type="love",
-                                   mode=(1,))
+                                   description=(("love", 1),))
 
         r0_set = swprepost.TargetSet([r0])
         r1_set = swprepost.TargetSet([r1])
@@ -223,11 +236,11 @@ class Test_Target(TestCase):
         r0 = swprepost.ModalTarget(frequency=np.linspace(1, 9, 10),
                                    velocity=np.linspace(100, 300, 10),
                                    velstd=np.linspace(10, 30, 10),
-                                   type="rayleigh", mode=(0,))
+                                   description=(("rayleigh", 0),))
         r1 = swprepost.ModalTarget(frequency=np.linspace(1, 9, 10),
                                    velocity=np.linspace(200, 400, 10),
                                    velstd=np.linspace(20, 40, 10),
-                                   type="rayleigh", mode=(1,))
+                                   description=(("rayleigh", 1),))
         targets = [r0, r1]
         targetset = swprepost.TargetSet(targets)
 
@@ -239,11 +252,11 @@ class Test_Target(TestCase):
         r0 = swprepost.ModalTarget(frequency=np.linspace(1, 9, 10),
                                    velocity=np.linspace(100, 300, 10),
                                    velstd=np.linspace(10, 30, 10),
-                                   type="rayleigh", mode=(0,))
+                                   description=(("rayleigh", 0),))
         r1 = swprepost.ModalTarget(frequency=np.linspace(1, 9, 10),
                                    velocity=np.linspace(200, 400, 10),
                                    velstd=np.linspace(20, 40, 10),
-                                   type="rayleigh", mode=(1,))
+                                   description=(("rayleigh", 1),))
         targets = [r0, r1]
         targetset = swprepost.TargetSet(targets)
 

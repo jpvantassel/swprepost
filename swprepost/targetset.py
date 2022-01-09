@@ -488,7 +488,10 @@ class TargetSet():
         except (UnicodeDecodeError, RuntimeError):
             with open("contents.xml", "r", encoding="utf_16_le") as f:
                 text = f.read()
-            if "<Dinver>" != text[:len("<Dinver>")]:
+            # start from index 1 to skip the byte order mark (BOM).
+            # the BOM for this format is \ufeff
+            # see https://en.wikipedia.org/wiki/Byte_order_mark.
+            if "<Dinver>" != text[1:len(r" <Dinver>")]:
                 raise ValueError("File encoding not recognized.")
         finally:
             os.remove("contents.xml")

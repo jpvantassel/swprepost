@@ -15,7 +15,7 @@
 #     You should have received a copy of the GNU General Public License
 #     along with this program.  If not, see <https: //www.gnu.org/licenses/>.
 
-"""Definition of Target class."""
+"""Definition of ModalTarget class."""
 
 import warnings
 
@@ -26,7 +26,7 @@ from numpy.core.defchararray import mod
 from swprepost import Curve
 from swprepost import CurveUncertain
 from swprepost.check_utils import check_geopsy_version
-from .regex import polarization_exec, modenumber_exec, statpoint_exec
+from .regex import polarization_exec, modenumber_exec, statpoint_exec, description_exec, mtargetpoint_exec
 from .meta import __version__
 
 class ModalTarget(CurveUncertain):
@@ -91,8 +91,13 @@ class ModalTarget(CurveUncertain):
         """Check description complies with expected format."""
         polarizations = ["rayleigh", "love"]
         for _description in description:
-            polarization, modenumber = _description
-            print(_description)
+            try:
+                polarization, modenumber = _description
+            # If tuple instead of tuple of tuples _description cannot be split
+            # and will return ValueError.
+            except ValueError as e:
+                raise TypeError("description must be a iterable of tuples, not tuple.")
+
             if polarization not in polarizations:
                 raise ValueError(f"polarization={polarization} is not recognized, must be in {polarizations}.")
             if not isinstance(modenumber, (int,)):
@@ -179,25 +184,31 @@ class ModalTarget(CurveUncertain):
         return 0.5*(((p+pstd)/p) + (p/(p-pstd)))
 
     @classmethod
-    def from_wavelength(cls, wavelength, velocity, velstd=0.05, type="rayleigh", mode=(0,)):
+    def from_wavelength(cls, wavelength, velocity, velstd, description=(("rayleigh", 0,),)):
         """Create from data processed in terms of wavelength.
 
         Parameters
         ----------
-        wavelength, velocity : array-like
-            Vector of wavelength and velocity values respectively
-            in the experimental dispersion curve (one per point).
-        velstd : None, float, array-like, optional
-            Velocity standard deviation of the experimental
-            dispersion curve. If `None`, no standard deviation is
-            defined. If `float`, a constant coefficient of variation
-            (COV) is applied, the default is 0.05. If `array-like`,
-            standard deviation is defined point-by-point.
+        frequency, velocity, velstd : array-like
+            Arrays of frequency, velocity, and velocity standard
+            deviation values to fully describe a mode of
+            experimental dispersion data (one per point).
+        description : tuple of tuples
+            Each `ModalTarget` may describe one or more wavetypes and/or
+            one or more modes. Each potential description of the
+            ModalTarget is listed as tuple of the form
+            `(wavetype, modenumber)` where `wavetype` is either
+            "rayleigh" or "love" and `modenumber` is a non-negative
+            integer. A mode number of zero refers to the fundamental
+            mode. The potential descriptions of a mode are grouped into
+            a tuple containing all possible descriptions. The default
+            description is that of the fundamental Rayleigh mode
+            expressed as `(("rayleigh", 0),)`.
 
         Returns
         -------
-        Target
-            Instantiated `Target` object.
+        ModalTarget
+            Instantiated `ModalTarget` object.
 
         """
         # Sterilize inputs.
@@ -220,7 +231,7 @@ class ModalTarget(CurveUncertain):
         b = lower.resample(xx=frequency, interp1d_kwargs=dict(
             fill_value="extrapolate"))[1]
         velstd = (abs(a - velocity) + abs(b - velocity))/2
-        return cls(frequency, velocity, velstd=velstd, type=type, mode=mode)
+        return cls(frequency, velocity, velstd=velstd, description=description)
 
     def setcov(self, cov):
         """Set coefficient of variation (COV) to a constant value.
@@ -413,7 +424,7 @@ class ModalTarget(CurveUncertain):
             self._y = new_vel
             self._yerr = new_velstd
         else:
-            return ModalTarget(new_frq, new_vel, new_velstd, type=self.type, mode=self.mode)
+            return ModalTarget(new_frq, new_vel, new_velstd, description=self.description)
 
     def easy_resample(self, pmin, pmax, pn, res_type="log", domain="wavelength", inplace=False):
         """Resample dispersion curve.
@@ -571,16 +582,16 @@ class ModalTarget(CurveUncertain):
 
         """
         with open(fname, "w") as f:
-            f.write(f"#swprepost v{__meta__}\n")
-            f.write(f"#{len(self.descriptions)} potential descriptions:\n")
-            for (polarization, modenumber)  in self.description:
-                f.write(f"#{polarization},{modenumber}\n")
+            f.write(f"#swprepost v{__version__},,\n")
+            f.write(f"#{len(self.description)} potential descriptions:,,\n")
+            for (polarization, modenumber) in self.description:
+                f.write(f"#{polarization} {modenumber},,\n")
             f.write("#Frequency (Hz),Velocity (m/s),Velocity Standard Deviation (m/s)\n")
             for c_frq, c_vel, c_velstd in zip(self.frequency, self.velocity, self.velstd):
                 f.write(f"{c_frq},{c_vel},{c_velstd}\n")
 
     @classmethod
-    def from_csv(cls, fname, description=None):
+    def from_csv(cls, fname, description=(("rayleigh", 0),)):
         """Read `ModalTarget` from csv.
 
         Read a comma seperated values (csv) file with header line(s) to
@@ -593,14 +604,22 @@ class ModalTarget(CurveUncertain):
             dispersion data. The field should have three columns:
             frequency in Hz, velocity in m/s, and velocity standard
             deviation in m/s.
-        commentcharacter : str, optional
-            Character at the beginning of a line denoting a
-            comment, default value is '#'.
+        description : tuple of tuples
+            Each `ModalTarget` may describe one or more wavetypes and/or
+            one or more modes. Each potential description of the
+            ModalTarget is listed as tuple of the form
+            `(wavetype, modenumber)` where `wavetype` is either
+            "rayleigh" or "love" and `modenumber` is a non-negative
+            integer. A mode number of zero refers to the fundamental
+            mode. The potential descriptions of a mode are grouped into
+            a tuple containing all possible descriptions. The default
+            description is that of the fundamental Rayleigh mode
+            expressed as `(("rayleigh", 0),)`.
 
         Returns
         -------
-        Target
-            Initialized `Target` object.
+        ModalTarget
+            Initialized `ModalTarget` object.
 
         Raises
         ------
@@ -610,27 +629,58 @@ class ModalTarget(CurveUncertain):
 
         """
         with open(fname, "r") as f:
-            lines = f.read().splitlines()
+            text = f.read()
+
+        # Read header information
+        descriptions = description_exec.findall(text)
+        
+        # TODO(jpv): Deprecate after v1.1.0.
+        if len(descriptions) == 0:
+            msg = ".csv does not contain any metadata, this the default"
+            msg += "in v1.0.0 and before, however with v1.1.0 metadata"
+            msg += "is required. The provided description will be used."
+            msg += "Replacement with the provided description will be"
+            msg += "deprecated after v1.1.0."
+            warnings.warn(msg, DeprecationWarning)
+        else:
+            description = []
+            for (polarization, modenumber) in descriptions:
+                description.append((polarization, modenumber))
+
+        # Read data
+        mtargetpoints = mtargetpoint_exec.findall(text)
 
         frequency, velocity, velstd = [], [], []
-        for line in lines:
-            # Skip commented lines
-            if line[0] == commentcharacter:
-                continue
-            # If three entries -> velstd is provided extract all three
-            elif line.count(",") == 2:
-                a, b, c = line.split(",")
-            # If two entries provided -> assume freq and vel, velstd=0
-            elif line.count(",") == 1:
-                a, b = line.split(",")
-                c = 0
-            else:
-                msg = f"Format of input file {fname} not recognized. Refer to documentation."
-                raise ValueError(msg)
-            frequency.append(float(a))
-            velocity.append(float(b))
-            velstd.append(float(c))
-        return cls(frequency, velocity, velstd, type=type, mode=mode)
+        for (frq, vel, std, additional) in mtargetpoints:
+            
+            # If a user provides more than three columns of data, this is a
+            # problem. To handle this rigorously, capture the additional text
+            # and raise an error to avoid any ambiguity.
+            if additional != "":
+                additional = True
+                break
+
+            frequency.append(float(frq))
+            velocity.append(float(vel))
+            # If std is not provided, regex will return '' and float('') will
+            # return a ValueError, which is then caught and handled.
+            # TODO(jpv): Consider for later deprecation.
+            try:
+                std = float(std)
+            except ValueError:
+                # msg = ".csv only contains two columns of information instead "
+                # msg += "of three the ability to provide only two columns will "
+                # msg += "be deprecated after v1.X.X."
+                # warnings.warn(msg, DeprecationWarning)
+                std = 0
+            finally:
+                velstd.append(std)
+
+        if len(frequency) == 0 or additional:
+            msg = f"Format of file {fname} not recognized. See documentation."
+            raise ValueError(msg)
+
+        return cls(frequency, velocity, velstd, description)
 
     def to_target(self, fname_prefix, version="3.4.2"):
         """Write info to the .target file format used by `Dinver`.
@@ -700,7 +750,8 @@ class ModalTarget(CurveUncertain):
 
         return targetset.targets[0]
 
-    def _parse_modeltarget_from_text(self, mc_text, version):
+    @staticmethod
+    def _parse_modeltarget_from_text(mc_text, version):
         """Parse information from ModalCurveTarget text.
         
         Paramters
@@ -721,10 +772,10 @@ class ModalTarget(CurveUncertain):
         version = check_geopsy_version(version)
 
         # Polarization -> return {rayleigh, love}
-        polarization = polarization_exec.finall(mc_text)
+        polarizations = polarization_exec.findall(mc_text)
 
         # Mode -> return int
-        modenumber = modenumber_exec.findall(mc_text)
+        modenumbers = modenumber_exec.findall(mc_text)
 
         # StatPoints {ndarray}
         statpoints = statpoint_exec.findall(mc_text)
@@ -750,8 +801,8 @@ class ModalTarget(CurveUncertain):
             pass
 
         description = []
-        for _polarization, _modenumber in zip(polarization, modenumber):
-            description.append((_polarization, _modenumber))
+        for polarization, modenumber in zip(polarizations, modenumbers):
+            description.append((polarization.lower(), int(modenumber)))
 
         return (frequency, velocity, velstd, description)
 
@@ -760,12 +811,18 @@ class ModalTarget(CurveUncertain):
         if not isinstance(obj, ModalTarget):
             return False
 
+        if len(self.description) != len(obj.description):
+            return False
+
         for pot_self_dsc, pot_obj_dsc in zip(self.description, obj.description):
             for _self_dsc, _obj_dsc in zip(pot_self_dsc, pot_obj_dsc):
                 if _self_dsc != _obj_dsc:
                     return False
 
         for attr in ["frequency", "velocity", "velstd"]:
+            if len(getattr(self, attr)) != len(getattr(obj, attr)):
+                return False
+
             if not np.allclose(getattr(self, attr), getattr(obj, attr)):
                 return False
 

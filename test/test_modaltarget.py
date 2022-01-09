@@ -19,12 +19,14 @@
 
 import os
 import logging
+from typing import Type
 import warnings
 import platform
 
 import numpy as np
 import nbformat
 from nbconvert.preprocessors import ExecutePreprocessor
+from numpy.testing._private.utils import jiffies
 
 from testtools import unittest, TestCase, get_full_path
 import swprepost
@@ -32,7 +34,7 @@ import swprepost
 logging.basicConfig(level=logging.ERROR)
 
 
-class Test_Target(TestCase):
+class Test_ModalTarget(TestCase):
 
     def setUp(self):
         self.full_path = get_full_path(__file__)
@@ -75,6 +77,11 @@ class Test_Target(TestCase):
         b = [1, 2]
         self.assertRaises(IndexError, swprepost.Target, a, b, a)
 
+        # With malformed description (tuple instead of tuple of tuple).
+        a = [1, 2, 3]
+        d = ("rayleigh", 0)
+        self.assertRaises(TypeError, swprepost.ModalTarget, a, a, a, d)
+
     def test_setters(self):
         x = [1, 3, 2]
         tar = swprepost.Target(x, x, velstd=x)
@@ -108,25 +115,45 @@ class Test_Target(TestCase):
 
     def test_from_csv(self):
         # With standard deviation provided.
+        # TODO(jpv): Remove entire test and replace with below in version >1.1.0.
+        # TODO(jpv): Remove file "data/test_tar_wstd.csv"
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            tar = swprepost.Target.from_csv(
+                self.full_path+"data/test_tar_wstd.csv")
+        self.assertArrayEqual(tar.frequency, np.array([1.55, 2.00]))
+        self.assertArrayEqual(tar.velocity, np.array([200, 500.01]))
+        self.assertArrayEqual(tar.velstd, np.array([60.0, 100.0]))
+        self.assertEqual(tar.description, (("rayleigh", 0),))
+
         tar = swprepost.Target.from_csv(
-            self.full_path+"data/test_tar_wstd.csv")
-        self.assertListEqual(tar.frequency.tolist(), [1.55, 2.00])
-        self.assertListEqual(tar.velocity.tolist(), [200, 500.01245])
-        self.assertListEqual(tar.velstd.tolist(), [60.012111, 100.00001])
-        self.assertListEqual(tar.wavelength.tolist(),
-                             [200/1.55, 500.01245/2.00])
+            self.full_path+"data/tar/from_tar_wstd.csv")
+        self.assertArrayEqual(tar.frequency, np.array([1.55, 2.00]))
+        self.assertArrayEqual(tar.velocity, np.array([200, 500.01]))
+        self.assertArrayEqual(tar.velstd, np.array([60.0, 100.0]))
+        self.assertEqual(tar.description, (("rayleigh", 0),))
 
         # Without standard deviation provided.
+        # TODO(jpv): Remove entire test and replace with below in version >1.1.0.
+        # TODO(jpv): Remove file "data/test_tar_wostd.csv"
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            tar = swprepost.Target.from_csv(
+                self.full_path+"data/test_tar_wostd.csv")
+        self.assertArrayEqual(tar.frequency, np.array([1.55, 2.00]))
+        self.assertArrayEqual(tar.velocity, np.array([200, 500.01]))
+        self.assertArrayEqual(tar.velstd, np.array([0, 0]))
+        self.assertEqual(tar.description, (("rayleigh", 0),))
+
         tar = swprepost.Target.from_csv(
-            self.full_path+"data/test_tar_wostd.csv")
-        self.assertListEqual(tar.frequency.tolist(), [1.55, 2.00])
-        self.assertListEqual(tar.velocity.tolist(), [200, 500.01245])
-        self.assertListEqual(tar.velstd.tolist(), [0, 0])
-        self.assertListEqual(tar.wavelength.tolist(),
-                             [200/1.55, 500.01245/2.00])
+            self.full_path+"data/tar/from_tar_wostd.csv")
+        self.assertArrayEqual(tar.frequency, np.array([1.55, 2.00]))
+        self.assertArrayEqual(tar.velocity, np.array([200, 500.01]))
+        self.assertArrayEqual(tar.velstd, np.array([0, 0]))
+        self.assertEqual(tar.description, (("rayleigh", 0),))
 
         # With incorrect formatting
-        fname = self.full_path+"data/test_tar_bad.csv"
+        fname = self.full_path+"data/tar/from_tar_bad.csv"
         self.assertRaises(ValueError, swprepost.Target.from_csv, fname)
 
     def test_setcov(self):
@@ -284,28 +311,54 @@ class Test_Target(TestCase):
     def test_to_and_from_target(self):
         prefix = self.full_path+"data/test_tar_wstd_nonlin_1"
         tar = swprepost.Target.from_csv(prefix + ".csv")
-        tar.to_target(fname_prefix=prefix+"_swprepost_v3", version="3")
-        tar.to_target(fname_prefix=prefix+"_swprepost_v2", version="2")
 
-        tar_swprepost = swprepost.Target.from_target(
-            prefix+"_swprepost_v3", version="3")
-        tar_geopsy = swprepost.Target.from_target(
-            prefix+"_geopsy_v3", version="3")
-        self.assertEqual(tar_geopsy, tar_swprepost)
-        os.remove(prefix+"_swprepost_v3.target")
+        # TODO(jpv): Put specific versions and remove filter after v1.1.0.
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            tar.to_target(prefix+"_swprepost_v3.4.2", version="3")
+            tar.to_target(prefix+"_swprepost_v2.10.1", version="2")
 
-        tar_swprepost = swprepost.Target.from_target(
-            prefix+"_swprepost_v2", version="2")
-        tar_geopsy = swprepost.Target.from_target(
-            prefix+"_geopsy_v2", version="2")
-        self.assertEqual(tar_geopsy, tar_swprepost)
-        os.remove(prefix+"_swprepost_v2.target")
+        # TODO(jpv): Remove text and replace with test below after v1.1.0.
+        try:
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                tar_swprepost = swprepost.Target.from_target(
+                    prefix+"_swprepost_v3.4.2", version="3")
+                tar_geopsy = swprepost.Target.from_target(
+                    prefix+"_geopsy_v3.4.2", version="3")
+            self.assertEqual(tar_geopsy, tar_swprepost)
+
+            tar_swprepost = swprepost.Target.from_target(
+                prefix+"_swprepost_v3.4.2", version="3.4.2")
+            tar_geopsy = swprepost.Target.from_target(
+                prefix+"_geopsy_v3.4.2", version="3.4.2")
+            self.assertEqual(tar_geopsy, tar_swprepost)
+        finally:
+            os.remove(prefix+"_swprepost_v3.4.2.target")
+
+        # TODO(jpv): Remove text and replace with test below after v1.1.0.
+        try:
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                tar_swprepost = swprepost.Target.from_target(
+                    prefix+"_swprepost_v2.10.1", version="2")
+                tar_geopsy = swprepost.Target.from_target(
+                    prefix+"_geopsy_v2.10.1", version="2")
+            self.assertEqual(tar_geopsy, tar_swprepost)
+
+            tar_swprepost = swprepost.Target.from_target(
+                prefix+"_swprepost_v2.10.1", version="2.10.1")
+            tar_geopsy = swprepost.Target.from_target(
+                prefix+"_geopsy_v2.10.1", version="2.10.1")
+            self.assertEqual(tar_geopsy, tar_swprepost)
+        finally:
+            os.remove(prefix+"_swprepost_v2.10.1.target")
 
         # Bad version
         self.assertRaises(NotImplementedError, tar.to_target,
                           fname_prefix="blahbal", version="12000")
         self.assertRaises(NotImplementedError, tar.from_target,
-                          fname_prefix=prefix+"_geopsy_v3", version="12000")
+                          fname_prefix=prefix+"_geopsy_v3.4.2", version="12000")
 
     def test_to_and_from_dinver_txt(self):
         frq = [1, 3, 5, 7, 9, 15]
@@ -348,46 +401,60 @@ class Test_Target(TestCase):
     def test_str_and_repr(self):
         x = np.array([1, 2.01, 3.155])
         tar = swprepost.Target(x, x, x)
+        description = (("rayleigh", 0),)
 
         arr = "[1.   2.01 3.16]"
-        expected = f"Target(frequency={arr}, velocity={arr}, velstd={arr})"
+        expected = f"ModalTarget(frequency={arr}, velocity={arr}, velstd={arr}, description={description})"
         returned = tar.__repr__()
         self.assertEqual(expected, returned)
 
-        expected = "Target with 3 frequency/wavelength points"
+        expected = "ModalTarget with 3 frequency points."
         returned = tar.__str__()
         self.assertEqual(expected, returned)
 
     def test_eq(self):
         x = [1, 2]
-        tar1 = swprepost.Target(x, x, x)
-
-        # False - Wrong Values
         y = [1, 15]
-        tar2 = swprepost.Target(y, y, y)
-        self.assertFalse(tar1 == tar2)
+        z = [1, 2, 3]
 
-        # False - Wrong Length
-        y = [1, 2, 3]
-        tar2 = swprepost.Target(y, y, y)
-        self.assertFalse(tar1 == tar2)
+        i = (("rayleigh", 0),)
+        j = (("love", 0),)
+        k = (("rayleigh", 0), ("rayleigh", 1))
 
-    @unittest.skipIf(platform.python_version().startswith("3.8"),
-                     "Unresolved issue with ExecutePreprocessor")
-    def test_notebook(self):
-        fname = "../examples/basic/Targets.ipynb"
-        with open(self.full_path+fname) as f:
-            nb = nbformat.read(f, as_version=4)
+        a = swprepost.ModalTarget(x, x, x, i)
 
-        try:
-            with warnings.catch_warnings():
-                warnings.simplefilter("ignore")
-                ep = ExecutePreprocessor(timeout=600, kernel_name='python3')
-                ep.preprocess(nb,
-                              {'metadata':{'path': self.full_path+"../examples/basic"}})
-        finally:
-            with open(self.full_path+fname, 'w', encoding='utf-8') as f:
-                nbformat.write(nb, f)
+        b = swprepost.ModalTarget(y, y, y, i)
+        c = swprepost.ModalTarget(x, x, x, j)
+        d = swprepost.ModalTarget(x, x, x, k)
+        e = swprepost.ModalTarget(y, y, y, j)
+        f = swprepost.ModalTarget(z, z, z, i)
+
+        self.assertEqual(a, a)
+
+        self.assertNotEqual(a, x)
+        self.assertNotEqual(a, b)
+        self.assertNotEqual(a, c)
+        self.assertNotEqual(a, d)
+        self.assertNotEqual(a, e)
+        self.assertNotEqual(a, f)
+
+    # TODO(jpv): Fix this hacky test.
+    # @unittest.skipIf(platform.python_version().startswith("3.8"),
+    #                  "Unresolved issue with ExecutePreprocessor")
+    # def test_notebook(self):
+    #     fname = "../examples/basic/Targets.ipynb"
+    #     with open(self.full_path+fname) as f:
+    #         nb = nbformat.read(f, as_version=4)
+
+    #     try:
+    #         with warnings.catch_warnings():
+    #             warnings.simplefilter("ignore")
+    #             ep = ExecutePreprocessor(timeout=600, kernel_name='python3')
+    #             ep.preprocess(nb,
+    #                           {'metadata':{'path': self.full_path+"../examples/basic"}})
+    #     finally:
+    #         with open(self.full_path+fname, 'w', encoding='utf-8') as f:
+    #             nbformat.write(nb, f)
 
 
 if __name__ == '__main__':

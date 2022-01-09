@@ -19,12 +19,12 @@
 
 import re
 
-NUMBER = r"\d+.?\d*[eE]?[+-]?\d*"
+NUMBER = r"\d+\.?\d*[eE]?[+-]?\d*"
 NEWLINE = r"\W+"
 
 # DC
 pair = f"{NUMBER} {NUMBER}\n"
-model_txt = r"# Layered model (\d+): value=(\d+.?\d*)"
+model_txt = r"# Layered model (\d+): value=(\d+\.?\d*)"
 wave_txt = r"# \d+ (Rayleigh|Love) dispersion mode\(s\)"
 mode_txt = r"# Mode \d+\n"
 dcset_txt = f"{model_txt}\n{wave_txt}\n.*\n((?:{mode_txt}(?:{pair})+)+)"
@@ -51,7 +51,8 @@ modalcurve_exec = re.compile(modalcurve_expr, re.DOTALL)
 # -----------
 # Given the text associated with a single `ModalCurve` ->
 # Find the associated polarization (str).
-polarization_expr = r"<polarisation>(Rayleigh|Love)</polarisation>"
+# Geopsy v2.10.1 uses polarisation, but v3.4.2 uses polarization.
+polarization_expr = r"<polari[sz]ation>(Rayleigh|Love)</polari[sz]ation>"
 polarization_exec = re.compile(polarization_expr)
 
 # Find the associated Mode (number).
@@ -61,3 +62,15 @@ modenumber_exec = re.compile(modenumber_expr)
 # Find the associated StatPoints (tuple).
 statpoint_expr = f"<x>({NUMBER})</x>{NEWLINE}<mean>({NUMBER})</mean>{NEWLINE}<stddev>({NUMBER})</stddev>"
 statpoint_exec = re.compile(statpoint_expr)
+
+# Given the text from a swprepost .csv ->
+# Find the associated header information.
+description_expr = "^#(rayleigh|love) (\d+)"
+description_exec = re.compile(description_expr)
+
+# Find the associated data
+# the first two values (frequency and velocity) are required.
+# the third value (velocity standard deviation) is optional.
+# TODO(jpv): Deprecate after v1.1.0 (remove optionals).
+mtargetpoint_expr = f"({NUMBER}),({NUMBER}),?({NUMBER})?(.*)?{NEWLINE}"
+mtargetpoint_exec = re.compile(mtargetpoint_expr)
