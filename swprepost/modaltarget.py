@@ -17,8 +17,6 @@
 
 """Definition of Target class."""
 
-import tarfile as tar
-import os
 import warnings
 
 import matplotlib.pyplot as plt
@@ -29,6 +27,7 @@ from swprepost import Curve
 from swprepost import CurveUncertain
 from swprepost.check_utils import check_geopsy_version
 from .regex import polarization_exec, modenumber_exec, statpoint_exec
+from .meta import __version__
 
 class ModalTarget(CurveUncertain):
     """Target information for a surface wave mode.
@@ -93,9 +92,10 @@ class ModalTarget(CurveUncertain):
         polarizations = ["rayleigh", "love"]
         for _description in description:
             polarization, modenumber = _description
+            print(_description)
             if polarization not in polarizations:
                 raise ValueError(f"polarization={polarization} is not recognized, must be in {polarizations}.")
-            if isinstance(modenumber, (int,)):
+            if not isinstance(modenumber, (int,)):
                 raise TypeError(f"modenumber must be non-negative integer, not type {type(modenumber)}.")
             if modenumber < 0:
                 raise ValueError(f"modenumber={modenumber} is negative, must be non-negative integer.")
@@ -177,59 +177,6 @@ class ModalTarget(CurveUncertain):
         pstd = self.slowness * self.cov
         # From DispersionProxy.cpp Line 194
         return 0.5*(((p+pstd)/p) + (p/(p-pstd)))
-
-    @classmethod
-    def from_csv(cls, fname, commentcharacter="#", type="rayleigh", mode=(0,)):
-        """Construct instance from csv file.
-
-        Read a comma seperated values (csv) file with header line(s) to
-        construct a target object.
-
-        Parameters
-        ----------
-        fname : str
-            Name or path to file containing surface wave dispersion.
-            The file should have at a minimum two columns of frequency
-            in Hz and velocity in m/s. A third column velocity standard
-            deviation in m/s may also be provided.
-        commentcharacter : str, optional
-            Character at the beginning of a line denoting a
-            comment, default value is '#'.
-
-        Returns
-        -------
-        Target
-            Initialized `Target` object.
-
-        Raises
-        ------
-        ValueError
-            If the format of the input file does not match that
-            detailed above.
-
-        """
-        with open(fname, "r") as f:
-            lines = f.read().splitlines()
-
-        frequency, velocity, velstd = [], [], []
-        for line in lines:
-            # Skip commented lines
-            if line[0] == commentcharacter:
-                continue
-            # If three entries -> velstd is provided extract all three
-            elif line.count(",") == 2:
-                a, b, c = line.split(",")
-            # If two entries provided -> assume freq and vel, velstd=0
-            elif line.count(",") == 1:
-                a, b = line.split(",")
-                c = 0
-            else:
-                msg = f"Format of input file {fname} not recognized. Refer to documentation."
-                raise ValueError(msg)
-            frequency.append(float(a))
-            velocity.append(float(b))
-            velstd.append(float(c))
-        return cls(frequency, velocity, velstd, type=type, mode=mode)
 
     @classmethod
     def from_wavelength(cls, wavelength, velocity, velstd=0.05, type="rayleigh", mode=(0,)):
@@ -610,7 +557,7 @@ class ModalTarget(CurveUncertain):
         return cls(frq, vel, velstd)
 
     def to_csv(self, fname):
-        """Write in text format readily accepted by `swprepost`.
+        """Write `ModalTarget` to csv.
 
         Parameters
         ----------
@@ -624,9 +571,66 @@ class ModalTarget(CurveUncertain):
 
         """
         with open(fname, "w") as f:
-            f.write("#Frequency,Velocity,Velstd\n")
+            f.write(f"#swprepost v{__meta__}\n")
+            f.write(f"#{len(self.descriptions)} potential descriptions:\n")
+            for (polarization, modenumber)  in self.description:
+                f.write(f"#{polarization},{modenumber}\n")
+            f.write("#Frequency (Hz),Velocity (m/s),Velocity Standard Deviation (m/s)\n")
             for c_frq, c_vel, c_velstd in zip(self.frequency, self.velocity, self.velstd):
                 f.write(f"{c_frq},{c_vel},{c_velstd}\n")
+
+    @classmethod
+    def from_csv(cls, fname, description=None):
+        """Read `ModalTarget` from csv.
+
+        Read a comma seperated values (csv) file with header line(s) to
+        construct a `ModalTarget`.
+
+        Parameters
+        ----------
+        fname : str
+            Relative or the full path to a file containing surface wave
+            dispersion data. The field should have three columns:
+            frequency in Hz, velocity in m/s, and velocity standard
+            deviation in m/s.
+        commentcharacter : str, optional
+            Character at the beginning of a line denoting a
+            comment, default value is '#'.
+
+        Returns
+        -------
+        Target
+            Initialized `Target` object.
+
+        Raises
+        ------
+        ValueError
+            If the format of the input file does not match that
+            detailed above.
+
+        """
+        with open(fname, "r") as f:
+            lines = f.read().splitlines()
+
+        frequency, velocity, velstd = [], [], []
+        for line in lines:
+            # Skip commented lines
+            if line[0] == commentcharacter:
+                continue
+            # If three entries -> velstd is provided extract all three
+            elif line.count(",") == 2:
+                a, b, c = line.split(",")
+            # If two entries provided -> assume freq and vel, velstd=0
+            elif line.count(",") == 1:
+                a, b = line.split(",")
+                c = 0
+            else:
+                msg = f"Format of input file {fname} not recognized. Refer to documentation."
+                raise ValueError(msg)
+            frequency.append(float(a))
+            velocity.append(float(b))
+            velstd.append(float(c))
+        return cls(frequency, velocity, velstd, type=type, mode=mode)
 
     def to_target(self, fname_prefix, version="3.4.2"):
         """Write info to the .target file format used by `Dinver`.

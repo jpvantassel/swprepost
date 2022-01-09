@@ -20,16 +20,14 @@
 from typing import List
 import tarfile as tar
 import os
-import warnings
 
-import numpy as np
-
-from swprepost import ModalTarget
+from .modaltarget import ModalTarget
 from .check_utils import check_geopsy_version
 from .regex import modalcurve_exec
+from .meta import __version__
 
 class TargetSet():
-    """Intelligent container for handling multiple inversion targets."""
+    """Container for handling multiple inversion targets."""
 
     def __init__(self, targets: List[ModalTarget]) -> None:
         """Initialize a `TargetSet` object.
@@ -207,10 +205,11 @@ class TargetSet():
                 contents += [
                         "      <ModalCurve>",
                         "        <name>swprepost</name>",
-                        "        <log>swprepost by Joseph P. Vantassel</log>"
+                       f"        <log>swprepost v{__version__} by Joseph P. Vantassel</log>"
                         ]
 
                 for (polarization, modenumber) in target.description:
+                    polarization = polarization.capitalize()
                     contents += [
                         "        <Mode>",
                         "          <slowness>Phase</slowness>",
@@ -299,107 +298,139 @@ class TargetSet():
 
             contents += [
                         "  </TargetList>",
-                        "</Dinver>"
+                        "</Dinver>",
                         ]
 
         elif version == "3.4.2":
 
-            contents = ["<Dinver>",
+            contents = [
+                        "<Dinver>",
                         "  <pluginTag>DispersionCurve</pluginTag>",
-                        "  <pluginTitle>Surface Wave Inversion</pluginTitle>"]
+                        "  <pluginTitle>Surface Wave Inversion</pluginTitle>",
+                        ]
 
-            contents += [f"  <TargetList>",
-                         f"    <position>0 0 0</position>",
-                         f"    <DispersionTarget type=\"dispersion\">",
-                         f"      <selected>true</selected>",
-                         f"      <misfitWeight>{self.targets[0].dc_weight}</misfitWeight>",
-                         f"      <minimumMisfit>0</minimumMisfit>",
-                         f"      <misfitType>L2_LogNormalized</misfitType>",
-            ]
+            contents += [
+                        "  <TargetList>",
+                        "    <position>0 0 0</position>",
+                        "    <DispersionTarget type=\"dispersion\">",
+                        "      <selected>true</selected>",
+                       f"      <misfitWeight>{self.targets[0].dc_weight}</misfitWeight>",
+                        "      <minimumMisfit>0</minimumMisfit>",
+                        "      <misfitType>L2_LogNormalized</misfitType>",
+                        ]
+
             # TODO (jpv): Fix dc_weight should be an attribute of all ModalTarget and not set individually for each mode.
             # Essentially it needs to be moved to the TargetSet class and out of the ModalTarget class. Take first one for now.
 
             for target in self.targets:
                 target._sort_data()
 
-                contents +=[
-                         f"      <ModalCurve>",
-                         f"        <name>swprepost</name>",
-                         f"        <log>swprepost written by J. Vantassel</log>",
-                         f"        <enabled>true</enabled>",
-                         f"        <Mode>",
-                         f"          <slowness>Phase</slowness>",
-                         f"          <polarization>{target.type.capitalize()}</polarization>",
-                         f"          <ringIndex>0</ringIndex>",
-                         f"          <index>{target.mode[0]}</index>",
-                         f"        </Mode>"]
+                contents += [
+                        "      <ModalCurve>",
+                        "        <name>swprepost</name>",
+                       f"        <log>swprepost v{__version__} by Joseph P. Vantassel</log>"
+                        ]
+
+                for (polarization, modenumber) in target.description:
+                    polarization = polarization.capitalize()
+                    contents += [
+                        "        <Mode>",
+                        "          <value>Signed</value>",
+                        "          <slowness>Phase</slowness>",
+                       f"          <polarisation>{polarization}</polarisation>",
+                        "          <ringIndex>0</ringIndex>",
+                       f"          <index>{modenumber}</index>",
+                        "        </Mode>"
+                        ]
 
                 for x, mean, stddev in zip(target.frequency, target.slowness, target.logstd):
-                    contents += [f"        <RealStatisticalPoint>",
-                                 f"          <x>{x}</x>",
-                                 f"          <mean>{mean}</mean>",
-                                 f"          <stddev>{stddev}</stddev>",
-                                 f"          <weight>1</weight>",
-                                 f"          <valid>true</valid>",
-                                 f"        </RealStatisticalPoint>"]
-                contents += [f"      </ModalCurve>"]
-            contents += ["    </DispersionTarget>"]
+                    contents += [
+                        "        <RealStatisticalPoint>",
+                       f"          <x>{x}</x>",
+                       f"          <mean>{mean}</mean>",
+                       f"          <stddev>{stddev}</stddev>",
+                        "          <weight>1</weight>",
+                        "          <valid>true</valid>",
+                        "        </RealStatisticalPoint>"
+                        ]
+                contents += [
+                        "      </ModalCurve>"
+                        ]
+            contents += [
+                        "    </DispersionTarget>"
+                        ]
 
-            contents += ["    <AutocorrTarget>",
+            contents += [
+                        "    <AutocorrTarget>",
                         "      <selected>false</selected>",
                         "      <misfitWeight>1</misfitWeight>",
                         "      <minimumMisfit>0</minimumMisfit>",
                         "      <misfitType>L2_NormalizedBySigmaOnly</misfitType>",
                         "      <AutocorrCurves>",
                         "      </AutocorrCurves>",
-                        "    </AutocorrTarget>"]
+                        "    </AutocorrTarget>"
+                        ]
 
-            contents += ["    <ModalCurveTarget type=\"ellipticity\">",
+            contents += [
+                         "    <ModalCurveTarget type=\"ellipticity\">",
                          "      <selected>false</selected>",
                          "      <misfitWeight>1</misfitWeight>",
                          "      <minimumMisfit>0</minimumMisfit>",
                          "      <misfitType>L2_Normalized</misfitType>",
-                         "    </ModalCurveTarget>"]
+                         "    </ModalCurveTarget>"
+                         ]
 
             # TODO (jpv): Properly handle ell target.
             selected = "true" if __ell_def else "false"
-            contents += [f"    <ValueTarget type=\"ellipticity peak\">",
-                         f"      <selected>{selected}</selected>",
-                         f"      <misfitWeight>{__ell_weight}</misfitWeight>",
-                         f"      <minimumMisfit>0</minimumMisfit>",
-                         f"      <misfitType>L2_LogNormalized</misfitType>"]
+            contents += [
+                        "    <ValueTarget type=\"ellipticity peak\">",
+                       f"      <selected>{selected}</selected>",
+                       f"      <misfitWeight>{__ell_weight}</misfitWeight>",
+                        "      <minimumMisfit>0</minimumMisfit>",
+                        "      <misfitType>L2_LogNormalized</misfitType>"
+                        ]
 
-            contents += [f"      <RealStatisticalValue>",
-                         f"        <mean>{__ell_mean}</mean>",
-                         f"        <stddev>{__ell_std}</stddev>",
-                         f"        <weight>1</weight>",
-                         f"        <valid>{selected}</valid>",
-                         f"      </RealStatisticalValue>",
-                         f"    </ValueTarget>"]
+            contents += [
+                        "      <RealStatisticalValue>",
+                       f"        <mean>{__ell_mean}</mean>",
+                       f"        <stddev>{__ell_std}</stddev>",
+                        "        <weight>1</weight>",
+                       f"        <valid>{selected}</valid>",
+                        "      </RealStatisticalValue>",
+                        "    </ValueTarget>"
+                        ]
 
-            contents += ["    <RefractionTarget type=\"Vp\">",
-                         "      <selected>false</selected>",
-                         "      <misfitWeight>1</misfitWeight>",
-                         "      <minimumMisfit>0</minimumMisfit>",
-                         "      <misfitType>L2_Normalized</misfitType>",
-                         "    </RefractionTarget>"]
+            contents += [
+                        "    <RefractionTarget type=\"Vp\">",
+                        "      <selected>false</selected>",
+                        "      <misfitWeight>1</misfitWeight>",
+                        "      <minimumMisfit>0</minimumMisfit>",
+                        "      <misfitType>L2_Normalized</misfitType>",
+                        "    </RefractionTarget>"
+                        ]
 
-            contents += ["    <RefractionTarget type=\"Vs\">",
-                         "      <selected>false</selected>",
-                         "      <misfitWeight>1</misfitWeight>",
-                         "      <minimumMisfit>0</minimumMisfit>",
-                         "      <misfitType>L2_Normalized</misfitType>",
-                         "    </RefractionTarget>"]
+            contents += [
+                        "    <RefractionTarget type=\"Vs\">",
+                        "      <selected>false</selected>",
+                        "      <misfitWeight>1</misfitWeight>",
+                        "      <minimumMisfit>0</minimumMisfit>",
+                        "      <misfitType>L2_Normalized</misfitType>",
+                        "    </RefractionTarget>"
+                        ]
 
-            contents += ["    <MagnetoTelluricTarget>",
-                         "      <selected>false</selected>",
-                         "      <misfitWeight>1</misfitWeight>",
-                         "      <minimumMisfit>0</minimumMisfit>",
-                         "      <misfitType>L2_Normalized</misfitType>",
-                         "    </MagnetoTelluricTarget>"]
+            contents += [
+                        "    <MagnetoTelluricTarget>",
+                        "      <selected>false</selected>",
+                        "      <misfitWeight>1</misfitWeight>",
+                        "      <minimumMisfit>0</minimumMisfit>",
+                        "      <misfitType>L2_Normalized</misfitType>",
+                        "    </MagnetoTelluricTarget>"
+                        ]
 
-            contents += ["  </TargetList>",
-                        "</Dinver>"]
+            contents += [
+                        "  </TargetList>",
+                        "</Dinver>"
+                        ]
 
         with open("contents.xml", "w", encoding="utf-8") as f:
             for row in contents:
@@ -448,6 +479,7 @@ class TargetSet():
         with tar.open(fname_prefix+".target", "r:gz") as a:
             a.extractall()
 
+        # TODO (jpv): Make thread safe, race condition on os.remove.
         try:
             with open("contents.xml", "r", encoding="utf-8") as f:
                 text = f.read()
@@ -461,18 +493,19 @@ class TargetSet():
         finally:
             os.remove("contents.xml")
 
-        # Find first modal curve (ignore others).
-        mc_all = modalcurve_exec.findall(text)
-
+        mc_texts = modalcurve_exec.findall(text)
         targets = []
-        for mc_text in mc_all:
+        for mc_text in mc_texts:
             args = ModalTarget._parse_modeltarget_from_text(mc_text, version=version)
-            modaltarget = ModalTarget(*args)
+            targets.append(ModalTarget(*args))
 
         return cls(targets)
 
     def __eq__(self, obj):
-        """Check if two TargetSet objects are equal."""
+        """Check if two `TargetSet` objects are equal."""
+        if not isinstance(obj, TargetSet):
+            return False
+
         if len(self.targets) != len(obj.targets):
             return False
 
@@ -482,12 +515,12 @@ class TargetSet():
         return True
 
     def __repr__(self):
-        """Unambiguous representation of a TargetSet object."""
+        """Unambiguous representation of a `TargetSet`."""
         repr=""
         for target in self.targets:
             repr += f"{target.__repr__()}\n"
         return repr
 
     def __str__(self):
-        """Human readable representation of a TargetSet object."""
+        """Human readable representation of a `TargetSet`."""
         return f"TargetSet with {len(self.targets)} targets."
