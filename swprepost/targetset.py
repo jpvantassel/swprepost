@@ -427,7 +427,11 @@ class TargetSet():
                         "</Dinver>"
                         ]
 
-        with open("contents.xml", "w", encoding="utf-8") as f:
+        # TODO (jpv): Check if changing encoding break 2.10.1.
+        # TODO (jpv): Check new ecodings on Linux.
+        # TODO (jpv): If this works remove mess above with attempting utf-8.
+        with open("contents.xml", "w", encoding="utf_16_le") as f:
+            f.write(u"\ufeff")
             for row in contents:
                 f.write(row+"\n")
         with tar.open(fname_prefix+".target", "w:gz") as f:
