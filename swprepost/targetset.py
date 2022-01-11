@@ -328,7 +328,8 @@ class TargetSet():
                 contents += [
                         "      <ModalCurve>",
                         "        <name>swprepost</name>",
-                       f"        <log>swprepost v{__version__} by Joseph P. Vantassel</log>"
+                       f"        <log>swprepost v{__version__} by Joseph P. Vantassel</log>",
+                        "        <enabled>true</enabled>",
                         ]
 
                 for (polarization, modenumber) in target.description:
@@ -337,7 +338,7 @@ class TargetSet():
                         "        <Mode>",
                         "          <value>Signed</value>",
                         "          <slowness>Phase</slowness>",
-                       f"          <polarisation>{polarization}</polarisation>",
+                       f"          <polarization>{polarization}</polarization>",
                         "          <ringIndex>0</ringIndex>",
                        f"          <index>{modenumber}</index>",
                         "        </Mode>"
@@ -351,7 +352,7 @@ class TargetSet():
                        f"          <stddev>{stddev}</stddev>",
                         "          <weight>1</weight>",
                         "          <valid>true</valid>",
-                        "        </RealStatisticalPoint>"
+                        "        </RealStatisticalPoint>",
                         ]
                 contents += [
                         "      </ModalCurve>"
@@ -383,21 +384,15 @@ class TargetSet():
             # TODO (jpv): Properly handle ell target.
             selected = "true" if __ell_def else "false"
             contents += [
-                        "    <ValueTarget type=\"ellipticity peak\">",
-                       f"      <selected>{selected}</selected>",
-                       f"      <misfitWeight>{__ell_weight}</misfitWeight>",
-                        "      <minimumMisfit>0</minimumMisfit>",
-                        "      <misfitType>L2_LogNormalized</misfitType>"
-                        ]
-
-            contents += [
+                        "    <EllipticityPeakTarget type=\"ellipticity peak\">",
+                        "      <minimumAmplitude>0</minimumAmplitude>",
                         "      <RealStatisticalValue>",
-                       f"        <mean>{__ell_mean}</mean>",
-                       f"        <stddev>{__ell_std}</stddev>",
-                        "        <weight>1</weight>",
+                        "        <mean>0</mean>",
+                        "        <stddev>0</stddev>",
+                       f"        <weight>{__ell_weight}</weight>",
                        f"        <valid>{selected}</valid>",
                         "      </RealStatisticalValue>",
-                        "    </ValueTarget>"
+                        "    </EllipticityPeakTarget>",
                         ]
 
             contents += [

@@ -17,8 +17,7 @@
 
 """Metadata for swprepost."""
 
-# TODO (jpv): Update before next release.
-__version__ = "1.0.0"
+__version__ = "1.1.0"
 
 # These versions are those consistent with the current and prior
 # version(s) of the high-performance computing application swbatch.
