@@ -18,8 +18,9 @@
 """Definition of TargetSet class."""
 
 from typing import List
-import tarfile as tar
+import tarfile
 import os
+import io
 
 from .modaltarget import ModalTarget
 from .check_utils import check_geopsy_version
@@ -184,7 +185,7 @@ class TargetSet():
             contents = [
                         "<Dinver>",
                         "  <pluginTag>DispersionCurve</pluginTag>",
-                        "  <pluginTitle>Surface Wave Inversion</pluginTitle>"
+                        "  <pluginTitle>Surface Wave Inversion</pluginTitle>",
                         ]
 
             contents += [
@@ -205,7 +206,7 @@ class TargetSet():
                 contents += [
                         "      <ModalCurve>",
                         "        <name>swprepost</name>",
-                       f"        <log>swprepost v{__version__} by Joseph P. Vantassel</log>"
+                       f"        <log>swprepost v{__version__} by Joseph P. Vantassel</log>",
                         ]
 
                 for (polarization, modenumber) in target.description:
@@ -216,7 +217,7 @@ class TargetSet():
                        f"          <polarisation>{polarization}</polarisation>",
                         "          <ringIndex>0</ringIndex>",
                        f"          <index>{modenumber}</index>",
-                        "        </Mode>"
+                        "        </Mode>",
                         ]
 
                 for x, mean, stddev in zip(target.frequency, target.slowness, target.slostd):
@@ -246,7 +247,7 @@ class TargetSet():
                         "      <misfitType>L2_NormalizedBySigmaOnly</misfitType>",
                         "      <AutocorrCurves>",
                         "      </AutocorrCurves>",
-                        "    </AutocorrTarget>"
+                        "    </AutocorrTarget>",
                         ]
 
             contents += [
@@ -255,7 +256,7 @@ class TargetSet():
                         "      <misfitWeight>1</misfitWeight>",
                         "      <minimumMisfit>0</minimumMisfit>",
                         "      <misfitType>L2_Normalized</misfitType>",
-                        "    </ModalCurveTarget>"
+                        "    </ModalCurveTarget>",
                         ]
 
             # TODO (jpv): Properly handle ell target.
@@ -265,7 +266,7 @@ class TargetSet():
                        f"      <selected>{selected}</selected>",
                        f"      <misfitWeight>{__ell_weight}</misfitWeight>",
                         "      <minimumMisfit>0</minimumMisfit>",
-                        "      <misfitType>L2_LogNormalized</misfitType>"
+                        "      <misfitType>L2_LogNormalized</misfitType>",
                         ]
 
             contents += [
@@ -275,7 +276,7 @@ class TargetSet():
                         "        <weight>1</weight>",
                        f"        <valid>{selected}</valid>",
                         "      </StatValue>",
-                        "    </ValueTarget>"
+                        "    </ValueTarget>",
                         ]
             
             contents += [
@@ -284,7 +285,7 @@ class TargetSet():
                         "      <misfitWeight>1</misfitWeight>",
                         "      <minimumMisfit>0</minimumMisfit>",
                         "      <misfitType>L2_Normalized</misfitType>",
-                        "    </RefractionTarget>"
+                        "    </RefractionTarget>",
                         ]
 
             contents += [
@@ -293,7 +294,7 @@ class TargetSet():
                         "      <misfitWeight>1</misfitWeight>",
                         "      <minimumMisfit>0</minimumMisfit>",
                         "      <misfitType>L2_Normalized</misfitType>",
-                        "    </RefractionTarget>"
+                        "    </RefractionTarget>",
                         ]
 
             contents += [
@@ -341,7 +342,7 @@ class TargetSet():
                        f"          <polarization>{polarization}</polarization>",
                         "          <ringIndex>0</ringIndex>",
                        f"          <index>{modenumber}</index>",
-                        "        </Mode>"
+                        "        </Mode>",
                         ]
 
                 for x, mean, stddev in zip(target.frequency, target.slowness, target.logstd):
@@ -355,10 +356,10 @@ class TargetSet():
                         "        </RealStatisticalPoint>",
                         ]
                 contents += [
-                        "      </ModalCurve>"
+                        "      </ModalCurve>",
                         ]
             contents += [
-                        "    </DispersionTarget>"
+                        "    </DispersionTarget>",
                         ]
 
             contents += [
@@ -369,7 +370,7 @@ class TargetSet():
                         "      <misfitType>L2_NormalizedBySigmaOnly</misfitType>",
                         "      <AutocorrCurves>",
                         "      </AutocorrCurves>",
-                        "    </AutocorrTarget>"
+                        "    </AutocorrTarget>",
                         ]
 
             contents += [
@@ -378,7 +379,7 @@ class TargetSet():
                          "      <misfitWeight>1</misfitWeight>",
                          "      <minimumMisfit>0</minimumMisfit>",
                          "      <misfitType>L2_Normalized</misfitType>",
-                         "    </ModalCurveTarget>"
+                         "    </ModalCurveTarget>",
                          ]
 
             # TODO (jpv): Properly handle ell target.
@@ -401,7 +402,7 @@ class TargetSet():
                         "      <misfitWeight>1</misfitWeight>",
                         "      <minimumMisfit>0</minimumMisfit>",
                         "      <misfitType>L2_Normalized</misfitType>",
-                        "    </RefractionTarget>"
+                        "    </RefractionTarget>",
                         ]
 
             contents += [
@@ -410,7 +411,7 @@ class TargetSet():
                         "      <misfitWeight>1</misfitWeight>",
                         "      <minimumMisfit>0</minimumMisfit>",
                         "      <misfitType>L2_Normalized</misfitType>",
-                        "    </RefractionTarget>"
+                        "    </RefractionTarget>",
                         ]
 
             contents += [
@@ -419,24 +420,30 @@ class TargetSet():
                         "      <misfitWeight>1</misfitWeight>",
                         "      <minimumMisfit>0</minimumMisfit>",
                         "      <misfitType>L2_Normalized</misfitType>",
-                        "    </MagnetoTelluricTarget>"
+                        "    </MagnetoTelluricTarget>",
                         ]
 
             contents += [
                         "  </TargetList>",
-                        "</Dinver>"
+                        "</Dinver>",
                         ]
 
-        # TODO (jpv): Check if changing encoding break 2.10.1.
-        # TODO (jpv): Check new ecodings on Linux.
-        # TODO (jpv): If this works remove mess above with attempting utf-8.
-        with open("contents.xml", "w", encoding="utf_16_le") as f:
-            f.write(u"\ufeff")
-            for row in contents:
-                f.write(row+"\n")
-        with tar.open(fname_prefix+".target", "w:gz") as f:
-            f.add("contents.xml")
-        os.remove("contents.xml")
+        text = "\n".join(contents)
+        text = u"\ufeff" + text
+        text_b = text.encode("utf_16_le")
+        f_data = io.BytesIO(initial_bytes=text_b)
+
+        f_contents = io.BytesIO()
+        with tarfile.open(fileobj=f_contents, mode="w:gz") as tar:
+            info = tarfile.TarInfo(name="contents.xml")
+            info.size = len(text_b)
+            tar.addfile(info, f_data)
+
+        with open(f"{fname_prefix}.target", "wb") as f:
+            f.write(f_contents.getvalue())
+
+        f_data.close()
+        f_contents.close()
 
     @classmethod
     def from_target(cls, fname_prefix, version="3.4.2"):
@@ -475,25 +482,8 @@ class TargetSet():
         application `swbatch`.
 
         """
-        with tar.open(fname_prefix+".target", "r:gz") as a:
-            a.extractall()
-
-        # TODO (jpv): Make thread safe, race condition on os.remove.
-        try:
-            with open("contents.xml", "r", encoding="utf-8") as f:
-                text = f.read()
-            if "<Dinver>" != text[:len("<Dinver>")]:
-                raise RuntimeError
-        except (UnicodeDecodeError, RuntimeError):
-            with open("contents.xml", "r", encoding="utf_16_le") as f:
-                text = f.read()
-            # start from index 1 to skip the byte order mark (BOM).
-            # the BOM for this format is \ufeff
-            # see https://en.wikipedia.org/wiki/Byte_order_mark.
-            if "<Dinver>" != text[1:len(r" <Dinver>")]:
-                raise ValueError("File encoding not recognized.")
-        finally:
-            os.remove("contents.xml")
+        with tarfile.open(f"{fname_prefix}.target", "r:gz") as f:
+            text = f.extractfile(f.getmember("contents.xml")).read().decode("utf_16_le")
 
         mc_texts = modalcurve_exec.findall(text)
         targets = []
