@@ -92,7 +92,7 @@ jobs:
   test-310:
     <<: *test-template
     docker:
-      - image: circleci/python:3.10.2
+      - image: cimg/python:3.10.2
         auth:
           username: jpvantassel
           password: $DOCKER_PASS
