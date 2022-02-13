@@ -1,6 +1,6 @@
 # This file is part of swprepost, a Python package for surface wave
 # inversion pre- and post-processing.
-# Copyright (C) 2019-2020 Joseph P. Vantassel (jvantassel@utexas.edu)
+# Copyright (C) 2019-2022 Joseph P. Vantassel (jvantassel@utexas.edu)
 #
 #     This program is free software: you can redistribute it and/or modify
 #     it under the terms of the GNU General Public License as published by
@@ -38,8 +38,8 @@ class Parameterization():
     parameterization files for use in the open-source software Dinver.
     While parameterizations of various kinds can be built quickly using
     this tool, it does have limited functionality compared to the full
-    user interface. It is recommended that the user use this tool to 
-    batch create general parameterizations then fine tune them if
+    user interface. It is recommended that the you use this tool to 
+    create general parameterizations in batches and fine tune them if
     necessary using the Dinver user interface.
 
     Attributes
@@ -90,7 +90,7 @@ class Parameterization():
         self.rh = rh
 
     @classmethod
-    def from_min_max(cls, *args, **kwargs):
+    def from_min_max(cls, *args, **kwargs): # pragma: no cover
         return DeprecationWarning("This method was depreacted after v1.0.0.")
 
     def to_param(self, fname_prefix, version="3.4.2"):
@@ -217,6 +217,7 @@ class Parameterization():
                      '    </ParamSpaceScript>',
                      '  </ParamGroundModel>',
                      '</Dinver>\n']
+        # TODO (jpv): Check if final \n is required here.
 
         text = "\n".join(contents)
 
@@ -231,7 +232,8 @@ class Parameterization():
             msg = "You updated the SUPPORTED_GEOPSY_VERSIONS, but need to update to_param."
             raise NotImplementedError(msg)
 
-
+        # TODO (jpv): Factor out tarball writting process as this is shared
+        # with to_target.
         text_b = text.encode(encoding)
         f_data = io.BytesIO(initial_bytes=text_b)
 
@@ -297,6 +299,8 @@ class Parameterization():
         with tarfile.open(f"{fname_prefix}.param", "r:gz") as f:
             text = f.extractfile(f.getmember("contents.xml")).read().decode(encoding)
 
+        # TODO (jpv): Clean up regular expressions.
+        # Place these in regex module.
         section_lines = []
         lines = text.splitlines()
         for line_count, line in enumerate(lines):

@@ -111,19 +111,19 @@ class Test_Parameter(TestCase):
             self.assertRaises(
                 ValueError, swprepost.Parameter.depth_ftl, 1, val)
 
-    def test_depth_ln_depth(self):
+    def test_depth_ln(self):
         wmin, wmax = 1, 100
         # TypeError - nlayers
         for val in ["5", True, 0.5, 2.2]:
-            self.assertRaises(TypeError, swprepost.Parameter.depth_ln_depth,
+            self.assertRaises(TypeError, swprepost.Parameter.depth_ln,
                               wmin, wmax, val)
         # ValueError - nlayers
         for val in [-1, 0]:
-            self.assertRaises(ValueError, swprepost.Parameter.depth_ln_depth,
+            self.assertRaises(ValueError, swprepost.Parameter.depth_ln,
                               wmin, wmax, val)
         # Simple example
         nlayers = 5
-        lay_min, lay_max = swprepost.Parameter.depth_ln_depth(wmin=wmin, wmax=wmax,
+        lay_min, lay_max = swprepost.Parameter.depth_ln(wmin=wmin, wmax=wmax,
                                                               nlayers=nlayers,
                                                               depth_factor=2)
         expected_lay_min = [wmin/3]*nlayers
@@ -133,7 +133,7 @@ class Test_Parameter(TestCase):
 
         # Simple example
         nlayers = 5
-        lay_min, lay_max = swprepost.Parameter.depth_ln_depth(wmin=wmin, wmax=wmax,
+        lay_min, lay_max = swprepost.Parameter.depth_ln(wmin=wmin, wmax=wmax,
                                                               nlayers=nlayers,
                                                               depth_factor=5)
         expected_lay_min = [wmin/3]*nlayers

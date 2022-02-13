@@ -81,6 +81,7 @@ class Parameter():
 
         Specifically:
             1. `par_rev` is a list of `bool`s.
+
         """
         # Check type
         _par_rev = []
@@ -112,6 +113,12 @@ class Parameter():
         lay_type : {'thickness', 'depth'}, optional
             Indicate whether the layers are defined in terms of
             depth or thickness.
+
+        Returns
+        -------
+        Parameter
+            Instantiated `Parameter` object.
+
         """
         lay_types = {"thickness":"CT", "depth":"CD"}
         try:
@@ -264,7 +271,7 @@ class Parameter():
         Note
         ----
         If a more detailed parameterization is desired than
-        available here use the `dinver` user inferface to tweak the
+        available here use the `Dinver` user inferface to tweak the
         resulting `.param` file.
 
         """
@@ -280,7 +287,7 @@ class Parameter():
         return obj
 
     @staticmethod
-    def depth_ln_depth(wmin, wmax, nlayers, depth_factor=2):
+    def depth_ln(wmin, wmax, nlayers, depth_factor=2):
         """Calculate min and max depth for each layer using LN.
 
         Parameters
@@ -345,7 +352,7 @@ class Parameter():
             Instantiated `Parameter` object.
 
         """
-        lay_min, lay_max = cls.depth_ln_depth(wmin, wmax, nlayers,
+        lay_min, lay_max = cls.depth_ln(wmin, wmax, nlayers,
                                               depth_factor)
         par_min, par_max, par_rev = cls.min_max_rev(nlayers,
                                                     par_min, par_max, par_rev)
