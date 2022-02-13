@@ -1,6 +1,6 @@
 # This file is part of swprepost, a Python package for surface wave
 # inversion pre- and post-processing.
-# Copyright (C) 2019-2020 Joseph P. Vantassel (jvantassel@utexas.edu)
+# Copyright (C) 2019-2022 Joseph P. Vantassel (jvantassel@utexas.edu)
 #
 #     This program is free software: you can redistribute it and/or modify
 #     it under the terms of the GNU General Public License as published by
@@ -51,6 +51,7 @@ class Parameter():
     par_rev : list
         Indicate whether to allow parameter reversals, one `bool`
         value per layer.
+
     """
     @staticmethod
     def check_layers(lower_name, lower, upper_name, upper):
@@ -86,15 +87,11 @@ class Parameter():
         for cpar in par_rev:
             try:
                 _par_rev.append(bool(cpar))
-            # TODO (jpv): Actual exception
+            # TODO (jpv): Add actual exception when it occurs.
             except Exception as e:
                 msg = "`par_rev` must be an iterable composed of `bool`s."
                 raise TypeError(msg) from e
                 
-        # for cpar in par_rev:
-        #     if type(cpar) != bool:
-        #         raise TypeError(msg)
-
         return _par_rev
 
     def __init__(self, lay_min, lay_max, par_min, par_max, par_rev,
@@ -116,12 +113,11 @@ class Parameter():
             Indicate whether the layers are defined in terms of
             depth or thickness.
         """
-        if lay_type == "thickness":
-            self._par_type = "CT"
-        elif lay_type == "depth":
-            self._par_type = "CD"
-        else:
-            msg = f"lay_type={lay_type} not recognized, refer to documentation."
+        lay_types = {"thickness":"CT", "depth":"CD"}
+        try:
+            self._par_type = lay_types[lay_type]
+        except KeyError:
+            msg = f"lay_type={lay_type} not recognized, must be in {list(lay_types.keys())}."
             raise NotImplementedError(msg)
 
         self.par_value = 0
@@ -138,16 +134,19 @@ class Parameter():
 
     @classmethod
     def from_fx(cls, value):
-        """Instantiate `Parameter` object using Fixed (FX) layering.
+        """Create `Parameter` using Fixed (FX) layering.
 
         Parameters
         ----------
         value : {float, int}
             Value assigned to the parameter at all depths. Value
             will not be allowed to change with depth.
+
         Returns
         -------
+        `Parameter`
             Instantiated `Parameter` object.
+
         """
         try:
             value = float(value)
@@ -211,8 +210,7 @@ class Parameter():
 
     @staticmethod
     def depth_ftl(nlayers, thickness):
-        """Calculate the minimum and maximum thicknesses for each layer
-        using Fixed Thickness Layering (FTL).
+        """Calculate min and max thicknesses for each layer using FTL.
 
         Parameters
         ----------
@@ -243,10 +241,7 @@ class Parameter():
 
     @classmethod
     def from_ftl(cls, nlayers, thickness, par_min, par_max, par_rev=False):
-        """Alternate constructor to instantiate a `Parameter` using FTL.
-
-        Use Fixed Thickness Layering (FTL) to define the
-        parameterization.
+        """Create `Parameter` using Fixed Thickness Layering (FTL).
 
         Parameters
         ----------
@@ -285,114 +280,8 @@ class Parameter():
         return obj
 
     @staticmethod
-    def depth_ln_thickness(wmin, wmax, nlayers, depth_factor=2,
-                           increasing=False):
-        """Calculate the minimum and maximum thickness for each layer
-        using Layering by Number (LN).
-
-        Parameters
-        ----------
-        wmin, wmax : float
-            Minimum and maximum measured wavelengths from the
-            fundamental mode Rayleigh wave dispersion respectively.
-        nlayers : int
-            Desired number of layers.
-        depth_factor : [float, int], optional
-            Factor by which the maximum wavelength is
-            divided to estimate the maximum depth of profiling,
-            default is 2.
-        increasing : bool, optional
-            Indicate whether the layering thickness should be
-            contrained to increase, default value is `False`
-            meaning that layers are not contrained to increase.
-
-        Returns
-        -------
-        Tuple
-            Tuple of lists indicating thicknesses of the form
-            ([minthickness...], [maxthickness...]).
-
-        """
-        wmin, wmax = Parameter._check_wavelengths(wmin, wmax)
-
-        if type(nlayers) != int:
-            msg = f"`nlayers` must be `int`. Not {type(nlayers)}."
-            raise TypeError(msg)
-        if nlayers < 1:
-            raise ValueError("Number of layers for must be >= 1.")
-
-        depth_factor = Parameter.check_depth_factor(depth_factor)
-
-        minthickness = wmin/3
-        dmax = wmax/depth_factor
-        maxthickness = dmax/nlayers if not increasing else dmax
-        return ([minthickness]*nlayers, [maxthickness]*nlayers)
-
-    @classmethod
-    def from_ln_thickness(cls, wmin, wmax, nlayers, par_min, par_max, par_rev,
-                          depth_factor=2, increasing=False,
-                          increasing_factor=1.2):
-        """Alternate constructor to instantiate a `Parameter` using
-        LN or LNI.
-
-        Use Layering by Number (LN) or Layering by Number Increasing
-        (LNI) to define the `Parameter`.
-
-        Parameters
-        ----------
-        wmin, wmax : float
-            Minimum and maximum measured wavelength from the
-            fundamental mode Rayleigh wave disperison.
-        nlayers : int
-            Desired number of layers.
-        par_min, par_max : float
-            Minimum and maximum potential value of the parameter,
-            applied to all layers.
-        par_rev : bool, optional
-            Indicate whether layers are allowed to reverse or not,
-            default is `False` (i.e., no reversal allowed).
-        depth_factor : [float, int], optional
-            Factor by which the maximum wavelength is
-            divided to estimate the maximum depth of profiling,
-            default is 2.
-        increasing : bool, optional
-            Determines whether LN or LNI layering is used, default
-            is `False` meaning LN is used.
-        increasing_factor : float, optional
-            Factor by which each subsequent layer must be thicker
-            than the previous layer previous layer, default is 1.2.
-            Argument is only used if `increasing=True`.
-
-        Returns
-        -------
-        Parameter
-            Instantiated `Parameter` object.
-        """
-        msg = "`from_ln_thickness` is deprecated use `from_ln_depth` instead"
-        warnings.warn(msg, DeprecationWarning)
-
-        if increasing:
-            if type(increasing_factor) not in (int, float):
-                msg = f"`increasing_factor` must be `int` or `float`, not {type(increasing_factor)}."
-                raise TypeError(msg)
-            if increasing_factor <= 0:
-                raise ValueError("`increasing_factor` must be greater than 1.")
-
-        lay_min, lay_max = cls.depth_ln_thickness(wmin, wmax, nlayers,
-                                                  depth_factor, increasing)
-        par_min, par_max, par_rev = cls.min_max_rev(nlayers,
-                                                    par_min, par_max, par_rev)
-        obj = cls(lay_min, lay_max, par_min, par_max, par_rev)
-        obj._par_type = "LNI" if increasing else "LN-thickness"
-        obj.par_value = nlayers if increasing else nlayers
-        obj.par_add_value = increasing_factor if increasing else 0
-
-        return obj
-
-    @staticmethod
     def depth_ln_depth(wmin, wmax, nlayers, depth_factor=2):
-        """Calculate the minimum and maximum depth for each layer
-        using Layering by Number.
+        """Calculate min and max depth for each layer using LN.
 
         Parameters
         ----------
@@ -411,6 +300,7 @@ class Parameter():
         Tuple
             Tuple of lists indicating depths of the form
             ([mindepth...], [maxdepth...]).
+
         """
         wmin, wmax = Parameter._check_wavelengths(wmin, wmax)
 
@@ -425,27 +315,11 @@ class Parameter():
         dmin = wmin/3
 
         return ([dmin]*nlayers, [dmax]*nlayers)
-        # minthickness = wmin/3
-
-        # minthicknesses = []
-        # for nlay in range(1, nlayers+1):
-        #     minthicknesses.append(minthickness*nlay)
-
-        # return (minthicknesses, [dmax]*nlayers)
 
     @classmethod
     def from_ln(cls, wmin, wmax, nlayers, par_min, par_max, par_rev,
                 depth_factor=2):
-        return cls.from_ln_depth(wmin=wmin, wmax=wmax, nlayers=nlayers,
-                                 par_min=par_min, par_max=par_max,
-                                 par_rev=par_rev, depth_factor=depth_factor)
-
-    @classmethod
-    def from_ln_depth(cls, wmin, wmax, nlayers, par_min, par_max, par_rev,
-                      depth_factor=2):
-        """Alternate constructor to instantiate a `Parameter` using LN.
-
-        Use Layering by Number (LN) to define the `Parameter`.
+        """Create `Parameter` using Layering by Number (LN).
 
         Parameters
         ----------
