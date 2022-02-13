@@ -19,7 +19,6 @@
 
 from typing import List
 import tarfile
-import os
 import io
 
 from .modaltarget import ModalTarget
@@ -145,7 +144,7 @@ class TargetSet():
             return TargetSet(targets)
 
     def to_target(self, fname_prefix, version="3.4.2"):
-        """Write info to the .target file format used by `Dinver`.
+        """Write info to the .target file format used by Dinver.
 
         Parameters
         ----------
@@ -158,7 +157,7 @@ class TargetSet():
         Returns
         -------
         None
-            Writes file to disk.
+            Writes `.target` file to disk.
 
         Notes
         -----
@@ -447,7 +446,7 @@ class TargetSet():
 
     @classmethod
     def from_target(cls, fname_prefix, version="3.4.2"):
-        """Create from `TargetSet` from .target file.
+        """Create `TargetSet` from .target file.
 
         Note this method is still largely experimental and may
         not work for all cases.
