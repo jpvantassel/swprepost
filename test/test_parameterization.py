@@ -163,7 +163,8 @@ class Test_Parameterization(TestCase):
             vs = swprepost.Parameter.from_ftl(3, 3, 100, 200, True)
             rh = swprepost.Parameter.from_fx(2000)
             par = swprepost.Parameterization(vp, pr, vs, rh)
-            fname_prefix = self.full_path+"data/par/test_to_and_from_param"
+            # TODO (jpv): Move this to the par folder (once its added).
+            fname_prefix = self.full_path+"data/test_to_and_from_param"
             par.to_param(fname_prefix=fname_prefix, version=version)
             new_par = swprepost.Parameterization.from_param(fname_prefix=fname_prefix, version=version)
             self.assertEqual(par, new_par)
