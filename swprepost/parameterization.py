@@ -17,15 +17,16 @@
 
 """Parameterization class definition."""
 
-import warnings
 import logging
-import tarfile as tar
-import os
+import tarfile
 import re
+import io
 
 import numpy as np
 
-from swprepost import Parameter
+from .check_utils import check_geopsy_version
+from .parameter import Parameter
+
 
 logging.Logger(name=__name__)
 
@@ -89,126 +90,19 @@ class Parameterization():
         self.rh = rh
 
     @classmethod
-    def from_min_max(cls, vp, pr, vs, rh, wv, factor=2):
-        """Initialize an instance of the Parameterization class from
-        a minimum and maximum value.
+    def from_min_max(cls, *args, **kwargs):
+        return DeprecationWarning("This method was depreacted after v1.0.0.")
 
-        This method compromises readability for pure character
-        efficiency (which is almost always a bad idea!), however some
-        users may find this method useful.
-
-        Parameters
-        ----------
-        vp, pr, vs, rh : list
-            Of the form `[type, value, min, max, bool]` where `type`
-            is discussed below, `min` and `max` are the minimum and
-            maximum values which the parameter may assume, and
-            `bool` indicates whether the non-typical condition is
-            allowed.
-
-            Type:
-                If type = 'FX'
-                    Layering is Fixed, the next and only argument
-                    is its value.
-
-                Ex. ['FX', value]
-
-                If type = 'FTL'
-                    Layering follows Fixed Thickness Layering, the
-                    second argument is the number of layers desired,
-                    followed by their thickness, min, max, and bool.
-
-                Ex. ['FTL', nlay, thickness, min, max, bool]
-
-                If type = 'LN'
-                    Layering follows Layering by Number, the next
-                    argument is number of layers followed by min,
-                    max, and bool. 
-
-                Ex. ['LN', ln, min, max, reversal]
-
-                If type = 'LR' 
-                    Layering follows the Layering Ratio, the next
-                    argument is the layering ratio followed by
-                    min, max, and bool.
-
-                Ex. ['LR', lr, min, max, reversal]
-
-        wv : iterable
-            Of the form [min_wave, max_wave] where 
-            `min_wave` and `max_wave` are of type `float` or `int`
-            and indicate the minimum and maximum measured wavelength
-            from the fundamental mode Rayleigh wave disperison.
-
-        factor : float, optional
-            Factor by which the maximum wavelength is
-            divided to estimate the maximum depth of profiling,
-            default is 2.
-
-        Returns
-        -------
-        Parameterization
-            Instantiated `Paramterization` object.
-
-        Raises
-        ------
-        Various
-            If values do not comply with the instructions listed.
-        """
-
-        input_arguements = {"vs": vs, "vp": vp, "pr": pr, "rh": rh}
-        valid_options = ('FX', 'FTL', 'LN', 'LNI', 'LN-thickness', 'LR')
-        for key, value in input_arguements.items():
-            # Ensure entry is a list
-            if type(value) != list:
-                msg = f"Entry for argument {key} must be a list, not {type(value)}."
-                raise TypeError(msg)
-
-            # Ensure the first entry of that list is a valid option
-            if value[0] not in valid_options:
-                msg = f"{value[0]} entered for {key} not recognized use {valid_options}."
-                raise ValueError(msg)
-
-            if value[0] == "FX":
-                input_arguements[key] = Parameter.from_fx(value[1])
-            elif value[0] == "FTL":
-                input_arguements[key] = Parameter.from_ftl(*value[1:])
-            elif value[0] == "LN-thickness":
-                input_arguements[key] = Parameter.from_ln_thickness(*wv,
-                                                                    *value[1:],
-                                                                    factor, False)
-            elif value[0] == "LN":
-                input_arguements[key] = Parameter.from_ln_depth(*wv,
-                                                                *value[1:])
-            elif value[0] == "LNI":
-                input_arguements[key] = Parameter.from_ln_thickness(*wv,
-                                                                    value[1],
-                                                                    *value[3:],
-                                                                    factor, True, value[2])
-            elif value[0] == "LR":
-                input_arguements[key] = Parameter.from_lr(*wv, *value[1:])
-            else:
-                raise NotImplementedError
-
-        return cls(input_arguements["vp"], input_arguements["pr"],
-                   input_arguements["vs"], input_arguements["rh"])
-
-    def to_param(self, fname_prefix, version="3", full_version=None):
-        """Write parameterization to `.param` file that can be imported
-        into Dinver.
+    def to_param(self, fname_prefix, version="3.4.2"):
+        """Write info to the .param used by Dinver.
 
         Parameters
         ----------
         fname_prefix : str
             File name prefix (without the .param extension), may be
             a relative or the full path. 
-        version : {'2', '3'}, optional
-            Major version of Geopsy, default is '3'.
-        full_version : str, optional
-            Full version of Geopsy in the form Major.Minor.Micro,
-            default is `None`. When equal to `None` the method
-            will produce a warning if `full_version` is required
-            to avoid ambiguity.
+        version : {'3.4.2', '2.10.1'}, optional
+            Version of Geopsy, default is version '3.4.2'.
 
         Returns
         -------
@@ -217,12 +111,22 @@ class Parameterization():
 
         Raises
         ------
-        KeyError
-            If `version` does not match those listed in the
-            documentation.
+        NotImplementedError
+            If `version` does not match the options provided.
+
+        Notes
+        -----
+        In previous versions of `swprepost` (v1.0.0 and earlier) an
+        attempt was made to support all versions of Dinver's .target
+        and .param formats. However, this has become untenable due to
+        the number and frequency of breaking changes that occur to these
+        formats. Therefore, in lieu of supporting all versions,
+        `swprepost` will seek to support only those versions directly
+        associated with the open-source high-performance computing
+        application `swbatch`.
+
         """
-        available_versions = {'2': '2', '3': '3'}
-        version = available_versions[version]
+        version = check_geopsy_version(version)
 
         contents = ['<Dinver>',
                     '  <pluginTag>DispersionCurve</pluginTag>',
@@ -272,9 +176,9 @@ class Parameterization():
             else:
                 raise NotImplementedError(f"Selection {key} not implemented")
 
-            if value._par_type in ["FX", "FTL", "LN-thickness", "LNI", "CT"]:
+            if value._par_type in ["FX", "FTL", "CT"]:
                 isdepth = "false"
-            elif value._par_type in ["LR", "CD", "LN", "LN-depth"]:
+            elif value._par_type in ["LR", "CD", "LN"]:
                 isdepth = "true"
             else:
                 msg = f"._par_type` {value._par_type} not recognized, refer to Parameter.__doc__."
@@ -302,54 +206,61 @@ class Parameterization():
 
         for key, value in parameters.items():
 
-            if value._par_type == "LNI":
-                nlay = value.par_value
-                if nlay > 2:
-                    factor = value.par_add_value
-                    for lay in range(nlay-2):
-                        if lay == 0:
-                            char = "D"
-                            if version == "2" and full_version is None:
-                                msg = "If `full_version` is '2.9.0' please so \
-indicate by setting `full_version='2.9.0'`, otherwise no action is required."
-                                warnings.warn(msg)
-                            elif version == "2" and full_version == "2.9.0":
-                                char = "H"
-                            else:
-                                pass
-                        else:
-                            char = "H"
-                        contents += [
-                            f'linear("H{key}{lay+1}", ">" ,{factor},"{char}{key}{lay}",0);']
-            elif value._par_type == "LN":
+            if value._par_type == "LN":
                 nlay = value.par_value
                 min_thickness = np.round(value.lay_min[0], decimals=2)
                 if nlay > 2:
                     for lay in range(nlay-2):
-                        contents += [
-                            f'linear("D{key}{lay+1}",">",{1},"D{key}{lay}",{min_thickness});']
+                        contents += [f'linear(&quot;D{key}{lay+1}&quot;,&quot;&gt;&quot;,{1},&quot;D{key}{lay}&quot;,{min_thickness});']
 
         contents += ['      </text>',
                      '    </ParamSpaceScript>',
                      '  </ParamGroundModel>',
-                     '</Dinver>']
+                     '</Dinver>\n']
 
-        with open("contents.xml", "w") as f:
-            for row in contents:
-                f.write(row+"\n")
-        with tar.open(fname_prefix+".param", "w:gz") as f:
-            f.add("contents.xml")
-        os.remove("contents.xml")
+        text = "\n".join(contents)
+
+        if version == "2.10.1":
+            encoding = "utf-8"
+            format = tarfile.GNU_FORMAT
+        elif version == "3.4.2":
+            encoding = "utf_16_le"
+            format = tarfile.DEFAULT_FORMAT
+            text = u"\ufeff" + text
+        else: # pragma: no cover
+            msg = "You updated the SUPPORTED_GEOPSY_VERSIONS, but need to update to_param."
+            raise NotImplementedError(msg)
+
+
+        text_b = text.encode(encoding)
+        f_data = io.BytesIO(initial_bytes=text_b)
+
+        f_contents = io.BytesIO()
+        with tarfile.open(fileobj=f_contents, mode="w:gz", format=format) as tar:
+            info = tarfile.TarInfo(name="contents.xml")
+            info.size = len(text_b)
+            tar.addfile(info, f_data)
+
+        with open(f"{fname_prefix}.param", "wb") as f:
+            f.write(f_contents.getvalue())
+
+        f_data.close()
+        f_contents.close()
 
     @classmethod
-    def from_param(cls, fname_prefix):
-        """Instantitate a Parameterization object from a .param file.
+    def from_param(cls, fname_prefix, version="3.4.2"):
+        """Create `Parameterization` from a .param file.
+
+        Note this method is still largely experimental and may
+        not work for all cases.
 
         Parameters
         ----------
         fname_prefix : str
-            File name prefix, may include a relative or the full
-            path.
+            Name of param file to be opened excluding the `.param`
+            suffix, may include the relative or full path.
+        version : {'3.4.2', '2.10.1'}, optional
+            Version of Geopsy, default is version '3.4.2'.
 
         Returns
         -------
@@ -358,26 +269,36 @@ indicate by setting `full_version='2.9.0'`, otherwise no action is required."
 
         Raises
         ------
-        ValueError:
-            If file encoding is not recognized.
-        """
-        with tar.open(fname_prefix+".param", "r:gz") as a:
-            a.extractall()
+        NotImplementedError
+            If `version` does not match the options provided.
 
-        try:
-            with open("contents.xml", "r", encoding="utf-8") as f:
-                lines = f.read()
-            if "<Dinver>" not in lines[:10]:
-                raise RuntimeError
-        except (UnicodeDecodeError, RuntimeError):
-            with open("contents.xml", "r", encoding="utf_16_le") as f:
-                lines = f.read()
-            if "<Dinver>" not in lines[:10]:
-                raise ValueError("File encoding not recognized.")
-        os.remove("contents.xml")
+        Notes
+        -----
+        In previous versions of `swprepost` (v1.0.0 and earlier) an
+        attempt was made to support all versions of Dinver's .target
+        and .param formats. However, this has become untenable due to
+        the number and frequency of breaking changes that occur to these
+        formats. Therefore, in lieu of supporting all versions,
+        `swprepost` will seek to support only those versions directly
+        associated with the open-source high-performance computing
+        application `swbatch`.
+
+        """
+        version = check_geopsy_version(version)
+
+        if version == "2.10.1":
+            encoding = "utf-8"
+        elif version == "3.4.2":
+            encoding = "utf_16_le"
+        else: # pragma: no cover
+            msg = "You updated the SUPPORTED_GEOPSY_VERSIONS, but need to update from_param."
+            raise NotImplementedError(msg)
+
+        with tarfile.open(f"{fname_prefix}.param", "r:gz") as f:
+            text = f.extractfile(f.getmember("contents.xml")).read().decode(encoding)
 
         section_lines = []
-        lines = lines.splitlines()
+        lines = text.splitlines()
         for line_count, line in enumerate(lines):
             if "<shortName>" in line:
                 section_lines.append(line_count)
