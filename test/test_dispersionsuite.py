@@ -22,7 +22,7 @@ import logging
 
 import numpy as np
 
-from testtools import unittest, TestCase, get_full_path
+from testtools import unittest, TestCase, get_path
 import swprepost
 
 logging.basicConfig(level=logging.CRITICAL)
@@ -31,7 +31,7 @@ logging.basicConfig(level=logging.CRITICAL)
 class Test_DispersionSuite(TestCase):
 
     def setUp(self):
-        self.full_path = get_full_path(__file__)
+        self.path = get_path(__file__)
 
     def test_check_input(self):
         # DispersionSuite to be instantiated with only a DispersionSet object.
@@ -74,8 +74,8 @@ class Test_DispersionSuite(TestCase):
         self.assertListEqual([2.1, 1.1], dc_suite.misfits)
 
     def test_str(self):
-        fname = "data/test_dc_mod2_ray2_lov0_shrt.txt"
-        suite = swprepost.DispersionSuite.from_geopsy(self.full_path+fname)
+        fname = "data/dc/test_dc_mod2_ray2_lov0_shrt.txt"
+        suite = swprepost.DispersionSuite.from_geopsy(self.path / fname)
         expected = "DispersionSuite with 2 DispersionSets."
         returned = suite.__str__()
         self.assertEqual(expected, returned)
@@ -105,7 +105,7 @@ class Test_DispersionSuite(TestCase):
                             self.assertArrayAlmostEqual(expected, returned, places=10)
 
         # One Set with Two Rayleigh and Two Love Modes
-        fname = self.full_path+"data/test_dc_mod1_ray2_lov2_shrt.txt"
+        fname = self.path / "data/dc/test_dc_mod1_ray2_lov2_shrt.txt"
         e1 = {"identifier": 149641,
               "misfit": 1.08851,
               "love":None,
@@ -116,7 +116,7 @@ class Test_DispersionSuite(TestCase):
         compare(fname, models, nsets=1, nrayleigh=1, nlove=0)
 
         # One Set with Two Rayleigh and Two Love Modes
-        fname = self.full_path+"data/test_dc_mod1_ray2_lov2_shrt.txt"
+        fname = self.path / "data/dc/test_dc_mod1_ray2_lov2_shrt.txt"
         e1 = {"identifier": 149641,
               "misfit": 1.08851,
               "love": {0: {"frequency": [0.11, 61],
@@ -128,7 +128,7 @@ class Test_DispersionSuite(TestCase):
         compare(fname, models, nsets=1, nrayleigh=0, nlove=1)
 
         # One Set with Two Rayleigh and Two Love Modes
-        fname = self.full_path+"data/test_dc_mod1_ray2_lov2_shrt.txt"
+        fname = self.path / "data/dc/test_dc_mod1_ray2_lov2_shrt.txt"
         e1 = {"identifier": 149641,
               "misfit": 1.08851,
               "love": {0: {"frequency": [0.11, 61],
@@ -147,7 +147,7 @@ class Test_DispersionSuite(TestCase):
         compare(fname, models)
 
         # Two Sets with Two Rayleigh Modes Each
-        fname = self.full_path+"data/test_dc_mod2_ray2_lov0_shrt.txt"
+        fname = self.path / "data/dc/test_dc_mod2_ray2_lov0_shrt.txt"
         e1 = {"identifier": 149641,
               "misfit": 1.08851,
               "rayleigh": {0: {"frequency": [0.15, 64],
@@ -170,7 +170,7 @@ class Test_DispersionSuite(TestCase):
         compare(fname, models)
 
         # Two Sets with Two Love Modes Each
-        fname = self.full_path+"data/test_dc_mod2_ray0_lov2_shrt.txt"
+        fname = self.path / "data/dc/test_dc_mod2_ray0_lov2_shrt.txt"
         e1 = {"identifier": 149641,
               "misfit": 1.08851,
               "love": {0: {"frequency": [0.11, 61],
@@ -193,7 +193,7 @@ class Test_DispersionSuite(TestCase):
         compare(fname, models)
 
         # Two Sets with Two Rayleigh and Love Modes Each
-        fname = self.full_path+"data/test_dc_mod2_ray2_lov2_shrt.txt"
+        fname = self.path / "data/dc/test_dc_mod2_ray2_lov2_shrt.txt"
         e1 = {"identifier": 149641,
               "misfit": 1.08851,
               "love": {0: {"frequency": [0.11, 61],
@@ -246,7 +246,7 @@ class Test_DispersionSuite(TestCase):
         compare(fname, models, nrayleigh=1, nlove=1)
 
         # Large File
-        fname = self.full_path+"data/test_dc_mod100_ray2_lov2_full.txt"
+        fname = self.path / "data/dc/test_dc_mod100_ray2_lov2_full.txt"
         e1 = {"identifier": 146980,
               "misfit": 1.12243,
               "love": None,

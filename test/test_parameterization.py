@@ -22,7 +22,7 @@ import os
 import logging
 
 import swprepost
-from testtools import unittest, TestCase, get_full_path
+from testtools import unittest, TestCase, get_path
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -30,7 +30,7 @@ logging.basicConfig(level=logging.DEBUG)
 class Test_Parameterization(TestCase):
 
     def setUp(self):
-        self.full_path = get_full_path(__file__)
+        self.path = get_path(__file__)
 
     def test_init(self):
         # Define parameterization in terms of depths
@@ -150,7 +150,7 @@ class Test_Parameterization(TestCase):
     #     rh = ['FX', 2000]
     #     wv = [1, 100]
     #     par = swprepost.Parameterization.from_min_max(vp, pr, vs, rh, wv)
-    #     fname_prefix = self.full_path+"data/test_par1"
+    #     fname_prefix = self.path / "data/par/test_par1"
     #     par.to_param(fname_prefix=fname_prefix)
     #     new_par = swprepost.Parameterization.from_param(fname_prefix)
     #     self.assertEqual(par, new_par)
@@ -164,7 +164,7 @@ class Test_Parameterization(TestCase):
             rh = swprepost.Parameter.from_fx(2000)
             par = swprepost.Parameterization(vp, pr, vs, rh)
             # TODO (jpv): Move this to the par folder (once its added).
-            fname_prefix = self.full_path+"data/test_to_and_from_param"
+            fname_prefix = self.path / "data/par/test_to_and_from_param"
             par.to_param(fname_prefix=fname_prefix, version=version)
             new_par = swprepost.Parameterization.from_param(fname_prefix=fname_prefix, version=version)
             self.assertEqual(par, new_par)

@@ -22,7 +22,7 @@ import logging
 
 import numpy as np
 
-from testtools import unittest, TestCase, get_full_path
+from testtools import unittest, TestCase, get_path
 import swprepost
 
 logging.basicConfig(level=logging.CRITICAL)
@@ -31,7 +31,7 @@ logging.basicConfig(level=logging.CRITICAL)
 class Test_DispersionCurve(TestCase):
 
     def setUp(self):
-        self.full_path = get_full_path(__file__)
+        self.path = get_path(__file__)
 
     def test_init(self):
         # list
@@ -62,7 +62,7 @@ class Test_DispersionCurve(TestCase):
 
     def test_from_geopsy(self):
         # Quick test -> Full test in DispersionSuite
-        fname = self.full_path + "data/test_dc_mod2_ray2_lov0_shrt.txt"
+        fname = self.path / "data/dc/test_dc_mod2_ray2_lov0_shrt.txt"
         dc = swprepost.DispersionCurve.from_geopsy(fname)
         expected_frequency = np.array([0.15, 64])
         expected_slowness = np.array([0.000334532972901842,

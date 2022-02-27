@@ -26,7 +26,7 @@ import hypothesis.strategies as st
 import numpy as np
 
 import swprepost
-from testtools import unittest, TestCase, get_full_path
+from testtools import unittest, TestCase, get_path
 
 logging.basicConfig(level=logging.WARN)
 
@@ -34,7 +34,7 @@ logging.basicConfig(level=logging.WARN)
 class Test_GroundModel(TestCase):
 
     def setUp(self):
-        self.full_path = get_full_path(__file__)
+        self.path = get_path(__file__)
 
     def test_init(self):
         # List
@@ -344,7 +344,7 @@ class Test_GroundModel(TestCase):
         self.assertRaises(ValueError, swprepost.GroundModel.depth_to_thick, depth)
 
     def test_from_geopsy(self):
-        fname = self.full_path+"data/test_gm_mod1_self.txt"
+        fname = self.path / "data/gm/test_gm_mod1_self.txt"
         gm = swprepost.GroundModel.from_geopsy(fname)
         self.assertListEqual([2., 4., 0.], gm.tk)
         self.assertListEqual([300., 700., 400.], gm.vp)

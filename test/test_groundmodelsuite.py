@@ -23,7 +23,7 @@ import logging
 import numpy as np
 
 import swprepost
-from testtools import unittest, TestCase, get_full_path
+from testtools import unittest, TestCase, get_path
 
 logging.basicConfig(level=logging.ERROR)
 
@@ -61,7 +61,7 @@ class Test_GroundModelSuite(TestCase):
         cls.suite.append(cls.gm_1)
 
     def setUp(self):
-        self.full_path = get_full_path(__file__)
+        self.path = get_path(__file__)
 
     def test_init(self):
         # One GroundModel
@@ -92,7 +92,7 @@ class Test_GroundModelSuite(TestCase):
         expected_0 = swprepost.GroundModel(thickness=tk, vp=vp, vs=vs, density=rh,
                                        identifier=_id, misfit=mf)
 
-        fname = self.full_path+"data/test_gm_mod1.txt"
+        fname = self.path / "data/gm/test_gm_mod1.txt"
         returned_0 = swprepost.GroundModelSuite.from_geopsy(fname=fname)[0]
         self.assertEqual(expected_0, returned_0)
 
@@ -107,13 +107,13 @@ class Test_GroundModelSuite(TestCase):
                                        vs=vs1, density=rh1, identifier=_id,
                                        misfit=mf)
 
-        fname = self.full_path+"data/test_gm_mod2.txt"
+        fname = self.path / "data/gm/test_gm_mod2.txt"
         returned_1 = swprepost.GroundModelSuite.from_geopsy(fname=fname)
         self.assertEqual(expected_0, returned_1[0])
         self.assertEqual(expected_1, returned_1[1])
 
         # Randomly check the 10th profile (index=9)
-        fname = self.full_path+"data/test_gm_mod100.txt"
+        fname = self.path / "data/gm/test_gm_mod100.txt"
         suite = swprepost.GroundModelSuite.from_geopsy(fname=fname, nmodels=10)
 
         tk = [0.77397930357999966677,
