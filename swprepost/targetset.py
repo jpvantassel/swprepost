@@ -20,6 +20,8 @@
 from typing import List
 import tarfile
 import io
+import pathlib
+import warnings
 
 from .modaltarget import ModalTarget
 from .check_utils import check_geopsy_version
@@ -142,6 +144,34 @@ class TargetSet():
                     target = target.easy_resample(pmin, pmax, pn, res_type=res_type, domain=domain, inplace=inplace)
                 targets.append(target)
             return TargetSet(targets)
+    
+    def to_file(self, fname, format=None, version="3.4.2"):
+        """Write `TargetSet` info to disk.
+
+        Parameters
+        ----------
+        fname : str
+            Name of file, a relative or full path may be provided.
+        format : {'.target'}, optional
+            Format of the file, default is `None` indicating extension
+            of fname will be used.
+
+        Returns
+        -------
+        None
+            Writes `TargetSet` object to disk.
+
+        Raises
+        ------
+        ValueError
+            If `fname` does not have an extension and `format` is
+            `None`.
+        
+        """
+        path = pathlib.PurePath(fname)
+        format = format if format is not None else path.suffix
+        format_map = {".target":self._to_target}
+        format_map[format](str(path), version=version)
 
     def to_target(self, fname_prefix, version="3.4.2"):
         """Write info to the .target file format used by Dinver.
@@ -171,6 +201,12 @@ class TargetSet():
         application `swbatch`.
 
         """
+        # TODO (jpv): Remove method after release >2.0.0.
+        msg = "The to_target method has been deprecated, use to_file instead."
+        warnings.warn(msg, DeprecationWarning)
+        return self.to_file(f"{fname_prefix}.target", format=None, version=version)
+
+    def _to_target(self, fname, version):
         version = check_geopsy_version(version)
 
         # TODO (jpv): Handle ell properly.
@@ -254,7 +290,7 @@ class TargetSet():
                         "      <selected>false</selected>",
                         "      <misfitWeight>1</misfitWeight>",
                         "      <minimumMisfit>0</minimumMisfit>",
-                        "      <misfitType>L2_Normalized</misfitType>",
+                        "      <misfitType>L2_LogNormalized</misfitType>",
                         "    </ModalCurveTarget>",
                         ]
 
@@ -265,7 +301,7 @@ class TargetSet():
                        f"      <selected>{selected}</selected>",
                        f"      <misfitWeight>{__ell_weight}</misfitWeight>",
                         "      <minimumMisfit>0</minimumMisfit>",
-                        "      <misfitType>L2_LogNormalized</misfitType>",
+                        "      <misfitType>L2_Normalized</misfitType>",
                         ]
 
             contents += [
@@ -298,7 +334,7 @@ class TargetSet():
 
             contents += [
                         "  </TargetList>",
-                        "</Dinver>",
+                        "</Dinver>\n",
                         ]
 
         elif version == "3.4.2":
@@ -424,25 +460,64 @@ class TargetSet():
 
             contents += [
                         "  </TargetList>",
-                        "</Dinver>",
+                        "</Dinver>\n",
                         ]
 
         text = "\n".join(contents)
+
+        if version == "2.10.1":
+            format = tarfile.GNU_FORMAT
+        elif version == "3.4.2":
+            format = tarfile.DEFAULT_FORMAT
+        else: # pragma: no cover
+            msg = "You updated the SUPPORTED_GEOPSY_VERSIONS, but need to update to_param."
+            raise NotImplementedError(msg)
+
+        encoding = "utf_16_le"
         text = u"\ufeff" + text
-        text_b = text.encode("utf_16_le")
+        text_b = text.encode(encoding)
         f_data = io.BytesIO(initial_bytes=text_b)
 
         f_contents = io.BytesIO()
-        with tarfile.open(fileobj=f_contents, mode="w:gz") as tar:
+        with tarfile.open(fileobj=f_contents, mode="w:gz", format=format) as tar:
             info = tarfile.TarInfo(name="contents.xml")
             info.size = len(text_b)
             tar.addfile(info, f_data)
 
-        with open(f"{fname_prefix}.target", "wb") as f:
+        with open(fname, "wb") as f:
             f.write(f_contents.getvalue())
 
         f_data.close()
         f_contents.close()
+
+    @classmethod
+    def from_file(cls, fname, format=None, version="3.4.2"):
+        """Read `TargetSet` info from disk.
+
+        Parameters
+        ----------
+        fname : str
+            Name of file, a relative or full path may be provided.
+        format : {'.target'}, optional
+            Format of the file, default is `None` indicating extension
+            of fname will be used.
+
+        Returns
+        -------
+        TargetSet
+            Created from information stored in the provided file.
+
+        Raises
+        ------
+        ValueError
+            If `fname` does not have an extension and `format` is
+            `None`.
+        
+        """
+        path = pathlib.PurePath(fname)
+        format = format if format is not None else path.suffix
+        format_map = {".target":cls._from_target}
+        return format_map[format](str(path), version)
 
     @classmethod
     def from_target(cls, fname_prefix, version="3.4.2"):
@@ -481,7 +556,14 @@ class TargetSet():
         application `swbatch`.
 
         """
-        with tarfile.open(f"{fname_prefix}.target", "r:gz") as f:
+        # TODO (jpv): Remove method after release >2.0.0.
+        msg = "The from_target method has been deprecated, use from_file instead."
+        warnings.warn(msg, DeprecationWarning)
+        return cls.from_file(f"{fname_prefix}.target", format=None, version=version)
+
+    @classmethod
+    def _from_target(cls, fname, version):
+        with tarfile.open(fname, "r:gz") as f:
             text = f.extractfile(f.getmember("contents.xml")).read().decode("utf_16_le")
 
         mc_texts = modalcurve_exec.findall(text)
