@@ -18,10 +18,11 @@
 """Tests for the TargetSet class."""
 
 import os
+import warnings
 
 import numpy as np
 
-from testtools import unittest, TestCase, get_full_path
+from testtools import unittest, TestCase, get_path
 
 import swprepost
 
@@ -29,7 +30,7 @@ import swprepost
 class Test_TargetSet(TestCase):
 
     def setUp(self):
-        self.full_path = get_full_path(__file__)
+        self.path = get_path(__file__)
 
     def test_init(self):
         r0 = swprepost.ModalTarget(frequency=[1, 3, 10],
@@ -48,6 +49,7 @@ class Test_TargetSet(TestCase):
 
     def test_to_and_from_target(self):
         for version in ["2.10.1", "3.4.2"]:
+            # Fundamental and first-higher Rayleigh.
             r0 = swprepost.ModalTarget(frequency=[1, 3, 10],
                                        velocity=[100, 200, 300],
                                        velstd=[10, 20, 30],
@@ -61,13 +63,17 @@ class Test_TargetSet(TestCase):
             fname_prefix = "r0r1"
             fname = f"{fname_prefix}.target"
             try:
-                expected.to_target(fname_prefix, version=version)
-                returned = swprepost.TargetSet.from_target(fname_prefix,
-                                                           version=version)
+                # TODO (jpv): Remove catch_warnings >2.0.0
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore")
+                    expected.to_target(fname_prefix, version=version)
+                    returned = swprepost.TargetSet.from_target(fname_prefix,
+                                                               version=version)
                 self.assertEqual(expected, returned)
             finally:
                 os.remove(fname)
 
+            # Fundamental Rayleigh and fundamental Love.
             r0 = swprepost.ModalTarget(frequency=[1, 3, 10],
                                        velocity=[100, 200, 300],
                                        velstd=[10, 20, 30],
@@ -81,9 +87,12 @@ class Test_TargetSet(TestCase):
             fname_prefix = "r0l0"
             fname = f"{fname_prefix}.target"
             try:
-                expected.to_target(fname_prefix, version=version)
-                returned = swprepost.TargetSet.from_target(fname_prefix,
-                                                           version=version)
+                # TODO (jpv): Remove catch_warnings >2.0.0
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore")
+                    expected.to_target(fname_prefix, version=version)
+                    returned = swprepost.TargetSet.from_target(fname_prefix,
+                                                               version=version)
                 self.assertEqual(expected, returned)
             finally:
                 os.remove(fname)

@@ -19,16 +19,11 @@
 
 import os
 import logging
-from typing import Type
 import warnings
-import platform
 
 import numpy as np
-import nbformat
-from nbconvert.preprocessors import ExecutePreprocessor
-from numpy.testing._private.utils import jiffies
 
-from testtools import unittest, TestCase, get_full_path
+from testtools import unittest, TestCase, get_path
 import swprepost
 
 logging.basicConfig(level=logging.ERROR)
@@ -37,7 +32,7 @@ logging.basicConfig(level=logging.ERROR)
 class Test_ModalTarget(TestCase):
 
     def setUp(self):
-        self.full_path = get_full_path(__file__)
+        self.path = get_path(__file__)
 
     def test_init(self):
         # With standard deviation provided.
@@ -62,7 +57,10 @@ class Test_ModalTarget(TestCase):
         frequency = np.array([1, 2, 3])
         velocity = np.array([100, 50, 25])
         velstd = 0.01
-        tar = swprepost.Target(frequency, velocity, velstd)
+        # TODO (jpv): Remove after v2.0.0.
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            tar = swprepost.Target(frequency, velocity, velstd)
         self.assertArrayEqual(tar.frequency, frequency)
         self.assertArrayEqual(tar.velocity, velocity)
         self.assertArrayEqual(tar.velstd, velocity*velstd)
@@ -115,45 +113,45 @@ class Test_ModalTarget(TestCase):
 
     def test_from_csv(self):
         # With standard deviation provided.
-        # TODO(jpv): Remove entire test and replace with below in version >1.1.0.
+        # TODO(jpv): Remove entire test and replace with below in version >2.0.0.
         # TODO(jpv): Remove file "data/test_tar_wstd.csv"
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             tar = swprepost.Target.from_csv(
-                self.full_path+"data/test_tar_wstd.csv")
+                self.path / "data/tar/test_from_csv_wstd.csv")
         self.assertArrayEqual(tar.frequency, np.array([1.55, 2.00]))
         self.assertArrayEqual(tar.velocity, np.array([200, 500.01]))
         self.assertArrayEqual(tar.velstd, np.array([60.0, 100.0]))
         self.assertEqual(tar.description, (("rayleigh", 0),))
 
         tar = swprepost.Target.from_csv(
-            self.full_path+"data/tar/from_tar_wstd.csv")
+            self.path / "data/tar/test_from_csv_wstd.csv")
         self.assertArrayEqual(tar.frequency, np.array([1.55, 2.00]))
         self.assertArrayEqual(tar.velocity, np.array([200, 500.01]))
         self.assertArrayEqual(tar.velstd, np.array([60.0, 100.0]))
         self.assertEqual(tar.description, (("rayleigh", 0),))
 
         # Without standard deviation provided.
-        # TODO(jpv): Remove entire test and replace with below in version >1.1.0.
+        # TODO(jpv): Remove entire test and replace with below in version >2.0.0.
         # TODO(jpv): Remove file "data/test_tar_wostd.csv"
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             tar = swprepost.Target.from_csv(
-                self.full_path+"data/test_tar_wostd.csv")
+                self.path / "data/tar/test_from_csv_wostd.csv")
         self.assertArrayEqual(tar.frequency, np.array([1.55, 2.00]))
         self.assertArrayEqual(tar.velocity, np.array([200, 500.01]))
         self.assertArrayEqual(tar.velstd, np.array([0, 0]))
         self.assertEqual(tar.description, (("rayleigh", 0),))
 
         tar = swprepost.Target.from_csv(
-            self.full_path+"data/tar/from_tar_wostd.csv")
+            self.path / "data/tar/test_from_csv_wostd.csv")
         self.assertArrayEqual(tar.frequency, np.array([1.55, 2.00]))
         self.assertArrayEqual(tar.velocity, np.array([200, 500.01]))
         self.assertArrayEqual(tar.velstd, np.array([0, 0]))
         self.assertEqual(tar.description, (("rayleigh", 0),))
 
         # With incorrect formatting
-        fname = self.full_path+"data/tar/from_tar_bad.csv"
+        fname = self.path / "data/tar/test_from_csv_bad.csv"
         self.assertRaises(ValueError, swprepost.Target.from_csv, fname)
 
     def test_setcov(self):
@@ -184,8 +182,11 @@ class Test_ModalTarget(TestCase):
         tar = swprepost.Target(frequency, velocity, velstd)
         self.assertTrue(tar.is_no_velstd)
 
+        # TODO (jpv): Remove after v2.0.0.
         velstd = 0.1
-        tar = swprepost.Target(frequency, velocity, velstd)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            tar = swprepost.Target(frequency, velocity, velstd)
         self.assertFalse(tar.is_no_velstd)
 
     def test_pseudo_vs(self):
@@ -240,7 +241,7 @@ class Test_ModalTarget(TestCase):
     def test_easy_resample(self):
         # Inplace=False
         # Linear w/ VelStd
-        fname = self.full_path+"data/test_tar_wstd_linear.csv"
+        fname = self.path / "data/tar/test_easy_resample_linear_wstd.csv"
         tar = swprepost.Target.from_csv(fname)
         returned = tar.easy_resample(pmin=0.5, pmax=4.5, pn=5,
                                      res_type='linear', domain="frequency",
@@ -249,7 +250,7 @@ class Test_ModalTarget(TestCase):
         self.assertArrayAlmostEqual(expected, returned, places=1)
 
         # Linear w/ VelStd
-        fname = self.full_path+"data/test_tar_wstd_linear.csv"
+        fname = self.path / "data/tar/test_easy_resample_linear_wstd.csv"
         tar = swprepost.Target.from_csv(fname)
         expected = np.array([2., 2.8, 4.0])
         returned = tar.easy_resample(pmin=2, pmax=4, pn=3,
@@ -258,7 +259,7 @@ class Test_ModalTarget(TestCase):
         self.assertArrayAlmostEqual(expected, returned, places=1)
 
         # Non-linear w/ VelStd
-        fname = self.full_path+"data/test_tar_wstd_nonlin_0.csv"
+        fname = self.path / "data/tar/test_tar_wstd_nonlin_0.csv"
         tar = swprepost.Target.from_csv(fname)
         new_tar = tar.easy_resample(pmin=50, pmax=100, pn=5,
                                     res_type='log', domain="wavelength",
@@ -293,11 +294,11 @@ class Test_ModalTarget(TestCase):
                           pmax=0.5, pn=5, res_type="log-spiral")
 
     def test_vr40(self):
-        fname = self.full_path+"data/test_tar_wstd_nonlin_0.csv"
+        fname = self.path / "data/tar/test_tar_wstd_nonlin_0.csv"
         tar = swprepost.Target.from_csv(fname)
         self.assertAlmostEqual(tar.vr40, 180, places=1)
 
-        fname = self.full_path+"data/test_tar_wstd_nonlin_1.csv"
+        fname = self.path / "data/tar/test_tar_wstd_nonlin_1.csv"
         tar = swprepost.Target.from_csv(fname)
         self.assertAlmostEqual(tar.vr40, 267.2, places=1)
 
@@ -309,56 +310,55 @@ class Test_ModalTarget(TestCase):
             self.assertTrue(tar.vr40 is None)
 
     def test_to_and_from_target(self):
-        prefix = self.full_path+"data/test_tar_wstd_nonlin_1"
-        tar = swprepost.Target.from_csv(prefix + ".csv")
+        tar = swprepost.Target.from_csv(
+            self.path / "data/tar/swinvert_tar1.csv")
 
-        # TODO(jpv): Put specific versions and remove filter after v1.1.0.
+        prefix = str(self.path / "data/tar/from_tar1_")
+        # TODO(jpv): Put specific versions and remove filter after v2.0.0.
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            tar.to_target(prefix+"_swprepost_v3.4.2", version="3")
-            tar.to_target(prefix+"_swprepost_v2.10.1", version="2")
+            tar.to_target(prefix+"3.4.2_swprepost", version="3")
+            tar.to_target(prefix+"2.10.1_swprepost", version="2")
 
-        # TODO(jpv): Remove text and replace with test below after v1.1.0.
-        try:
-            with warnings.catch_warnings():
-                warnings.simplefilter("ignore")
-                tar_swprepost = swprepost.Target.from_target(
-                    prefix+"_swprepost_v3.4.2", version="3")
-                tar_geopsy = swprepost.Target.from_target(
-                    prefix+"_geopsy_v3.4.2", version="3")
-            self.assertEqual(tar_geopsy, tar_swprepost)
-
+        # TODO(jpv): Remove text and replace with test below after v2.0.0.
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
             tar_swprepost = swprepost.Target.from_target(
-                prefix+"_swprepost_v3.4.2", version="3.4.2")
+                prefix+"3.4.2_swprepost", version="3")
             tar_geopsy = swprepost.Target.from_target(
-                prefix+"_geopsy_v3.4.2", version="3.4.2")
-            self.assertEqual(tar_geopsy, tar_swprepost)
-        finally:
-            os.remove(prefix+"_swprepost_v3.4.2.target")
+                prefix+"3.4.2_dinver", version="3")
+        self.assertEqual(tar_geopsy, tar_swprepost)
 
-        # TODO(jpv): Remove text and replace with test below after v1.1.0.
-        try:
-            with warnings.catch_warnings():
-                warnings.simplefilter("ignore")
-                tar_swprepost = swprepost.Target.from_target(
-                    prefix+"_swprepost_v2.10.1", version="2")
-                tar_geopsy = swprepost.Target.from_target(
-                    prefix+"_geopsy_v2.10.1", version="2")
-            self.assertEqual(tar_geopsy, tar_swprepost)
-
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
             tar_swprepost = swprepost.Target.from_target(
-                prefix+"_swprepost_v2.10.1", version="2.10.1")
+                prefix+"3.4.2_swprepost", version="3.4.2")
             tar_geopsy = swprepost.Target.from_target(
-                prefix+"_geopsy_v2.10.1", version="2.10.1")
-            self.assertEqual(tar_geopsy, tar_swprepost)
-        finally:
-            os.remove(prefix+"_swprepost_v2.10.1.target")
+                prefix+"3.4.2_dinver", version="3.4.2")
+        self.assertEqual(tar_geopsy, tar_swprepost)
+
+        # TODO(jpv): Remove text and replace with test below after v2.0.0.
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            tar_swprepost = swprepost.Target.from_target(
+                prefix+"2.10.1_swprepost", version="2")
+            tar_geopsy = swprepost.Target.from_target(
+                prefix+"2.10.1_dinver", version="2")
+        self.assertEqual(tar_geopsy, tar_swprepost)
+
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            tar_swprepost = swprepost.Target.from_target(
+                prefix+"2.10.1_swprepost", version="2.10.1")
+            tar_geopsy = swprepost.Target.from_target(
+                prefix+"2.10.1_dinver", version="2.10.1")
+        self.assertEqual(tar_geopsy, tar_swprepost)
 
         # Bad version
         self.assertRaises(NotImplementedError, tar.to_target,
                           fname_prefix="blahbal", version="12000")
         self.assertRaises(NotImplementedError, tar.from_target,
-                          fname_prefix=prefix+"_geopsy_v3.4.2", version="12000")
+                          fname_prefix=prefix+"3.4.2_dinver", version="12000")
 
     def test_to_and_from_dinver_txt(self):
         frq = [1, 3, 5, 7, 9, 15]
@@ -366,7 +366,7 @@ class Test_ModalTarget(TestCase):
         velstd = [10, 8, 6, 5, 5, 5]
         tar = swprepost.Target(frq, vel, velstd)
 
-        fname = self.full_path+"test_dinver_txt.txt"
+        fname = self.path / "test_dinver_txt.txt"
         for version in ["2", "3"]:
             tar.to_txt_dinver(fname, version=version)
             new = swprepost.Target.from_txt_dinver(fname, version=version)
@@ -391,7 +391,7 @@ class Test_ModalTarget(TestCase):
         velstd = [10, 8, 6, 5, 5, 5]
         tar = swprepost.Target(frq, vel, velstd)
 
-        fname = self.full_path+"test_csv.txt"
+        fname = self.path / "test_csv.txt"
         tar.to_csv(fname)
         new = swprepost.Target.from_csv(fname)
         self.assertEqual(tar, new)
@@ -443,7 +443,7 @@ class Test_ModalTarget(TestCase):
     #                  "Unresolved issue with ExecutePreprocessor")
     # def test_notebook(self):
     #     fname = "../examples/basic/Targets.ipynb"
-    #     with open(self.full_path+fname) as f:
+    #     with open(self.path / fname) as f:
     #         nb = nbformat.read(f, as_version=4)
 
     #     try:
@@ -451,9 +451,9 @@ class Test_ModalTarget(TestCase):
     #             warnings.simplefilter("ignore")
     #             ep = ExecutePreprocessor(timeout=600, kernel_name='python3')
     #             ep.preprocess(nb,
-    #                           {'metadata':{'path': self.full_path+"../examples/basic"}})
+    #                           {'metadata':{'path': self.path / "../examples/basic"}})
     #     finally:
-    #         with open(self.full_path+fname, 'w', encoding='utf-8') as f:
+    #         with open(self.path / fname, 'w', encoding='utf-8') as f:
     #             nbformat.write(nb, f)
 
 
