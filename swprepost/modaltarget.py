@@ -73,9 +73,9 @@ class ModalTarget(CurveUncertain):
             If `velstd` is `float` and the value is less than zero.
 
         """
-        # TODO(jpv): To remove in version >1.1.0.
+        # TODO(jpv): To remove in version >2.0.0.
         if isinstance(velstd, float):
-            msg = f"Setting velstd as a float is deprecated and will be removed after v1.1.0"
+            msg = f"Setting velstd as a float is deprecated and will be removed after v2.0.0"
             warnings.warn(msg, category=DeprecationWarning)
             velstd = np.array(velocity, dtype=np.double)*velstd
 
@@ -634,13 +634,13 @@ class ModalTarget(CurveUncertain):
         # Read header information
         descriptions = description_exec.findall(text)
         
-        # TODO(jpv): Deprecate after v1.1.0.
+        # TODO(jpv): Deprecate after v>2.0.0.
         if len(descriptions) == 0:
             msg = ".csv does not contain any metadata, this the default"
-            msg += "in v1.0.0 and before, however with v1.1.0 metadata"
+            msg += "in v2.0.0 and before, however with v2.0.0 metadata"
             msg += "is required. The provided description will be used."
             msg += "Replacement with the provided description will be"
-            msg += "deprecated after v1.1.0."
+            msg += "deprecated after v2.0.0."
             warnings.warn(msg, DeprecationWarning)
         else:
             description = []
@@ -914,5 +914,5 @@ class ModalTarget(CurveUncertain):
         if ax_was_none:
             return (fig, ax)
 
-# TODO(jpv): remove in version after 1.1.0, here for backwards comptability.
+# TODO(jpv): remove in version after 2.0.0, here for backwards comptability.
 Target = ModalTarget

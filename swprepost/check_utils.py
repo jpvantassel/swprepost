@@ -36,7 +36,7 @@ def check_geopsy_version(version):
         Version specified if valid, raise `NotImplementedError` otherwise. 
 
     """
-    # TODO (jpv): Remove in swprocess version >1.1.0.
+    # TODO (jpv): Remove in swprocess version >2.0.0.
     # Provides backwards compatability to v1.0.0 and earlier.
     if version == "2":
         version = "2.10.1"

@@ -17,7 +17,7 @@
 
 """Metadata for swprepost."""
 
-__version__ = "1.1.0"
+__version__ = "2.0.0"
 
 # These versions are those consistent with the current and prior
 # version(s) of the high-performance computing application swbatch.

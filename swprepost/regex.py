@@ -71,6 +71,6 @@ description_exec = re.compile(description_expr)
 # Find the associated data
 # the first two values (frequency and velocity) are required.
 # the third value (velocity standard deviation) is optional.
-# TODO(jpv): Deprecate after v1.1.0 (remove optionals).
+# TODO(jpv): Deprecate after v2.0.0 (remove optionals).
 mtargetpoint_expr = f"({NUMBER}),({NUMBER}),?({NUMBER})?(.*)?{NEWLINE}"
 mtargetpoint_exec = re.compile(mtargetpoint_expr)
