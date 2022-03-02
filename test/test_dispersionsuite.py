@@ -333,6 +333,17 @@ class Test_DispersionSuite(TestCase):
         models = [e1]
         compare(fname, models, nsets=20)
 
+        # Real Examples
+        # -------------
+        for op_sys in ["windows", "linux"]:
+            for version in swprepost.meta.SUPPORTED_GEOPSY_VERSIONS:
+                for tar, par in zip(["tar1", "tar12"], ["ln3", "ln7"]):
+                    fname = self.path / f"data/dc/{op_sys}/{tar}_{par}_v{version.replace('.','')}_m100_dc.txt"
+                    suite = swprepost.DispersionSuite.from_geopsy(fname)
+                    dc_set = swprepost.DispersionSet.from_geopsy(fname)
+                    self.assertEqual(dc_set, suite[0])
+                    self.assertTrue(len(suite) == 100)        
+
     def test_write_to_txt(self):
         dc_0 = swprepost.DispersionCurve([1, 5, 10, 15], [100, 200, 300, 400])
         dc_1 = swprepost.DispersionCurve([1, 5, 12, 15], [100, 180, 300, 400])
