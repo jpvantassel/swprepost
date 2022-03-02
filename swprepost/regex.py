@@ -34,12 +34,16 @@ mode = re.compile(mode_txt)
 dcset = re.compile(dcset_txt)
 dc_data = re.compile(f"({NUMBER}) ({NUMBER})")
 
-# GM
-quad = f"{NUMBER} {NUMBER} {NUMBER} {NUMBER}\n"
-gm_txt = f"{model_txt}\n\d+\n((?:{quad})+)"
+# GroundModel
+# -----------
+# Identify the text associated with a single layer of a `GroundModel`.
+gm_layer = f"{NUMBER} {NUMBER} {NUMBER} {NUMBER}"
+gm_layer_exec = re.compile(f"({NUMBER}) ({NUMBER}) ({NUMBER}) ({NUMBER})")
 
-gm = re.compile(gm_txt)
-gm_data = re.compile(f"({NUMBER}) ({NUMBER}) ({NUMBER}) ({NUMBER})")
+# Identify the text associated with a single `GroundModel`.
+gm_meta = r"# Layered model (\d+): value=(\d+\.?\d*)"
+gm_expr = f"{gm_meta}\n\d+\n((?:{gm_layer}\n)+)"
+gm_exec = re.compile(gm_expr)
 
 # TargetSet
 # ---------
@@ -71,6 +75,6 @@ description_exec = re.compile(description_expr)
 # Find the associated data
 # the first two values (frequency and velocity) are required.
 # the third value (velocity standard deviation) is optional.
-# TODO(jpv): Deprecate after v2.0.0 (remove optionals).
+# TODO(jpv): Deprecate after v2.0.0; remove optionals; require all values.
 mtargetpoint_expr = f"({NUMBER}),({NUMBER}),?({NUMBER})?(.*)?{NEWLINE}"
 mtargetpoint_exec = re.compile(mtargetpoint_expr)

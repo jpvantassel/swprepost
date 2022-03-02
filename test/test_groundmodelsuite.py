@@ -144,6 +144,20 @@ class Test_GroundModelSuite(TestCase):
                                        identifier=_id, misfit=mf)
         self.assertEqual(expected_9, suite[9])
 
+        # test 100 models
+        suite = swprepost.GroundModelSuite.from_geopsy(self.path / "data/gm/test_gm_mod100.txt")
+        self.assertTrue(len(suite) == 100)
+
+        # Real Examples
+        # -------------
+        for version in swprepost.meta.SUPPORTED_GEOPSY_VERSIONS:
+            for tar, par in zip(["tar1", "tar12"], ["ln3", "ln7"]):
+                fname = self.path / f"data/gm/{tar}_{par}_v{version.replace('.','')}_m100_gm.txt"
+                suite = swprepost.GroundModelSuite.from_geopsy(fname)
+                gm = swprepost.GroundModel.from_geopsy(fname)
+                self.assertEqual(gm, suite[0])
+                self.assertTrue(len(suite) == 100)
+
     def test_vs30(self):
         # nbest="all"
         thk = [5, 20, 0]

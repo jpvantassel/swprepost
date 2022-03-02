@@ -641,7 +641,7 @@ class GroundModel():
 
         """
         tks, vps, vss, rhs = [], [], [], []
-        for gm in regex.gm_data.finditer(gm_data):
+        for gm in regex.gm_layer_exec.finditer(gm_data):
             tk, vp, vs, rh = gm.groups()
 
             tks.append(tk)
@@ -677,7 +677,7 @@ class GroundModel():
         with open(fname, "r") as f:
             lines = f.read()
 
-        for model_info in regex.gm.finditer(lines):
+        for model_info in regex.gm_exec.finditer(lines):
             identifier, misfit, data = model_info.groups()
             break
 

@@ -17,6 +17,8 @@
 
 """GroundModelSuite class definition."""
 
+import warnings
+
 import numpy as np
 
 from swprepost import GroundModel, Suite, regex
@@ -334,22 +336,26 @@ class GroundModelSuite(Suite):
             Initialized `GroundModelSuite`.
 
         """
-        # TODO (jpv): Add warning if nsets < navailable.
         if nmodels == "all":
             nmodels = np.inf
 
         with open(fname, "r") as f:
-            lines = f.read()
+            text = f.read()
 
         gms = []
         model_count = 0
-        for model_info in regex.gm.finditer(lines):
+        for model_info in regex.gm_exec.finditer(text):
             identifier, misfit, data = model_info.groups()
             gms.append(cls._gm()._parse_gm(data, identifier, misfit))
 
             model_count += 1
             if model_count == nmodels:
                 break
+        else:
+            if nmodels is not np.inf:
+                msg =  f"The number of models requested ({nmodels}) is fewer "
+                msg += f"than the number of those returned ({model_count})."
+                warnings.warn(msg, UserWarning)
 
         return cls.from_list(gms, sort=sort)
 
