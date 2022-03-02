@@ -8,6 +8,7 @@ doc
 scratch
 html
 test/htmlcov
+test/data/inv
 examples/adv/0_targets
 examples/adv/1_parameters
 
