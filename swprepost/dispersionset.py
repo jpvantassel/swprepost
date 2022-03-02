@@ -106,7 +106,7 @@ class DispersionSet():
     @classmethod
     def _parse_dcs(cls, dcs_data, nmodes="all"):
         """Parse a group of modes into a `dict` of `DispersionCurves`"""
-        modes = regex.mode.split(dcs_data)
+        modes = regex.dc_mode_start_exec.split(dcs_data)
 
         if nmodes == "all":
             modes = modes[1:]
@@ -116,17 +116,18 @@ class DispersionSet():
             modes = modes[1:nmodes+1]
 
         dcs = {}
-        for mode_number, dc_data in enumerate(modes):
+        for mode, dc_data in zip(regex.dc_mode_exec.finditer(dcs_data), modes):
+            mode_number = int(mode.groups()[0])
             dcs.update({mode_number: cls._dc()._parse_dc(dc_data)})
         return dcs
 
     @classmethod
-    def _from_full_file(cls, data, nrayleigh="all", nlove="all"):
+    def _from_full_file(cls, text, nrayleigh="all", nlove="all"):
         """Parse the first `DispersionSet` from Geopsy-style contents.
 
         Parameters
         ----------
-        data : str
+        text : str
             Contents of Geopsy-style text file.
         nrayleigh, nlove : {"all", int}, optional
             Number of Rayleigh and Love modes to extract into a
@@ -144,15 +145,19 @@ class DispersionSet():
 
         rayleigh, love = None, None
         previous_id, previous_misfit = "start", "0"
-        for model_info in regex.dcset.finditer(data):
-            identifier, misfit, wave_type, dcs_data = model_info.groups()
+        for model_info in regex.dc_set_exec.finditer(text):
+            id_a, msft_a, wav_a, wav_b, id_b, msft_b, data = model_info.groups()
+
+            identifier = id_a if id_a is not None else id_b
+            misfit = msft_a if msft_a is not None else msft_b
+            wave_type = wav_a if wav_a is not None else wav_b
 
             if identifier == previous_id or previous_id == "start":
                 if wave_type == "Rayleigh":
-                    rayleigh = cls._parse_dcs(dcs_data, nmodes=nrayleigh)
+                    rayleigh = cls._parse_dcs(data, nmodes=nrayleigh)
                 elif wave_type == "Love":
-                    love = cls._parse_dcs(dcs_data, nmodes=nlove)
-                else:
+                    love = cls._parse_dcs(data, nmodes=nlove)
+                else: # pragma: no cover
                     raise NotImplementedError
                 previous_id = identifier
                 previous_misfit = misfit
@@ -187,8 +192,8 @@ class DispersionSet():
 
         """
         with open(fname, "r") as f:
-            data = f.read()
-        return cls._from_full_file(data, nrayleigh=nrayleigh, nlove=nlove)
+            text = f.read()
+        return cls._from_full_file(text, nrayleigh=nrayleigh, nlove=nlove)
 
     def write_set(self, fileobj, nrayleigh="all", nlove="all"):
         """Write `DispersionSet` to current file.

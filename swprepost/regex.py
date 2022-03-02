@@ -20,29 +20,42 @@
 import re
 
 NUMBER = r"\d+\.?\d*[eE]?[+-]?\d*"
-NEWLINE = r"\W+"
+NEWLINE = r"[\r\n?|\n]"
 
-# DC
-pair = f"{NUMBER} {NUMBER}\n"
-model_txt = r"# Layered model (\d+): value=(\d+\.?\d*)"
-wave_txt = r"# \d+ (Rayleigh|Love) dispersion mode\(s\)"
-mode_txt = r"# Mode \d+\n"
-dcset_txt = f"{model_txt}\n{wave_txt}\n.*\n((?:{mode_txt}(?:{pair})+)+)"
+# DispersionSuite
+# ---------------
+# Identify the text associated with a single dispersion point.
+dc_pair_expr = f"{NUMBER} {NUMBER}{NEWLINE}"
+dc_pair_exec = re.compile(f"({NUMBER}) ({NUMBER})")
 
-model = re.compile(model_txt)
-mode = re.compile(mode_txt)
-dcset = re.compile(dcset_txt)
-dc_data = re.compile(f"({NUMBER}) ({NUMBER})")
+# Identify the text associated with `DispersionSet`.
+dc_meta_expr = r"# Layered model (\d+): value=(\d+\.?\d*)"
+dc_meta_exec = re.compile(dc_meta_expr)
+
+dc_wave_expr = r"# \d+ (Rayleigh|Love) dispersion mode\(s\)"
+dc_wave_exec = re.compile(dc_wave_expr)
+
+dc_mode_start_expr = f"# Mode \d+{NEWLINE}"
+dc_mode_start_exec = re.compile(dc_mode_start_expr)
+
+dc_mode_expr = f"# Mode (\d+){NEWLINE}"
+dc_mode_exec = re.compile(dc_mode_expr)
+
+# There are two different syntax for dispersion files, dc_header_a & dc_header_b.
+dc_header_a = f"{dc_meta_expr}{NEWLINE}{dc_wave_expr}{NEWLINE}.*{NEWLINE}"
+dc_header_b = f"{dc_wave_expr}{NEWLINE}.*{NEWLINE}.*{NEWLINE}{dc_meta_expr}{NEWLINE}"
+dc_set_expr = f"(?:{dc_header_a}|{dc_header_b})((?:{dc_mode_start_expr}(?:{dc_pair_expr})+)+)"
+dc_set_exec = re.compile(dc_set_expr)
 
 # GroundModel
 # -----------
 # Identify the text associated with a single layer of a `GroundModel`.
-gm_layer = f"{NUMBER} {NUMBER} {NUMBER} {NUMBER}"
+gm_layer_expr = f"{NUMBER} {NUMBER} {NUMBER} {NUMBER}"
 gm_layer_exec = re.compile(f"({NUMBER}) ({NUMBER}) ({NUMBER}) ({NUMBER})")
 
 # Identify the text associated with a single `GroundModel`.
-gm_meta = r"# Layered model (\d+): value=(\d+\.?\d*)"
-gm_expr = f"{gm_meta}\n\d+\n((?:{gm_layer}\n)+)"
+gm_meta_expr = r"# Layered model (\d+): value=(\d+\.?\d*)"
+gm_expr = f"{gm_meta_expr}{NEWLINE}\d+{NEWLINE}((?:{gm_layer_expr}{NEWLINE})+)"
 gm_exec = re.compile(gm_expr)
 
 # TargetSet
@@ -64,7 +77,7 @@ modenumber_expr = r"<index>(\d+)</index>"
 modenumber_exec = re.compile(modenumber_expr)
 
 # Find the associated StatPoints (tuple).
-statpoint_expr = f"<x>({NUMBER})</x>{NEWLINE}<mean>({NUMBER})</mean>{NEWLINE}<stddev>({NUMBER})</stddev>"
+statpoint_expr = f"<x>({NUMBER})</x>{NEWLINE}\s*<mean>({NUMBER})</mean>{NEWLINE}\s*<stddev>({NUMBER})</stddev>"
 statpoint_exec = re.compile(statpoint_expr)
 
 # Given the text from a swprepost .csv ->

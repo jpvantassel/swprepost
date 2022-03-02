@@ -98,7 +98,7 @@ class DispersionCurve(Curve):
 
         """
         frequency, slowness = [], []
-        for curve in regex.dc_data.finditer(dc_data):
+        for curve in regex.dc_pair_exec.finditer(dc_data):
             f, p = curve.groups()
             f = float(f)
             try:
