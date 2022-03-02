@@ -45,8 +45,6 @@ class Test_TargetSet(TestCase):
         targetset = swprepost.TargetSet(targets)
         self.assertTrue(isinstance(targetset, swprepost.TargetSet))
 
-    # def test_from_target(self):
-
     def test_to_and_from_target(self):
         for version in ["2.10.1", "3.4.2"]:
             # Fundamental and first-higher Rayleigh.
@@ -64,6 +62,8 @@ class Test_TargetSet(TestCase):
             fname = f"{fname_prefix}.target"
             try:
                 # TODO (jpv): Remove catch_warnings >2.0.0
+                # When replace to_target with to_file and
+                # from_target with from_file.
                 with warnings.catch_warnings():
                     warnings.simplefilter("ignore")
                     expected.to_target(fname_prefix, version=version)
@@ -88,6 +88,8 @@ class Test_TargetSet(TestCase):
             fname = f"{fname_prefix}.target"
             try:
                 # TODO (jpv): Remove catch_warnings >2.0.0
+                # When replace to_target with to_file and
+                # from_target with from_file.
                 with warnings.catch_warnings():
                     warnings.simplefilter("ignore")
                     expected.to_target(fname_prefix, version=version)

@@ -566,9 +566,9 @@ class TargetSet():
         with tarfile.open(fname, "r:gz") as f:
             text = f.extractfile(f.getmember("contents.xml")).read().decode("utf_16_le")
 
-        mc_texts = modalcurve_exec.findall(text)
         targets = []
-        for mc_text in mc_texts:
+        for mc_text in modalcurve_exec.finditer(text):
+            mc_text = mc_text.groups()[0]
             args = ModalTarget._parse_modeltarget_from_text(mc_text, version=version)
             targets.append(ModalTarget(*args))
 

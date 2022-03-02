@@ -353,8 +353,9 @@ class GroundModelSuite(Suite):
                 break
         else:
             if nmodels is not np.inf:
-                msg =  f"The number of models requested ({nmodels}) is fewer "
-                msg += f"than the number of those returned ({model_count})."
+                msg =  f"The number of GroundModels requested ({nmodels}) is "
+                msg += f"greater than the number of those available "
+                msg += f"({model_count})."
                 warnings.warn(msg, UserWarning)
 
         return cls.from_list(gms, sort=sort)
