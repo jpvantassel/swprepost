@@ -142,4 +142,7 @@ class Suite(ABC):
             if my != ur:
                 return False
         return True
+
+    def __len__(self):
+        return len(self._items)
         
