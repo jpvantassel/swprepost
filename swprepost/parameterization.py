@@ -173,14 +173,14 @@ class Parameterization():
                              '      <defaultMinimum>2000</defaultMinimum>',
                              '      <defaultMaximum>2000</defaultMaximum>',
                              '      <defaultCondition>LessThan</defaultCondition>']
-            else:
+            else: # pragma: no cover
                 raise NotImplementedError(f"Selection {key} not implemented")
 
             if value._par_type in ["FX", "FTL", "CT"]:
                 isdepth = "false"
             elif value._par_type in ["LR", "CD", "LN"]:
                 isdepth = "true"
-            else:
+            else: # pragma: no cover
                 msg = f"._par_type` {value._par_type} not recognized, refer to Parameter.__doc__."
                 raise NotImplementedError(msg)          
 
@@ -353,7 +353,7 @@ class Parameterization():
             if len(tmp_depth) > 1:
                 isdepth = tmp_depth[1]
                 for val in tmp_depth[1:]:
-                    if val != isdepth:
+                    if val != isdepth: # pragma: no cover
                         msg = "Parameterizations with layers defined in terms of thickness and depth cannot be parsed at this time."
                         raise ValueError(msg)
             else:
@@ -370,7 +370,7 @@ class Parameterization():
                 rh = par
             elif name == "Nu":
                 pr = par
-            else:
+            else: # pragma: no cover
                 raise NotImplementedError
         return cls(vp, pr, vs, rh)
 
@@ -382,5 +382,5 @@ class Parameterization():
                 return False
         return True
 
-    def __repr__(self):
+    def __repr__(self): # pragma: no cover
         return f"Parameterization(\nvp={self.vp},\npr={self.pr},\nvs={self.vs},\nrh={self.rh})"

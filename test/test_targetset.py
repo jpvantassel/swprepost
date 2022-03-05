@@ -242,6 +242,7 @@ class Test_TargetSet(TestCase):
         self.assertNotEqual(l0_set, l1_set)
         self.assertNotEqual(r0r1_set, r0_set)
         self.assertNotEqual(r0r1_set, l0l1_set)
+        self.assertNotEqual(r0_set, "target")
 
     def test_str(self):
         r0 = swprepost.ModalTarget(frequency=np.linspace(1, 9, 10),

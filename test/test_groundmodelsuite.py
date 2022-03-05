@@ -19,6 +19,7 @@
 
 import os
 import logging
+import warnings
 
 import numpy as np
 
@@ -37,7 +38,7 @@ class Test_GroundModelSuite(TestCase):
             for key, value in gm_dict.items():
                 setattr(cls, key+v, value)
             setattr(cls, "gm"+v, swprepost.GroundModel(*[gm_dict[attr] for attr in ["tk", "vp", "vs", "rh"]],
-                                                   **{key: gm_dict[attr] for key, attr in zip(["identifier", "misfit"], ["id", "mf"])}))
+                                                       **{key: gm_dict[attr] for key, attr in zip(["identifier", "misfit"], ["id", "mf"])}))
 
         v = "_0"
         tk = [1, 3, 5, 0]
@@ -66,7 +67,7 @@ class Test_GroundModelSuite(TestCase):
     def test_init(self):
         # One GroundModel
         gm = swprepost.GroundModel(self.tk_0, self.vp_0, self.vs_0, self.rh_0,
-                               identifier=self.id_0, misfit=self.mf_0)
+                                   identifier=self.id_0, misfit=self.mf_0)
         returned = swprepost.GroundModelSuite(gm)
         expected = swprepost.GroundModelSuite(self.gm_0)
         self.assertEqual(expected, returned)
@@ -90,7 +91,7 @@ class Test_GroundModelSuite(TestCase):
         _id = 149698
         mf = 0.766485
         expected_0 = swprepost.GroundModel(thickness=tk, vp=vp, vs=vs, density=rh,
-                                       identifier=_id, misfit=mf)
+                                           identifier=_id, misfit=mf)
 
         fname = self.path / "data/gm/test_gm_mod1.txt"
         returned_0 = swprepost.GroundModelSuite.from_geopsy(fname=fname)[0]
@@ -104,8 +105,8 @@ class Test_GroundModelSuite(TestCase):
         _id = 147185
         mf = 0.767484
         expected_1 = swprepost.GroundModel(thickness=tk1, vp=vp1,
-                                       vs=vs1, density=rh1, identifier=_id,
-                                       misfit=mf)
+                                           vs=vs1, density=rh1, identifier=_id,
+                                           misfit=mf)
 
         fname = self.path / "data/gm/test_gm_mod2.txt"
         returned_1 = swprepost.GroundModelSuite.from_geopsy(fname=fname)
@@ -141,18 +142,27 @@ class Test_GroundModelSuite(TestCase):
         _id = 149535
         mf = 0.770783
         expected_9 = swprepost.GroundModel(thickness=tk, vp=vp, vs=vs, density=rh,
-                                       identifier=_id, misfit=mf)
+                                           identifier=_id, misfit=mf)
         self.assertEqual(expected_9, suite[9])
 
         # test 100 models
-        suite = swprepost.GroundModelSuite.from_geopsy(self.path / "data/gm/test_gm_mod100.txt")
+        suite = swprepost.GroundModelSuite.from_geopsy(
+            self.path / "data/gm/test_gm_mod100.txt")
+        self.assertTrue(len(suite) == 100)
+
+        # Request more models than are available.
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            suite = swprepost.GroundModelSuite.from_geopsy(
+                self.path / "data/gm/test_gm_mod100.txt", nmodels=101)
         self.assertTrue(len(suite) == 100)
 
         # Real Examples
         # -------------
         for version in swprepost.meta.SUPPORTED_GEOPSY_VERSIONS:
             for tar, par in zip(["tar1", "tar12"], ["ln3", "ln7"]):
-                fname = self.path / f"data/gm/{tar}_{par}_v{version.replace('.','')}_m100_gm.txt"
+                fname = self.path / \
+                    f"data/gm/{tar}_{par}_v{version.replace('.','')}_m100_gm.txt"
                 suite = swprepost.GroundModelSuite.from_geopsy(fname)
                 gm = swprepost.GroundModel.from_geopsy(fname)
                 self.assertEqual(gm, suite[0])
@@ -242,13 +252,13 @@ class Test_GroundModelSuite(TestCase):
         gms = []
         for col in range(tks.shape[1]):
             gm = swprepost.GroundModel(tks[:, col], vps[:, col],
-                                   vss[:, col], rhs[:, col],
-                                   identifier=ids[col],
-                                   misfit=misfits[col])
+                                       vss[:, col], rhs[:, col],
+                                       identifier=ids[col],
+                                       misfit=misfits[col])
             gms.append(gm)
 
         suite = swprepost.GroundModelSuite.from_array(tks, vps, vss, rhs,
-                                                  ids, misfits)
+                                                      ids, misfits)
 
         for expected, returned in zip(gms, suite):
             self.assertEqual(expected, returned)
@@ -265,10 +275,11 @@ class Test_GroundModelSuite(TestCase):
         misfits = [1, 0.5, 0.3]
 
         gm = swprepost.GroundModel(tks[0], vps[0], vss[0], rhs[0],
-                               identifier=ids[0], misfit=misfits[0])
+                                   identifier=ids[0], misfit=misfits[0])
         suite = swprepost.GroundModelSuite(gm)
         for tk, vs, vp, rh, cid, ms in zip(tks[1:], vss[1:], vps[1:], rhs[1:], ids[1:], misfits[1:]):
-            gm = swprepost.GroundModel(tk, vp, vs, rh, identifier=cid, misfit=ms)
+            gm = swprepost.GroundModel(
+                tk, vp, vs, rh, identifier=cid, misfit=ms)
             suite.append(gm)
 
         fname = "text.txt"

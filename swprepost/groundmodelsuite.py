@@ -169,7 +169,7 @@ class GroundModelSuite(Suite):
                 try:
                     thks[:, ncol] = thk
                     pars[:, ncol] = par
-                except ValueError as e:
+                except ValueError as e: # pragma: no cover
                     msg = f"The simplified model {thks}, {pars} contains too few layers. The original model was {gm}. Please report this issue."
                     raise ValueError(msg) from e
 
@@ -294,7 +294,7 @@ class GroundModelSuite(Suite):
         """
         cols = tks.shape[1]
         for other in (vps.shape[1], vss.shape[1], rhs.shape[1], ids.size, misfits.size):
-            if cols != other:
+            if cols != other: # pragma: no cover
                 raise ValueError("Array sizes must be consistent.")
 
         for col in range(cols):
@@ -373,6 +373,6 @@ class GroundModelSuite(Suite):
         """Human-readable representation of a `GroundModelSuite`."""
         return f"GroundModelSuite with {len(self.gms)} GroundModels."
 
-    def __repr__(self):
+    def __repr__(self): # pragma: no cover
         """Unambiguous representation of a `GroundModelSuite`."""
         return f"GroundModelSuite with {len(self.gms)} GroundModels at {id(self)}."
