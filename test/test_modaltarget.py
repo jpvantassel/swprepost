@@ -124,8 +124,11 @@ class Test_ModalTarget(TestCase):
         self.assertArrayEqual(tar.velstd, np.array([60.0, 100.0]))
         self.assertEqual(tar.description, (("rayleigh", 0),))
 
-        tar = swprepost.Target.from_csv(
-            self.path / "data/tar/test_from_csv_wstd.csv")
+        # TODO(jpv): Add metadata to csv for version >2.0.0.
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            tar = swprepost.Target.from_csv(
+                self.path / "data/tar/test_from_csv_wstd.csv")
         self.assertArrayEqual(tar.frequency, np.array([1.55, 2.00]))
         self.assertArrayEqual(tar.velocity, np.array([200, 500.01]))
         self.assertArrayEqual(tar.velstd, np.array([60.0, 100.0]))
@@ -143,16 +146,22 @@ class Test_ModalTarget(TestCase):
         self.assertArrayEqual(tar.velstd, np.array([0, 0]))
         self.assertEqual(tar.description, (("rayleigh", 0),))
 
-        tar = swprepost.Target.from_csv(
-            self.path / "data/tar/test_from_csv_wostd.csv")
+        # TODO(jpv): Add metadata to csv for version >2.0.0.
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            tar = swprepost.Target.from_csv(
+                self.path / "data/tar/test_from_csv_wostd.csv")
         self.assertArrayEqual(tar.frequency, np.array([1.55, 2.00]))
         self.assertArrayEqual(tar.velocity, np.array([200, 500.01]))
         self.assertArrayEqual(tar.velstd, np.array([0, 0]))
         self.assertEqual(tar.description, (("rayleigh", 0),))
 
         # With incorrect formatting
-        fname = self.path / "data/tar/test_from_csv_bad.csv"
-        self.assertRaises(ValueError, swprepost.Target.from_csv, fname)
+        # TODO(jpv): Add metadata to csv for version >2.0.0.
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            fname = self.path / "data/tar/test_from_csv_bad.csv"
+            self.assertRaises(ValueError, swprepost.Target.from_csv, fname)
 
     def test_setcov(self):
         frequency = [1, 2, 3]
@@ -260,7 +269,10 @@ class Test_ModalTarget(TestCase):
 
         # Non-linear w/ VelStd
         fname = self.path / "data/tar/test_tar_wstd_nonlin_0.csv"
-        tar = swprepost.Target.from_csv(fname)
+        # TODO(jpv): Add metadata to csv for version >2.0.0.
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            tar = swprepost.Target.from_csv(fname)
         new_tar = tar.easy_resample(pmin=50, pmax=100, pn=5,
                                     res_type='log', domain="wavelength",
                                     inplace=False)
@@ -295,11 +307,17 @@ class Test_ModalTarget(TestCase):
 
     def test_vr40(self):
         fname = self.path / "data/tar/test_tar_wstd_nonlin_0.csv"
-        tar = swprepost.Target.from_csv(fname)
+        # TODO(jpv): Add metadata to csv for version >2.0.0.
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            tar = swprepost.Target.from_csv(fname)
         self.assertAlmostEqual(tar.vr40, 180, places=1)
 
         fname = self.path / "data/tar/test_tar_wstd_nonlin_1.csv"
-        tar = swprepost.Target.from_csv(fname)
+                # TODO(jpv): Add metadata to csv for version >2.0.0.
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            tar = swprepost.Target.from_csv(fname)
         self.assertAlmostEqual(tar.vr40, 267.2, places=1)
 
         # Vr40 out of range
@@ -310,8 +328,11 @@ class Test_ModalTarget(TestCase):
             self.assertTrue(tar.vr40 is None)
 
     def test_to_and_from_target(self):
-        tar = swprepost.Target.from_csv(
-            self.path / "data/tar/swinvert_tar1.csv")
+        # TODO(jpv): Add metadata to csv for version >2.0.0.
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            tar = swprepost.Target.from_csv(
+                self.path / "data/tar/swinvert_tar1.csv")
 
         prefix = str(self.path / "data/tar/from_tar1_")
         # TODO(jpv): Put specific versions and remove filter after v2.0.0.
@@ -355,10 +376,17 @@ class Test_ModalTarget(TestCase):
         self.assertEqual(tar_geopsy, tar_swprepost)
 
         # Bad version
-        self.assertRaises(NotImplementedError, tar.to_target,
-                          fname_prefix="blahbal", version="12000")
-        self.assertRaises(NotImplementedError, tar.from_target,
-                          fname_prefix=prefix+"3.4.2_dinver", version="12000")
+        # TODO(jpv): Add metadata to csv for version >2.0.0.
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            self.assertRaises(NotImplementedError, tar.to_target,
+                            fname_prefix="blahbal", version="12000")
+            self.assertRaises(NotImplementedError, tar.from_target,
+                            fname_prefix=prefix+"3.4.2_dinver", version="12000")
+
+        for version in swprepost.meta.SUPPORTED_GEOPSY_VERSIONS:
+            os.remove(
+                self.path / f"data/tar/from_tar1_{version}_swprepost.target")
 
     def test_to_and_from_dinver_txt(self):
         frq = [1, 3, 5, 7, 9, 15]

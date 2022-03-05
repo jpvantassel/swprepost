@@ -82,7 +82,7 @@ statpoint_exec = re.compile(statpoint_expr)
 
 # Given the text from a swprepost .csv ->
 # Find the associated header information.
-description_expr = "^#(rayleigh|love) (\d+)"
+description_expr = "#(rayleigh|love) (\d+)"
 description_exec = re.compile(description_expr)
 
 # Find the associated data

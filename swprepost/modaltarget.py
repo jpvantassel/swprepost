@@ -633,19 +633,20 @@ class ModalTarget(CurveUncertain):
 
         # Read header information
         descriptions = description_exec.findall(text)
-        
+
         # TODO(jpv): Deprecate after v>2.0.0.
         if len(descriptions) == 0:
-            msg = ".csv does not contain any metadata, this the default"
-            msg += "in v2.0.0 and before, however with v2.0.0 metadata"
-            msg += "is required. The provided description will be used."
-            msg += "Replacement with the provided description will be"
+            msg = ".csv does not contain any metadata, this the default "
+            msg += "in v2.0.0 and before, however with v2.0.0 metadata "
+            msg += "is required. The provided description will be used. "
+            msg += "Replacement with the provided description will be "
             msg += "deprecated after v2.0.0."
             warnings.warn(msg, DeprecationWarning)
         else:
             description = []
             for (polarization, modenumber) in descriptions:
-                description.append((polarization, modenumber))
+                description.append((polarization, int(modenumber)))
+            description = tuple(description)
 
         # Read data
         mtargetpoints = mtargetpoint_exec.findall(text)
