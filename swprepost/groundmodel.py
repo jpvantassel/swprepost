@@ -103,7 +103,7 @@ class GroundModel():
         for key in ["thickness", "vp", "vs", "density"]:
             value = kwargs[key]
             if tmp_len != len(value):
-                raise ValueError(f"All inputs must have the same length.")
+                raise ValueError("All inputs must have the same length.")
             for _val in value:
                 if _val < 0:
                     raise ValueError(f"{key} must always be >= 0.")
@@ -442,7 +442,7 @@ class GroundModel():
         valid_parameters = ["depth", "vp", "vs", "rh", "density", "pr"]
         self._validate_parameter(parameter, valid_parameters)
         par = getattr(self, parameter)
-        
+
         other_pars = ["vs", "vp", "rh"]
         other_pars.remove(parameter)
         par1 = getattr(self, other_pars[0])
@@ -452,7 +452,7 @@ class GroundModel():
         spar = [par[0]]
         sum_ctk = self.tk[0]
         for (ctk, ppar, cpar, ppar1, cpar1, ppar2, cpar2) in zip(self.tk[1:], par[:-1], par[1:], par1[:-1], par1[1:], par2[:-1], par2[1:]):
-            
+
             if (cpar == ppar) and ((cpar1 != ppar1) or (cpar2 != ppar2)):
                 sum_ctk += ctk
             else:
@@ -589,7 +589,8 @@ class GroundModel():
             Writes file to disk.
 
         """
-        fileobj.write(f"# Layered model {self.identifier}: value={self.misfit}\n")
+        fileobj.write(
+            f"# Layered model {self.identifier}: value={self.misfit}\n")
         fileobj.write(self.txt_repr)
 
     def write_to_txt(self, fname):
@@ -607,7 +608,8 @@ class GroundModel():
 
         """
         with open(fname, "w") as f:
-            f.write(f"# Layered model {self.identifier}: value={self.misfit}\n")
+            f.write(
+                f"# Layered model {self.identifier}: value={self.misfit}\n")
             for line in self.txt_repr:
                 f.write(line)
 

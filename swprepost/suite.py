@@ -75,7 +75,7 @@ class Suite(ABC):
 
             if nbest > max_avail:
                 msg = f"Requested ({nbest}) > Available ({max_avail})"
-                msg += f", setting requested to available."
+                msg += ", setting requested to available."
                 warnings.warn(msg)
                 return max_avail
             else:

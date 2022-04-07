@@ -28,6 +28,7 @@ from swprepost.check_utils import check_geopsy_version
 from .regex import polarization_exec, modenumber_exec, statpoint_exec, description_exec, mtargetpoint_exec
 from .meta import __version__
 
+
 class ModalTarget(CurveUncertain):
     """Target information for a surface wave mode.
 
@@ -74,7 +75,7 @@ class ModalTarget(CurveUncertain):
         """
         # TODO(jpv): To remove in version >2.0.0.
         if isinstance(velstd, float):
-            msg = f"Setting velstd as a float is deprecated and will be removed after v2.0.0"
+            msg = "Setting velstd as a float is deprecated and will be removed after v2.0.0"
             warnings.warn(msg, category=DeprecationWarning)
             velstd = np.array(velocity, dtype=np.double)*velstd
 
@@ -94,15 +95,19 @@ class ModalTarget(CurveUncertain):
                 polarization, modenumber = _description
             # If tuple instead of tuple of tuples _description cannot be split
             # and will return ValueError.
-            except ValueError as e:
-                raise TypeError("description must be a iterable of tuples, not tuple.")
+            except ValueError:
+                raise TypeError(
+                    "description must be a iterable of tuples, not tuple.")
 
             if polarization not in polarizations:
-                raise ValueError(f"polarization={polarization} is not recognized, must be in {polarizations}.")
+                raise ValueError(
+                    f"polarization={polarization} is not recognized, must be in {polarizations}.")
             if not isinstance(modenumber, (int,)):
-                raise TypeError(f"modenumber must be non-negative integer, not type {type(modenumber)}.")
+                raise TypeError(
+                    f"modenumber must be non-negative integer, not type {type(modenumber)}.")
             if modenumber < 0:
-                raise ValueError(f"modenumber={modenumber} is negative, must be non-negative integer.")
+                raise ValueError(
+                    f"modenumber={modenumber} is negative, must be non-negative integer.")
         return description
 
     def _sort_data(self):
@@ -530,7 +535,7 @@ class ModalTarget(CurveUncertain):
             stddevs = self.slostd
         elif version == "3.4.2":
             stddevs = self.logstd
-        else: # pragma: no cover
+        else:  # pragma: no cover
             msg = "You updated the SUPPORTED_GEOPSY_VERSIONS, but need to update to_txt_dinver."
             raise NotImplementedError(msg)
 
@@ -580,7 +585,7 @@ class ModalTarget(CurveUncertain):
         for line in lines:
             if line.startswith("#"):
                 continue
-            
+
             frq, slo, std = line.split()[:3]
             frqs.append(frq)
             slos.append(slo)
@@ -596,7 +601,7 @@ class ModalTarget(CurveUncertain):
         elif version == "3.4.2":
             cov = std - np.sqrt(std*std - 2*std + 2)
             velstd = cov*vel
-        else: # pragma: no cover
+        else:  # pragma: no cover
             msg = "You updated the SUPPORTED_GEOPSY_VERSIONS, but need to update from_txt_dinver."
             raise NotImplementedError(msg)
 
@@ -621,7 +626,8 @@ class ModalTarget(CurveUncertain):
             f.write(f"#{len(self.description)} potential descriptions:,,\n")
             for (polarization, modenumber) in self.description:
                 f.write(f"#{polarization} {modenumber},,\n")
-            f.write("#Frequency (Hz),Velocity (m/s),Velocity Standard Deviation (m/s)\n")
+            f.write(
+                "#Frequency (Hz),Velocity (m/s),Velocity Standard Deviation (m/s)\n")
             for c_frq, c_vel, c_velstd in zip(self.frequency, self.velocity, self.velstd):
                 f.write(f"{c_frq},{c_vel},{c_velstd}\n")
 
@@ -688,7 +694,7 @@ class ModalTarget(CurveUncertain):
 
         frequency, velocity, velstd = [], [], []
         for (frq, vel, std, additional) in mtargetpoints:
-            
+
             # If a user provides more than three columns of data, this is a
             # problem. To handle this rigorously, capture the additional text
             # and raise an error to avoid any ambiguity.
@@ -777,7 +783,8 @@ class ModalTarget(CurveUncertain):
 
         """
         from swprepost import TargetSet
-        targetset = TargetSet.from_target(fname_prefix=fname_prefix, version=version)
+        targetset = TargetSet.from_target(
+            fname_prefix=fname_prefix, version=version)
         ntargets = len(targetset.targets)
 
         if ntargets > 1:
@@ -789,7 +796,7 @@ class ModalTarget(CurveUncertain):
     @staticmethod
     def _parse_modeltarget_from_text(mc_text, version):
         """Parse information from ModalCurveTarget text.
-        
+
         Paramters
         ---------
         mc_text : str
@@ -817,7 +824,7 @@ class ModalTarget(CurveUncertain):
         statpoints = statpoint_exec.findall(mc_text)
         xs = np.empty(len(statpoints))
         means = np.empty(len(statpoints))
-        stddevs =   np.empty(len(statpoints))
+        stddevs = np.empty(len(statpoints))
         for cid, statpoint in enumerate(statpoints):
             _x, _mean, _stddev = statpoint
             xs[cid] = float(_x)
@@ -949,6 +956,7 @@ class ModalTarget(CurveUncertain):
 
         if ax_was_none:
             return (fig, ax)
+
 
 # TODO(jpv): remove in version after 2.0.0, here for backwards comptability.
 Target = ModalTarget

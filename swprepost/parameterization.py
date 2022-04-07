@@ -90,7 +90,7 @@ class Parameterization():
         self.rh = rh
 
     @classmethod
-    def from_min_max(cls, *args, **kwargs): # pragma: no cover
+    def from_min_max(cls, *args, **kwargs):  # pragma: no cover
         return DeprecationWarning("This method was depreacted after v1.0.0.")
 
     def to_param(self, fname_prefix, version="3.4.2"):
@@ -173,16 +173,16 @@ class Parameterization():
                              '      <defaultMinimum>2000</defaultMinimum>',
                              '      <defaultMaximum>2000</defaultMaximum>',
                              '      <defaultCondition>LessThan</defaultCondition>']
-            else: # pragma: no cover
+            else:  # pragma: no cover
                 raise NotImplementedError(f"Selection {key} not implemented")
 
             if value._par_type in ["FX", "FTL", "CT"]:
                 isdepth = "false"
             elif value._par_type in ["LR", "CD", "LN"]:
                 isdepth = "true"
-            else: # pragma: no cover
+            else:  # pragma: no cover
                 msg = f"._par_type` {value._par_type} not recognized, refer to Parameter.__doc__."
-                raise NotImplementedError(msg)          
+                raise NotImplementedError(msg)
 
             for lnum, (dhmin, dhmax, pmin, pmax, rev) in enumerate(zip(value.lay_min, value.lay_max, value.par_min, value.par_max, value.par_rev)):
                 rev_check = 'true' if not rev else 'false'
@@ -211,7 +211,8 @@ class Parameterization():
                 min_thickness = np.round(value.lay_min[0], decimals=2)
                 if nlay > 2:
                     for lay in range(nlay-2):
-                        contents += [f'linear(&quot;D{key}{lay+1}&quot;,&quot;&gt;&quot;,{1},&quot;D{key}{lay}&quot;,{min_thickness});']
+                        contents += [
+                            f'linear(&quot;D{key}{lay+1}&quot;,&quot;&gt;&quot;,{1},&quot;D{key}{lay}&quot;,{min_thickness});']
 
         contents += ['      </text>',
                      '    </ParamSpaceScript>',
@@ -223,12 +224,12 @@ class Parameterization():
 
         if version == "2.10.1":
             encoding = "utf-8"
-            format = tarfile.GNU_FORMAT
+            file_format = tarfile.GNU_FORMAT
         elif version == "3.4.2":
             encoding = "utf_16_le"
-            format = tarfile.DEFAULT_FORMAT
+            file_format = tarfile.DEFAULT_FORMAT
             text = u"\ufeff" + text
-        else: # pragma: no cover
+        else:  # pragma: no cover
             msg = "You updated the SUPPORTED_GEOPSY_VERSIONS, but need to update to_param."
             raise NotImplementedError(msg)
 
@@ -238,7 +239,7 @@ class Parameterization():
         f_data = io.BytesIO(initial_bytes=text_b)
 
         f_contents = io.BytesIO()
-        with tarfile.open(fileobj=f_contents, mode="w:gz", format=format) as tar:
+        with tarfile.open(fileobj=f_contents, mode="w:gz", format=file_format) as tar:
             info = tarfile.TarInfo(name="contents.xml")
             info.size = len(text_b)
             tar.addfile(info, f_data)
@@ -292,12 +293,13 @@ class Parameterization():
             encoding = "utf-8"
         elif version == "3.4.2":
             encoding = "utf_16_le"
-        else: # pragma: no cover
+        else:  # pragma: no cover
             msg = "You updated the SUPPORTED_GEOPSY_VERSIONS, but need to update from_param."
             raise NotImplementedError(msg)
 
         with tarfile.open(f"{fname_prefix}.param", "r:gz") as f:
-            text = f.extractfile(f.getmember("contents.xml")).read().decode(encoding)
+            text = f.extractfile(f.getmember("contents.xml")
+                                 ).read().decode(encoding)
 
         # TODO (jpv): Clean up regular expressions.
         # Place these in regex module.
@@ -308,7 +310,7 @@ class Parameterization():
                 section_lines.append(line_count)
         section_lines.append(len(lines))
 
-        number = f"(-?\d+.?\d*[eE]?[+-]?\d*)"
+        number = "(-?\d+.?\d*[eE]?[+-]?\d*)"
         newline = r"\W+"
         reg_shape = "<shape>.*</shape>"
         reg_cond = "<lastParamCondition>(true|false)</lastParamCondition>"
@@ -353,7 +355,7 @@ class Parameterization():
             if len(tmp_depth) > 1:
                 isdepth = tmp_depth[1]
                 for val in tmp_depth[1:]:
-                    if val != isdepth: # pragma: no cover
+                    if val != isdepth:  # pragma: no cover
                         msg = "Parameterizations with layers defined in terms of thickness and depth cannot be parsed at this time."
                         raise ValueError(msg)
             else:
@@ -370,7 +372,7 @@ class Parameterization():
                 rh = par
             elif name == "Nu":
                 pr = par
-            else: # pragma: no cover
+            else:  # pragma: no cover
                 raise NotImplementedError
         return cls(vp, pr, vs, rh)
 
@@ -382,5 +384,5 @@ class Parameterization():
                 return False
         return True
 
-    def __repr__(self): # pragma: no cover
+    def __repr__(self):  # pragma: no cover
         return f"Parameterization(\nvp={self.vp},\npr={self.pr},\nvs={self.vs},\nrh={self.rh})"

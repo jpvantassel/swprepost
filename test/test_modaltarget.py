@@ -22,8 +22,6 @@ import logging
 import warnings
 
 import numpy as np
-import nbformat
-from nbconvert.preprocessors import ExecutePreprocessor
 
 from testtools import unittest, TestCase, get_path
 import swprepost

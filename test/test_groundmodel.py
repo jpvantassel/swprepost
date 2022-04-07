@@ -42,7 +42,8 @@ class Test_GroundModel(TestCase):
         vps = [300, 450, 1500.1, 2000.1]
         vss = [100, 150, 201., 300]
         rho = [2000, 3000, 2250., 2300.]
-        mygm = swprepost.GroundModel(thickness=thk, vp=vps, vs=vss, density=rho)
+        mygm = swprepost.GroundModel(
+            thickness=thk, vp=vps, vs=vss, density=rho)
 
         self.assertListEqual(mygm.tk, thk)
         self.assertListEqual(mygm.vp, vps)
@@ -54,7 +55,8 @@ class Test_GroundModel(TestCase):
         vps = np.array([300, 450, 1500.1, 2000.1])
         vss = np.array([100, 150, 201., 300])
         rho = np.array([2000, 3000, 2250., 2300.])
-        mygm = swprepost.GroundModel(thickness=thk, vp=vps, vs=vss, density=rho)
+        mygm = swprepost.GroundModel(
+            thickness=thk, vp=vps, vs=vss, density=rho)
 
         self.assertListEqual(thk.tolist(), mygm.tk)
         self.assertListEqual(vps.tolist(), mygm.vp)
@@ -87,7 +89,8 @@ class Test_GroundModel(TestCase):
         vp1 = [200, 250]
         vs1 = [100, 125]
         rh1 = [2000]*2
-        mygm = swprepost.GroundModel(thickness=tk1, vp=vp1, vs=vs1, density=rh1)
+        mygm = swprepost.GroundModel(
+            thickness=tk1, vp=vp1, vs=vs1, density=rh1)
         self.assertListEqual([0, 5, 5, 9999.0], mygm.depth)
         self.assertListEqual([200, 200, 250, 250], mygm.vp2)
         self.assertListEqual([100, 100, 125, 125], mygm.vs2)
@@ -155,12 +158,13 @@ class Test_GroundModel(TestCase):
         vps = [150, 150, 150]
         vss = [151, 150, 149]
         for vp, vs in zip(vps, vss):
-            self.assertRaises(ValueError, swprepost.GroundModel.calc_pr, vp, vs)
+            self.assertRaises(
+                ValueError, swprepost.GroundModel.calc_pr, vp, vs)
 
     def test_properties(self):
-        tk = [1,2,0]
-        vp = [100,200,300]
-        vs = [50,100,150]
+        tk = [1, 2, 0]
+        vp = [100, 200, 300]
+        vs = [50, 100, 150]
         rh = [2000]*3
         gm = swprepost.GroundModel(tk, vp, vs, rh)
 
@@ -307,7 +311,7 @@ class Test_GroundModel(TestCase):
         rh = [2000]
         gm = swprepost.GroundModel(tk, vp, vs, rh)
         disc_depth, disc_vs = gm.discretize(dmax=5, dy=1)
-        expected = [0,1,2,3,4,5]
+        expected = [0, 1, 2, 3, 4, 5]
         self.assertListEqual(expected, disc_depth)
         expected = [100]*6
         self.assertListEqual(expected, disc_vs)
@@ -340,8 +344,9 @@ class Test_GroundModel(TestCase):
             self.assertAlmostEqual(test, known)
 
         # Bad Value
-        depth = [1,2,3]
-        self.assertRaises(ValueError, swprepost.GroundModel.depth_to_thick, depth)
+        depth = [1, 2, 3]
+        self.assertRaises(
+            ValueError, swprepost.GroundModel.depth_to_thick, depth)
 
     def test_from_geopsy(self):
         fname = self.path / "data/gm/test_gm_mod1_self.txt"
@@ -405,8 +410,8 @@ class Test_GroundModel(TestCase):
         rh_tk = [0]
         rh = [2000]
         mygm = swprepost.GroundModel.from_simple_profiles(vp_tk, vp,
-                                                      vs_tk, vs,
-                                                      rh_tk, rh)
+                                                          vs_tk, vs,
+                                                          rh_tk, rh)
         self.assertListEqual(mygm.tk, [0])
         self.assertListEqual(mygm.vp, [500])
         self.assertListEqual(mygm.vs, [200])
@@ -419,8 +424,8 @@ class Test_GroundModel(TestCase):
         rh_tk = [0]
         rh = [2000]
         mygm = swprepost.GroundModel.from_simple_profiles(vp_tk, vp,
-                                                      vs_tk, vs,
-                                                      rh_tk, rh)
+                                                          vs_tk, vs,
+                                                          rh_tk, rh)
         self.assertListEqual(mygm.tk, [4, 1, 5, 0])
         self.assertListEqual(mygm.vp, [200, 500, 500, 600])
         self.assertListEqual(mygm.vs, [100, 100, 200, 200])
@@ -446,8 +451,8 @@ class Test_GroundModel(TestCase):
         rh_tk = [0]
         rh = [2000]
         mygm = swprepost.GroundModel.from_simple_profiles(vp_tk, vp,
-                                                      vs_tk, vs,
-                                                      rh_tk, rh)
+                                                          vs_tk, vs,
+                                                          rh_tk, rh)
         self.assertListEqual(mygm.tk, [1, 1, 2, 2, 3, 4, 1, 2, 2, 4, 6, 0])
         self.assertListEqual(mygm.vp,
                              [100, 100, 200, 200, 300, 300, 400, 500, 600, 600, 600, 600])
@@ -462,8 +467,8 @@ class Test_GroundModel(TestCase):
         rh_tk = [0]
         rh = [2000]
         mygm = swprepost.GroundModel.from_simple_profiles(vp_tk, vp,
-                                                      vs_tk, vs,
-                                                      rh_tk, rh)
+                                                          vs_tk, vs,
+                                                          rh_tk, rh)
         self.assertListEqual(mygm.tk, [1, 1, 1, 1, 1, 1, 0])
         self.assertListEqual(mygm.vp,
                              [1500, 1501, 1502, 1503, 1504, 1504, 1505])
@@ -477,8 +482,8 @@ class Test_GroundModel(TestCase):
         rh_tk = [0]
         rh = [2000]
         mygm = swprepost.GroundModel.from_simple_profiles(vp_tk, vp,
-                                                      vs_tk, vs,
-                                                      rh_tk, rh)
+                                                          vs_tk, vs,
+                                                          rh_tk, rh)
         self.assertListEqual(mygm.tk, [1, 1, 1, 1, 1, 1, 0])
         self.assertListEqual(mygm.vp,
                              [1500, 1501, 1502, 1503, 1504, 1505, 1505])
@@ -486,9 +491,9 @@ class Test_GroundModel(TestCase):
         self.assertListEqual(mygm.rh, [2000]*7)
 
     def test_str_and_repr(self):
-        tk = [1,2,0]
-        vp = [100,200,300]
-        vs = [50,100,150]
+        tk = [1, 2, 0]
+        vp = [100, 200, 300]
+        vs = [50, 100, 150]
         rh = [2000]*3
         gm = swprepost.GroundModel(tk, vp, vs, rh)
         # str
@@ -498,9 +503,9 @@ class Test_GroundModel(TestCase):
         self.assertEqual(expected, gm.__repr__())
 
     def test_equal(self):
-        tk = [1,2,0]
-        vp = [100,200,300]
-        vs = [50,100,150]
+        tk = [1, 2, 0]
+        vp = [100, 200, 300]
+        vs = [50, 100, 150]
         rh = [2000]*3
         gm_a = swprepost.GroundModel(tk, vp, vs, rh)
 
@@ -509,16 +514,17 @@ class Test_GroundModel(TestCase):
         self.assertEqual(gm_a, gm_b)
 
         # Not Equal - Wrong Length
-        x = [1,2]
-        y = [2,4]
-        gm_b = swprepost.GroundModel(x,y,x,x)
+        x = [1, 2]
+        y = [2, 4]
+        gm_b = swprepost.GroundModel(x, y, x, x)
         self.assertNotEqual(gm_a, gm_b)
 
         # Not Equal - Wrong Value
-        x = [1,2,3]
-        y = [2,4,6]
-        gm_b = swprepost.GroundModel(x,y,x,x)
+        x = [1, 2, 3]
+        y = [2, 4, 6]
+        gm_b = swprepost.GroundModel(x, y, x, x)
         self.assertNotEqual(gm_a, gm_b)
+
 
 class Test_FromSimple(unittest.TestCase):
     @settings(deadline=None)

@@ -159,7 +159,7 @@ class Parameter():
         try:
             value = float(value)
         except:
-            msg = f"`value` must be abel to be cast to `float`."
+            msg = "`value` must be abel to be cast to `float`."
             raise TypeError(msg)
 
         if value <= 0:
@@ -199,7 +199,7 @@ class Parameter():
     @staticmethod
     def check_depth_factor(depth_factor):
         """Check input value for factor."""
-        if type(depth_factor) not in (int, float):
+        if not isinstance(depth_factor, (int, float)):
             msg = f"`factor` must be `int` or `float`. Not {type(depth_factor)}."
             raise TypeError(msg)
         if depth_factor < 2:
@@ -234,12 +234,12 @@ class Parameter():
             ([minthickness...], [maxthickness...]).
 
         """
-        if type(nlayers) != int:
+        if not isinstance(nlayers, int):
             raise TypeError(f"`nlayers` must be `int`, not {type(nlayers)}.")
         if nlayers <= 0:
             raise ValueError("`nlayers` must be positive.")
 
-        if type(thickness) not in (int, float):
+        if not isinstance(thickness, (int, float)):
             msg = f"`thickness` must be `int` or `float`, not {type(thickness)}."
             raise TypeError(msg)
         if thickness <= 0:
@@ -312,7 +312,7 @@ class Parameter():
         """
         wmin, wmax = Parameter._check_wavelengths(wmin, wmax)
 
-        if type(nlayers) != int:
+        if not isinstance(nlayers, int):
             msg = f"`nlayers` must be `int`. Not {type(nlayers)}."
             raise TypeError(msg)
         if nlayers < 1:
@@ -398,7 +398,7 @@ class Parameter():
         """
         wmin, wmax = Parameter._check_wavelengths(wmin, wmax)
 
-        if type(lr) not in (int, float):
+        if isinstance(lr, (int, float)):
             msg = f"`lr` must be `int` or `float`, not {type(lr)}."
             raise TypeError(msg)
         if lr <= 1:
@@ -544,11 +544,11 @@ class Parameter():
                    parameter.par_max, parameter.par_rev, parameter.lay_type)
 
     @staticmethod
-    def make_rectangle(left, right, upper, lower): # pragma: no cover
+    def make_rectangle(left, right, upper, lower):  # pragma: no cover
         return ([left, left, right, right],
                 [upper, lower, lower, upper])
 
-    def plot(self, ax=None, show_example=True): # pragma: no cover
+    def plot(self, ax=None, show_example=True):  # pragma: no cover
         # TODO (jpv): Add docstring.
         if ax is None:
             ax_was_none = True
@@ -613,5 +613,5 @@ class Parameter():
                     return False
         return True
 
-    def __repr__(self): # pragma: no cover 
+    def __repr__(self):  # pragma: no cover
         return f"Parameter(lay_min={self.lay_min}, lay_max={self.lay_max}, par_min={self.par_min}, par_max={self.par_max}, par_rev={self.par_rev}, lay_type={self._par_type})"

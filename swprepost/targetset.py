@@ -169,9 +169,9 @@ class TargetSet():
         
         """
         path = pathlib.PurePath(fname)
-        format = format if format is not None else path.suffix
+        file_format = file_format if file_format is not None else path.suffix
         format_map = {".target":self._to_target}
-        format_map[format](str(path), version=version)
+        format_map[file_format](str(path), version=version)
 
     def to_target(self, fname_prefix, version="3.4.2"):
         """Write info to the .target file format used by Dinver.
@@ -466,9 +466,9 @@ class TargetSet():
         text = "\n".join(contents)
 
         if version == "2.10.1":
-            format = tarfile.GNU_FORMAT
+            file_format = tarfile.GNU_FORMAT
         elif version == "3.4.2":
-            format = tarfile.DEFAULT_FORMAT
+            file_format = tarfile.DEFAULT_FORMAT
         else: # pragma: no cover
             msg = "You updated the SUPPORTED_GEOPSY_VERSIONS, but need to update to_param."
             raise NotImplementedError(msg)
@@ -479,7 +479,7 @@ class TargetSet():
         f_data = io.BytesIO(initial_bytes=text_b)
 
         f_contents = io.BytesIO()
-        with tarfile.open(fileobj=f_contents, mode="w:gz", format=format) as tar:
+        with tarfile.open(fileobj=f_contents, mode="w:gz", format=file_format) as tar:
             info = tarfile.TarInfo(name="contents.xml")
             info.size = len(text_b)
             tar.addfile(info, f_data)
@@ -515,9 +515,9 @@ class TargetSet():
         
         """
         path = pathlib.PurePath(fname)
-        format = format if format is not None else path.suffix
+        file_format = file_format if file_format is not None else path.suffix
         format_map = {".target":cls._from_target}
-        return format_map[format](str(path), version)
+        return format_map[file_format](str(path), version)
 
     @classmethod
     def from_target(cls, fname_prefix, version="3.4.2"):

@@ -98,7 +98,7 @@ class Test_Curve(TestCase):
         self.assertEqual(expected, returned)
 
         # __str__
-        expected = f"Curve with 3 points."
+        expected = "Curve with 3 points."
         returned = curve.__str__()
         self.assertEqual(expected, returned)
 

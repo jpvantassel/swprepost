@@ -17,7 +17,6 @@
 
 """Tests for Parameterization class."""
 
-import warnings
 import os
 import logging
 
