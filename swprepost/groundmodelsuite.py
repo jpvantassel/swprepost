@@ -72,7 +72,7 @@ class GroundModelSuite(Suite):
         Parameters
         ----------
         groundmodel : GroundModel
-            refer to 
+            refer to
             :meth: `__init__ <swprepost.GroundModelSuite.__init__>`.
         sort : bool
             Sort models according to misfit (smallest to largest),
@@ -328,7 +328,7 @@ class GroundModelSuite(Suite):
         sort : bool, optional
             Indicates whether the imported data should be sorted from
             lowest to highest misfit, default is `False` indicating no
-            sorting is performed.  
+            sorting is performed.
 
         Returns
         -------

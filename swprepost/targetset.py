@@ -144,7 +144,7 @@ class TargetSet():
                     target = target.easy_resample(pmin, pmax, pn, res_type=res_type, domain=domain, inplace=inplace)
                 targets.append(target)
             return TargetSet(targets)
-    
+
     def to_file(self, fname, file_format=None, version="3.4.2"):
         """Write `TargetSet` info to disk.
 
@@ -166,7 +166,7 @@ class TargetSet():
         ValueError
             If `fname` does not have an extension and `file_format` is
             `None`.
-        
+
         """
         path = pathlib.PurePath(fname)
         file_format = file_format if file_format is not None else path.suffix
@@ -231,7 +231,7 @@ class TargetSet():
                         "      <minimumMisfit>0</minimumMisfit>",
                         "      <misfitType>L2_Normalized</misfitType>",
                         ]
-            
+
             # TODO (jpv): Fix dc_weight should be an attribute of all ModalTarget and not set individually for each mode.
             # Essentially it needs to be moved to the TargetSet class and out of the ModalTarget class. Take first one for now.
 
@@ -313,7 +313,7 @@ class TargetSet():
                         "      </StatValue>",
                         "    </ValueTarget>",
                         ]
-            
+
             contents += [
                         "    <RefractionTarget type=\"Vp\">",
                         "      <selected>false</selected>",
@@ -512,7 +512,7 @@ class TargetSet():
         ValueError
             If `fname` does not have an extension and `format` is
             `None`.
-        
+
         """
         path = pathlib.PurePath(fname)
         file_format = file_format if file_format is not None else path.suffix
@@ -589,10 +589,10 @@ class TargetSet():
 
     def __repr__(self):
         """Unambiguous representation of a `TargetSet`."""
-        repr=""
+        representation=""
         for target in self.targets:
-            repr += f"{target.__repr__()}\n"
-        return repr
+            representation += f"{target.__repr__()}\n"
+        return representation
 
     def __str__(self):
         """Human readable representation of a `TargetSet`."""

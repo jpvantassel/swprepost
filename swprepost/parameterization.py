@@ -38,7 +38,7 @@ class Parameterization():
     parameterization files for use in the open-source software Dinver.
     While parameterizations of various kinds can be built quickly using
     this tool, it does have limited functionality compared to the full
-    user interface. It is recommended that the you use this tool to 
+    user interface. It is recommended that the you use this tool to
     create general parameterizations in batches and fine tune them if
     necessary using the Dinver user interface.
 
@@ -61,7 +61,7 @@ class Parameterization():
         """Initialize an instance of the `Parameterization` class.
 
         Initialize a `Parameterization` using instantiated `Parameter`
-        objects. 
+        objects.
 
         Parameters
         ----------
@@ -100,7 +100,7 @@ class Parameterization():
         ----------
         fname_prefix : str
             File name prefix (without the .param extension), may be
-            a relative or the full path. 
+            a relative or the full path.
         version : {'3.4.2', '2.10.1'}, optional
             Version of Geopsy, default is version '3.4.2'.
 

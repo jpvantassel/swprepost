@@ -19,7 +19,6 @@
 
 import logging
 import warnings
-import wave
 
 import numpy as np
 
@@ -108,7 +107,7 @@ class DispersionSuite(Suite):
         fname : str
             Name of file, may be a relative or full path.
         nsets : int, optional
-            Number of sets to extract, default is "all" so all 
+            Number of sets to extract, default is "all" so all
             available sets will be extracted.
         nrayleigh, nlove : int, optional
             Number of Rayleigh and Love modes respectively, default
@@ -189,7 +188,7 @@ class DispersionSuite(Suite):
         sort : bool, optional
             Indicates whether the imported data should be sorted from
             lowest to highest misfit, default is `False` indicating no
-            sorting is performed.  
+            sorting is performed.
 
         Returns
         -------

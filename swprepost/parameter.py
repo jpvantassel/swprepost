@@ -508,7 +508,7 @@ class Parameter():
             default is `False` (i.e., no reversal allowed).
         existing_parameter : Parameter
             Instantiated `Parameter` object to which you wish to link
-            the current parameter. 
+            the current parameter.
         ptype : {'vs', 'pr', 'rh', 'vp'}, optional
             Inversion parameter, represented by the
             `existing_parameter`, default is `vs`.

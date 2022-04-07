@@ -94,7 +94,7 @@ class Suite(ABC):
         -------
         float, tuple
             If `nmodels==1`, returns `float` corresponding to the single
-            best misfit, otherwise returns `tuple` of the form 
+            best misfit, otherwise returns `tuple` of the form
             (min_msft, max_msft).
 
         """

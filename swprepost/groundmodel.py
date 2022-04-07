@@ -136,7 +136,7 @@ class GroundModel():
         vp, vs : iterable
             Container of `float` or `int` denoting the P- and S-wave
             velocity of each layer in m/s.
-        density : iterable 
+        density : iterable
             Container of `float` or `int` denoting the mass density
             of each layer in kg/m3.
         identifier : int, optional
@@ -302,7 +302,7 @@ class GroundModel():
         Returns
         -------
         list
-            Defining the specified parameter. 
+            Defining the specified parameter.
 
         Raises
         ------

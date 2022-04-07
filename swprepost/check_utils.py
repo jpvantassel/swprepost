@@ -33,13 +33,13 @@ def check_geopsy_version(version):
     Returns
     -------
     str
-        Version specified if valid, raise `NotImplementedError` otherwise. 
+        Version specified if valid, raise `NotImplementedError` otherwise.
 
     """
     # TODO (jpv): Remove in swprocess version >2.0.0.
     # Provides backwards compatability to v1.0.0 and earlier.
     if version == "2" or version == "3":
-        version_map = {"2":"2.10.1", "3":"3.4.2"}
+        version_map = {"2": "2.10.1", "3": "3.4.2"}
         version = version_map[version]
         msg = "Proving only Geopsy's major version is no longer permitted, "
         msg += f"setting version to {version}."

@@ -87,7 +87,8 @@ class ModalTarget(CurveUncertain):
         self.description = self._check_description(description)
 
     # TODO(jpv): Replace with Typing.
-    def _check_description(self, description):
+    @staticmethod
+    def _check_description(description):
         """Check description complies with expected format."""
         polarizations = ["rayleigh", "love"]
         for _description in description:
