@@ -145,14 +145,14 @@ class TargetSet():
                 targets.append(target)
             return TargetSet(targets)
     
-    def to_file(self, fname, format=None, version="3.4.2"):
+    def to_file(self, fname, file_format=None, version="3.4.2"):
         """Write `TargetSet` info to disk.
 
         Parameters
         ----------
         fname : str
             Name of file, a relative or full path may be provided.
-        format : {'.target'}, optional
+        file_format : {'.target'}, optional
             Format of the file, default is `None` indicating extension
             of fname will be used.
 
@@ -164,7 +164,7 @@ class TargetSet():
         Raises
         ------
         ValueError
-            If `fname` does not have an extension and `format` is
+            If `fname` does not have an extension and `file_format` is
             `None`.
         
         """
@@ -204,7 +204,7 @@ class TargetSet():
         # TODO (jpv): Remove method after release >2.0.0.
         msg = "The to_target method has been deprecated, use to_file instead."
         warnings.warn(msg, DeprecationWarning)
-        return self.to_file(f"{fname_prefix}.target", format=None, version=version)
+        return self.to_file(f"{fname_prefix}.target", file_format=None, version=version)
 
     def _to_target(self, fname, version):
         version = check_geopsy_version(version)
@@ -491,14 +491,14 @@ class TargetSet():
         f_contents.close()
 
     @classmethod
-    def from_file(cls, fname, format=None, version="3.4.2"):
+    def from_file(cls, fname, file_format=None, version="3.4.2"):
         """Read `TargetSet` info from disk.
 
         Parameters
         ----------
         fname : str
             Name of file, a relative or full path may be provided.
-        format : {'.target'}, optional
+        file_format : {'.target'}, optional
             Format of the file, default is `None` indicating extension
             of fname will be used.
 
@@ -559,7 +559,7 @@ class TargetSet():
         # TODO (jpv): Remove method after release >2.0.0.
         msg = "The from_target method has been deprecated, use from_file instead."
         warnings.warn(msg, DeprecationWarning)
-        return cls.from_file(f"{fname_prefix}.target", format=None, version=version)
+        return cls.from_file(f"{fname_prefix}.target", file_format=None, version=version)
 
     @classmethod
     def _from_target(cls, fname, version):

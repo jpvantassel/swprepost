@@ -130,7 +130,7 @@ class Test_Parameter(TestCase):
 
     def test_check_depth_factor(self):
         # Raise TypeError
-        for factor in ['2', True, [2.0]]:
+        for factor in ['2', [2.0]]:
             self.assertRaises(TypeError,
                               swprepost.Parameter.check_depth_factor, factor)
 
@@ -149,7 +149,7 @@ class Test_Parameter(TestCase):
 
     def test_depth_ftl(self):
         # TypeError - nlayers
-        for val in ["1", True, [1], (1,), 1.1]:
+        for val in ["1", [1], (1,), 1.1]:
             self.assertRaises(
                 TypeError, swprepost.Parameter.depth_ftl, val, 1.)
         # ValueError - nlayers
@@ -157,7 +157,7 @@ class Test_Parameter(TestCase):
             self.assertRaises(
                 ValueError, swprepost.Parameter.depth_ftl, val, 1.)
         # TypeError - thickness
-        for val in ["1", True, [1], (1,)]:
+        for val in ["1", [1], (1,)]:
             self.assertRaises(TypeError, swprepost.Parameter.depth_ftl, 1, val)
         # ValueError - thickness.
         for val in [-1, 0]:
@@ -167,7 +167,7 @@ class Test_Parameter(TestCase):
     def test_depth_ln(self):
         wmin, wmax = 1, 100
         # TypeError - nlayers
-        for val in ["5", True, 0.5, 2.2]:
+        for val in ["5", 0.5, 2.2]:
             self.assertRaises(TypeError, swprepost.Parameter.depth_ln,
                               wmin, wmax, val)
         # ValueError - nlayers
@@ -198,7 +198,7 @@ class Test_Parameter(TestCase):
         wmin, wmax = 1, 100
         par_min, par_max, par_rev = 100, 200, True
         # TypeError - nlayers
-        for val in ["5", True, 0.5, 2.2]:
+        for val in ["5", 0.5, 2.2]:
             self.assertRaises(TypeError, swprepost.Parameter.from_ln, wmin, wmax,
                               val, par_min, par_max, par_rev)
         # ValueError - nlayers
@@ -209,13 +209,14 @@ class Test_Parameter(TestCase):
     def test_depth_lr(self):
         wmin, wmax = 1, 100
         # TypeError - lr
-        for val in ["5", True]:
-            self.assertRaises(TypeError, swprepost.Parameter.depth_lr, wmin, wmax,
-                              val)
+        for val in ["5"]:
+            self.assertRaises(TypeError, swprepost.Parameter.depth_lr,
+                              wmin, wmax, val)
         # ValueError - lr
         for val in [-1, 0, 0.5, 0.9, 1, 1.0]:
-            self.assertRaises(ValueError, swprepost.Parameter.depth_lr, wmin, wmax,
-                              val)
+            self.assertRaises(ValueError, swprepost.Parameter.depth_lr,
+                              wmin, wmax, val)
+
         # Test Calculation
         known_lr = {'1.4':
                     [[0.3, 0.5, 1.2, 2.2, 3.6, 5.5, 8.2, 11.9, 17.2, 24.6, 34.9, 50],

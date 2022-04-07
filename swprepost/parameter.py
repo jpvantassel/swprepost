@@ -398,7 +398,7 @@ class Parameter():
         """
         wmin, wmax = Parameter._check_wavelengths(wmin, wmax)
 
-        if isinstance(lr, (int, float)):
+        if not isinstance(lr, (int, float)):
             msg = f"`lr` must be `int` or `float`, not {type(lr)}."
             raise TypeError(msg)
         if lr <= 1:
