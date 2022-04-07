@@ -76,7 +76,7 @@ class Parameter():
         return (list(lower), list(upper))
 
     @staticmethod
-    def check_rev(par_rev):
+    def check_rev(par_rev):  # pragma: no cover
         """Check reversal input.
 
         Specifically:
@@ -92,10 +92,11 @@ class Parameter():
             except Exception as e:
                 msg = "`par_rev` must be an iterable composed of `bool`s."
                 raise TypeError(msg) from e
-                
+
         return _par_rev
 
-    def __init__(self, lay_min, lay_max, par_min, par_max, par_rev,
+    def __init__(self, lay_min, lay_max,
+                 par_min, par_max, par_rev,
                  lay_type="thickness"):
         """Initialize a `Parameter` object.
 
@@ -120,7 +121,7 @@ class Parameter():
             Instantiated `Parameter` object.
 
         """
-        lay_types = {"thickness":"CT", "depth":"CD"}
+        lay_types = {"thickness": "CT", "depth": "CD"}
         try:
             self._par_type = lay_types[lay_type]
         except KeyError:
@@ -353,7 +354,7 @@ class Parameter():
 
         """
         lay_min, lay_max = cls.depth_ln(wmin, wmax, nlayers,
-                                              depth_factor)
+                                        depth_factor)
         par_min, par_max, par_rev = cls.min_max_rev(nlayers,
                                                     par_min, par_max, par_rev)
 
@@ -532,7 +533,7 @@ class Parameter():
         obj.par_max = [float(par_max) for _ in range(length)]
         obj.par_rev = [float(par_rev) for _ in range(length)]
 
-        linked_map = {"vs":"Vs", "vp":"Vp", "rh":"Rho", "pr":"Nu"}
+        linked_map = {"vs": "Vs", "vp": "Vp", "rh": "Rho", "pr": "Nu"}
         obj.linked = linked_map[ptype]
         return obj
 
@@ -543,7 +544,7 @@ class Parameter():
                    parameter.par_max, parameter.par_rev, parameter.lay_type)
 
     @staticmethod
-    def make_rectangle(left, right, upper, lower):
+    def make_rectangle(left, right, upper, lower): # pragma: no cover
         return ([left, left, right, right],
                 [upper, lower, lower, upper])
 
@@ -612,5 +613,5 @@ class Parameter():
                     return False
         return True
 
-    def __repr__(self):
+    def __repr__(self): # pragma: no cover 
         return f"Parameter(lay_min={self.lay_min}, lay_max={self.lay_max}, par_min={self.par_min}, par_max={self.par_max}, par_rev={self.par_rev}, lay_type={self._par_type})"

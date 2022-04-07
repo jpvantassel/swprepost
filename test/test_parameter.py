@@ -61,6 +61,54 @@ class Test_Parameter(TestCase):
         self.assertListEqual(par_max, mypar.par_max)
         self.assertListEqual(par_rev, mypar.par_rev)
 
+        # Unknown lay_type
+        lay_min = [1, 5]
+        lay_max = [3, 16]
+        par_min = [200, 400]
+        par_max = [400, 600]
+        par_rev = [True, False]
+        self.assertRaises(NotImplementedError, swprepost.Parameter,
+                          lay_min, lay_max,
+                          par_min, par_max, par_rev,
+                          lay_type="mylatype"
+                          )
+
+        # Different length of lay_min and lay_max
+        lay_min = [1, 5, 2]
+        lay_max = [3, 16]
+        par_min = [200, 400]
+        par_max = [400, 600]
+        par_rev = [True, False]
+        self.assertRaises(ValueError, swprepost.Parameter,
+                          lay_min, lay_max,
+                          par_min, par_max, par_rev,
+                          lay_type="thickness"
+                          )
+
+        # Different in length between lay and par.
+        lay_min = [1, 5, 7]
+        lay_max = [3, 16, 20]
+        par_min = [200, 400]
+        par_max = [400, 600]
+        par_rev = [True, False]
+        self.assertRaises(ValueError, swprepost.Parameter,
+                          lay_min, lay_max,
+                          par_min, par_max, par_rev,
+                          lay_type="thickness"
+                          )
+
+        # min greater than max.
+        lay_min = [1, 5, 7]
+        lay_max = [3, 16, 20]
+        par_min = [600, 600]
+        par_max = [400, 400]
+        par_rev = [True, False]
+        self.assertRaises(ValueError, swprepost.Parameter,
+                          lay_min, lay_max,
+                          par_min, par_max, par_rev,
+                          lay_type="thickness"
+                          )
+
     def test_check_wavelengths(self):
         wmin, wmax = (1, 100)
         # Proper Order
@@ -85,6 +133,11 @@ class Test_Parameter(TestCase):
         for factor in ['2', True, [2.0]]:
             self.assertRaises(TypeError,
                               swprepost.Parameter.check_depth_factor, factor)
+
+        # if depth_factor < 2, set equal to 2
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            self.assertEqual(2, swprepost.Parameter.check_depth_factor(1.5))
 
     def test_from_fx(self):
         # Raise TypeError
@@ -124,8 +177,8 @@ class Test_Parameter(TestCase):
         # Simple example
         nlayers = 5
         lay_min, lay_max = swprepost.Parameter.depth_ln(wmin=wmin, wmax=wmax,
-                                                              nlayers=nlayers,
-                                                              depth_factor=2)
+                                                        nlayers=nlayers,
+                                                        depth_factor=2)
         expected_lay_min = [wmin/3]*nlayers
         expected_lay_max = [wmax/2]*nlayers
         self.assertListAlmostEqual(expected_lay_min, lay_min)
@@ -134,8 +187,8 @@ class Test_Parameter(TestCase):
         # Simple example
         nlayers = 5
         lay_min, lay_max = swprepost.Parameter.depth_ln(wmin=wmin, wmax=wmax,
-                                                              nlayers=nlayers,
-                                                              depth_factor=5)
+                                                        nlayers=nlayers,
+                                                        depth_factor=5)
         expected_lay_min = [wmin/3]*nlayers
         expected_lay_max = [wmax/5]*nlayers
         self.assertListAlmostEqual(expected_lay_min, lay_min)
@@ -194,6 +247,28 @@ class Test_Parameter(TestCase):
                                           par_min, par_max, par_rev)
         self.assertEqual("LR", par._par_type)
         self.assertEqual(lr, par.par_value)
+
+    def test_clone(self):
+        wmin, wmax = 1, 100
+        par_min, par_max, par_rev = 100, 200, True
+        nlay = 3
+        par1 = swprepost.Parameter.from_ln(wmin, wmax, nlay,
+                                           par_min, par_max, par_rev)
+        par1_clone = swprepost.Parameter.clone(par1)
+        self.assertEqual(par1, par1_clone)
+
+    def test_from_parameter_and_link(self):
+        wmin, wmax = 1, 100
+        par_min, par_max, par_rev = 100, 200, True
+        nlay = 3
+        vs = swprepost.Parameter.from_ln(wmin, wmax, nlay,
+                                         par_min, par_max, par_rev)
+        par_min, par_max, par_rev = 200, 400, True
+        vp = swprepost.Parameter.from_parameter_and_link(
+            par_min, par_max, par_rev,
+            existing_parameter=vs, ptype="vs")
+
+        self.assertListEqual(vs.lay_min, vp.lay_min)
 
     def test_eq(self):
         wmin, wmax = 1, 100
