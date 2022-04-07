@@ -187,7 +187,7 @@ class Parameter():
             if val <= 0:
                 raise ValueError("Wavelength must be > 0.")
 
-        # Compare wavelenghts
+        # Compare wavelengths
         if wmin > wmax:
             msg = "Minimum wavelength must be less than maximum wavelength. Swapping!"
             warnings.warn(msg)
@@ -242,7 +242,7 @@ class Parameter():
             msg = f"`thickness` must be `int` or `float`, not {type(thickness)}."
             raise TypeError(msg)
         if thickness <= 0:
-            raise ValueError("`thickness` must be postive.")
+            raise ValueError("`thickness` must be positive.")
 
         return ([thickness]*nlayers, [thickness]*nlayers)
 
@@ -271,7 +271,7 @@ class Parameter():
         Note
         ----
         If a more detailed parameterization is desired than
-        available here use the `Dinver` user inferface to tweak the
+        available here use the `dinver` user inferface to tweak the
         resulting `.param` file.
 
         """

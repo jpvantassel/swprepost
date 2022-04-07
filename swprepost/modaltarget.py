@@ -21,7 +21,6 @@ import warnings
 
 import matplotlib.pyplot as plt
 import numpy as np
-from numpy.core.defchararray import mod
 
 from swprepost import Curve
 from swprepost import CurveUncertain
@@ -297,7 +296,7 @@ class ModalTarget(CurveUncertain):
 
         """
         self._is_valid_cov(cov)
-        update_ids = np.where(self.cov < cov)
+        update_ids = np.argwhere(self.cov < cov)
         self.velstd[update_ids] = self.velocity[update_ids]*cov
         self._isyerr = True
 
@@ -493,28 +492,46 @@ class ModalTarget(CurveUncertain):
         else:
             warnings.warn("A wavelength of 40m is out of range.")
 
-    def to_txt_dinver(self, fname, version="3"):
+    def to_txt_dinver(self, fname, version="3.4.2"):
         """Write in text format accepted by `Dinver`.
 
         Parameters
         ----------
         fname : str
             Name of output file, may a relative or full path.
-        version : {'3', '2'}, optional
-            Major version of Geopsy, default is version 3.
+        version : {'3.4.2', '2.10.1'}, optional
+            Version of Geopsy, default is version '3.4.2'.
 
         Returns
         -------
         None
-            Writes file to disk.
+            Write's geopsy-styled text file to disk.
+
+        Raises
+        ------
+        NotImplementedError
+            If `version` does not match the options provided.
+
+        Notes
+        -----
+        In previous versions of `swprepost` (v1.0.0 and earlier) an
+        attempt was made to support all versions of Dinver's .target
+        and .param formats. However, this has become untenable due to
+        the number and frequency of breaking changes that occur to these
+        formats. Therefore, in lieu of supporting all versions,
+        `swprepost` will seek to support only those versions directly
+        associated with the open-source high-performance computing
+        application `swbatch`.
 
         """
-        if version == "2":
+        version = check_geopsy_version(version)
+
+        if version == "2.10.1":
             stddevs = self.slostd
-        elif version == "3":
+        elif version == "3.4.2":
             stddevs = self.logstd
-        else:
-            msg = f"version={version} is not implemented, refer to documentation."
+        else: # pragma: no cover
+            msg = "You updated the SUPPORTED_GEOPSY_VERSIONS, but need to update to_txt_dinver."
             raise NotImplementedError(msg)
 
         with open(fname, "w") as f:
@@ -522,22 +539,40 @@ class ModalTarget(CurveUncertain):
                 f.write(f"{frq}\t{slo}\t{std}\n")
 
     @classmethod
-    def from_txt_dinver(cls, fname, version="3"):
+    def from_txt_dinver(cls, fname, version="3.4.2"):
         """Create from text format accepted by `Dinver`.
 
         Parameters
         ----------
         fname : str
             Name of output file, may a relative or full path.
-        version : {'3', '2'}, optional
-            Major version of Geopsy, default is version 3.
+        version : {'3.4.2', '2.10.1'}, optional
+            Version of Geopsy, default is version '3.4.2'.
 
         Returns
         -------
-        Target
-            Instantiated `Target` with information from file.
+        ModalTarget
+            Instantiated `ModalTarget` with information from file.
+
+        Raises
+        ------
+        NotImplementedError
+            If `version` does not match the options provided.
+
+        Notes
+        -----
+        In previous versions of `swprepost` (v1.0.0 and earlier) an
+        attempt was made to support all versions of Dinver's .target
+        and .param formats. However, this has become untenable due to
+        the number and frequency of breaking changes that occur to these
+        formats. Therefore, in lieu of supporting all versions,
+        `swprepost` will seek to support only those versions directly
+        associated with the open-source high-performance computing
+        application `swbatch`.
 
         """
+        version = check_geopsy_version(version)
+
         with open(fname, "r") as f:
             lines = f.readlines()
 
@@ -556,13 +591,13 @@ class ModalTarget(CurveUncertain):
         vel = 1/slo
         std = np.array(stds, dtype=np.double)
 
-        if version == "2":
+        if version == "2.10.1":
             velstd = (-1 + np.sqrt(1 + 4*std*std*vel*vel))/(2*std)
-        elif version == "3":
+        elif version == "3.4.2":
             cov = std - np.sqrt(std*std - 2*std + 2)
             velstd = cov*vel
-        else:
-            msg = f"version={version} is not implemented, refer to documentation."
+        else: # pragma: no cover
+            msg = "You updated the SUPPORTED_GEOPSY_VERSIONS, but need to update from_txt_dinver."
             raise NotImplementedError(msg)
 
         return cls(frq, vel, velstd)
@@ -745,7 +780,7 @@ class ModalTarget(CurveUncertain):
         targetset = TargetSet.from_target(fname_prefix=fname_prefix, version=version)
         ntargets = len(targetset.targets)
 
-        if ntargets > 0:
+        if ntargets > 1:
             msg = f"{fname_prefix}.target contains {ntargets} ModalTargets, only returning the first."
             warnings.warn(msg, category=RuntimeWarning)
 

@@ -22,6 +22,8 @@ import logging
 import warnings
 
 import numpy as np
+import nbformat
+from nbconvert.preprocessors import ExecutePreprocessor
 
 from testtools import unittest, TestCase, get_path
 import swprepost
@@ -314,7 +316,7 @@ class Test_ModalTarget(TestCase):
         self.assertAlmostEqual(tar.vr40, 180, places=1)
 
         fname = self.path / "data/tar/test_tar_wstd_nonlin_1.csv"
-                # TODO(jpv): Add metadata to csv for version >2.0.0.
+        # TODO(jpv): Add metadata to csv for version >2.0.0.
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             tar = swprepost.Target.from_csv(fname)
@@ -380,9 +382,9 @@ class Test_ModalTarget(TestCase):
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             self.assertRaises(NotImplementedError, tar.to_target,
-                            fname_prefix="blahbal", version="12000")
+                              fname_prefix="blahbal", version="12000")
             self.assertRaises(NotImplementedError, tar.from_target,
-                            fname_prefix=prefix+"3.4.2_dinver", version="12000")
+                              fname_prefix=prefix+"3.4.2_dinver", version="12000")
 
         for version in swprepost.meta.SUPPORTED_GEOPSY_VERSIONS:
             os.remove(
@@ -395,14 +397,18 @@ class Test_ModalTarget(TestCase):
         tar = swprepost.Target(frq, vel, velstd)
 
         fname = self.path / "test_dinver_txt.txt"
-        for version in ["2", "3"]:
-            tar.to_txt_dinver(fname, version=version)
-            new = swprepost.Target.from_txt_dinver(fname, version=version)
+        # TODO(jpv): Put specific versions and remove filter after v2.0.0.
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
 
-            for attr in ["frequency", "velocity", "velstd"]:
-                expected = getattr(tar, attr)
-                returned = getattr(new, attr)
-                self.assertArrayAlmostEqual(expected, returned, places=0)
+            for version in ["2", "3"]:
+                tar.to_txt_dinver(fname, version=version)
+                new = swprepost.Target.from_txt_dinver(fname, version=version)
+
+                for attr in ["frequency", "velocity", "velstd"]:
+                    expected = getattr(tar, attr)
+                    returned = getattr(new, attr)
+                    self.assertArrayAlmostEqual(expected, returned, places=0)
 
         # Bad version.
         version = "1245"
@@ -465,24 +471,6 @@ class Test_ModalTarget(TestCase):
         self.assertNotEqual(a, d)
         self.assertNotEqual(a, e)
         self.assertNotEqual(a, f)
-
-    # TODO(jpv): Fix this hacky test.
-    # @unittest.skipIf(platform.python_version().startswith("3.8"),
-    #                  "Unresolved issue with ExecutePreprocessor")
-    # def test_notebook(self):
-    #     fname = "../examples/basic/Targets.ipynb"
-    #     with open(self.path / fname) as f:
-    #         nb = nbformat.read(f, as_version=4)
-
-    #     try:
-    #         with warnings.catch_warnings():
-    #             warnings.simplefilter("ignore")
-    #             ep = ExecutePreprocessor(timeout=600, kernel_name='python3')
-    #             ep.preprocess(nb,
-    #                           {'metadata':{'path': self.path / "../examples/basic"}})
-    #     finally:
-    #         with open(self.path / fname, 'w', encoding='utf-8') as f:
-    #             nbformat.write(nb, f)
 
 
 if __name__ == '__main__':
