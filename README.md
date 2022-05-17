@@ -31,11 +31,11 @@ Joseph P. Vantassel.
 
 The package includes multiple class definitions for interacting with the various
 components required for surface wave inversion. It is designed to integrate
-seamlessly with the Dinver module of the popular open-source software Geopsy,
+seamlessly with the _dinver_ module of the popular open-source software _[geopsy](www.geopsy.org)_,
 however has been written in a general manner to ensure its usefulness with other
 inversion programs. Furthermore, some of the class definitions provided, such as
-`GroundModel`, may even be of use to those working in the Geotechnical or
-Geophysical fields, but who do not perform surface wave inversion.
+`GroundModel`, may even be of use to those working in the geotechnical or
+geophysical fields, but who do not perform surface wave inversion.
 
 If you use _swprepost_ in your research or consulting we ask you please cite the
 following:
