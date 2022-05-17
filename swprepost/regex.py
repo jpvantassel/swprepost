@@ -41,10 +41,11 @@ dc_mode_start_exec = re.compile(dc_mode_start_expr)
 dc_mode_expr = f"# Mode (\d+){NEWLINE}"
 dc_mode_exec = re.compile(dc_mode_expr)
 
-# There are two different syntax for dispersion files, dc_header_a & dc_header_b.
+# There are three different syntax for dispersion files, dc_header_a, dc_header_b, dc_header_c.
 dc_header_a = f"{dc_meta_expr}{NEWLINE}{dc_wave_expr}{NEWLINE}.*{NEWLINE}"
 dc_header_b = f"{dc_wave_expr}{NEWLINE}.*{NEWLINE}.*{NEWLINE}{dc_meta_expr}{NEWLINE}"
-dc_set_expr = f"(?:{dc_header_a}|{dc_header_b})((?:{dc_mode_start_expr}(?:{dc_pair_expr})+)+)"
+dc_header_c = f"{dc_wave_expr}{NEWLINE}.*{NEWLINE}{dc_meta_expr}{NEWLINE}"
+dc_set_expr = f"(?:{dc_header_a}|{dc_header_b}|{dc_header_c})((?:{dc_mode_start_expr}(?:{dc_pair_expr})+)+)"
 dc_set_exec = re.compile(dc_set_expr)
 
 # GroundModel

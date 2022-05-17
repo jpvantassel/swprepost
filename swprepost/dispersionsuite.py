@@ -134,11 +134,14 @@ class DispersionSuite(Suite):
         rayleigh, love = None, None
         model_count = 0
         for model_info in regex.dc_set_exec.finditer(text):
-            id_a, msft_a, wav_a, wav_b, id_b, msft_b, data = model_info.groups()
+            id_a, msft_a, wav_a, wav_b, id_b, msft_b, wav_c, id_c, msft_c,  data = model_info.groups()
 
-            identifier = id_a if id_a is not None else id_b
-            misfit = msft_a if msft_a is not None else msft_b
-            wave_type = wav_a if wav_a is not None else wav_b
+            for _id, _msft, _wav in zip([id_a, id_b, id_c], [msft_a, msft_b, msft_c], [wav_a, wav_b, wav_c]):
+                if _id is not None:
+                    identifier = _id
+                    misfit = _msft
+                    wave_type = _wav
+                    break
 
             # Encountered new model, save previous, and reset.
             if identifier != previous_id and previous_id != "start":
