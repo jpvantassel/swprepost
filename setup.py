@@ -47,7 +47,7 @@ setup(
     ],
     keywords='surface wave inversion geopsy pre-process post-process dispersion surface waves',
     packages=find_packages(),
-    python_requires='>3.6, <3.11',
+    python_requires='>3.6',
     install_requires=["numpy", "scipy", "matplotlib"],
     extras_require={
         'dev': ['hypothesis', 'jupyterlab', 'nbformat', 'coverage', 'tox'],
