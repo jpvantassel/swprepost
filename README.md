@@ -43,18 +43,14 @@ following:
 > Joseph Vantassel. (2020). jpvantassel/swprepost: latest (Concept). Zenodo.
 > http://doi.org/10.5281/zenodo.3839998
 
+> Vantassel, J.P. and Cox, B.R. (2021). SWinvert: a workflow for performing
+> rigorous 1-D surface wave inversions. Geophysical Journal International
+> 224, 1141-1156. https://doi.org/10.1093/gji/ggaa426
+
 _Note: For software, version specific citations should be preferred to general_
 _concept citations, such as that listed above. To generate a version specific_
 _citation for _swprepost_, please use the citation tool for that specific_
 _version on the _swprepost_ [archive](https://doi.org/10.5281/zenodo.3839998)._
-
-For the motivation behind the development of _swprepost_ and its role in a
-larger project focused on developing a complete and rigorous workflow for
-surface wave inversion please refer to and consider citing the following:
-
-> Vantassel, J.P. and Cox, B.R. (2021). SWinvert: a workflow for performing
-> rigorous 1-D surface wave inversions. Geophysical Journal International
-> 224, 1141-1156. https://doi.org/10.1093/gji/ggaa426
 
 ## A Few Examples
 
