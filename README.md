@@ -90,7 +90,7 @@ ax.legend()
 plt.show()
 ```
 
-![Plot of 100 best shear wave velocity profiles.](figs/100bestvs.svg)
+![Plot of 100 best shear wave velocity profiles.](https://raw.githubusercontent.com/jpvantassel/swprepost/main/figs/100bestvs.svg)
 
 ### Compute and plot their uncertainty
 
@@ -105,7 +105,7 @@ ax.set_ylabel("Depth (m)")
 plt.show()
 ```
 
-![Plot of the lognormal standard deviation of the 100 best shear wave velocity profiles.](figs/siglnvs.svg)
+![Plot of the lognormal standard deviation of the 100 best shear wave velocity profiles.](https://raw.githubusercontent.com/jpvantassel/swprepost/main/figs/siglnvs.svg)
 
 ## Getting Started
 
