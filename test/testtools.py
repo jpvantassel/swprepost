@@ -18,15 +18,10 @@
 """Testing tools."""
 
 import unittest
+import pathlib
 
-def get_full_path(path):
-    if path.count("/") > 1:
-        file_name = path.split(r"/")[-1]
-        full_path = path[:-len(file_name)]
-    else:
-        file_name = path.split(r"\\")[-1]
-        full_path = path[:-len(file_name)]
-    return full_path
+def get_path(path):
+    return pathlib.PurePath(path).parent
 
 class TestCase(unittest.TestCase):
 

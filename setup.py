@@ -43,13 +43,14 @@ setup(
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9',
+        'Programming Language :: Python :: 3.10',
     ],
     keywords='surface wave inversion geopsy pre-process post-process dispersion surface waves',
     packages=find_packages(),
     python_requires='>3.6',
     install_requires=["numpy", "scipy", "matplotlib"],
     extras_require={
-        'dev': ['hypothesis', 'jupyter', 'nbformat', 'coverage'],
+        'dev': ['hypothesis', 'jupyterlab', 'nbformat', 'coverage', 'tox'],
     },
     package_data={
     },

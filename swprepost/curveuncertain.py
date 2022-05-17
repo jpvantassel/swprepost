@@ -163,7 +163,7 @@ class CurveUncertain(Curve):
                 return (xx, yy, yerr, xerr)
             elif self._isyerr:
                 return (xx, yy, yerr)
-            elif self._isxerr:
+            elif self._isxerr: # pragma: no cover
                 return (xx, yy, xerr)
             else:
                 return (xx, yy)

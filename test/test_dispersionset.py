@@ -20,7 +20,7 @@
 import os
 import logging
 
-from testtools import unittest, TestCase, get_full_path
+from testtools import unittest, TestCase, get_path
 import swprepost
 
 logging.basicConfig(level=logging.CRITICAL)
@@ -41,7 +41,7 @@ class Test_DispersionSet(TestCase):
                                              love=cls.lov)
 
     def setUp(self):
-        self.full_path = get_full_path(__file__)
+        self.path = get_path(__file__)
 
     def test_check_type(self):
         # curveset is not dict
@@ -88,7 +88,7 @@ class Test_DispersionSet(TestCase):
 
     def test_from_geopsy(self):
         # Quick test -> Full test in DispersionSuite
-        fname = self.full_path+"data/test_dc_mod2_ray2_lov2_shrt.txt"
+        fname = self.path / "data/dc/test_dc_mod2_ray2_lov2_shrt.txt"
         rayleigh = {0: swprepost.DispersionCurve([0.15, 64],
                                                  [1/0.000334532972901842,
                                                   1/0.00917746839997367]),

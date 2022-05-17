@@ -22,7 +22,7 @@ import logging
 
 import numpy as np
 
-from testtools import unittest, TestCase, get_full_path
+from testtools import unittest, TestCase, get_path
 import swprepost
 
 logging.basicConfig(level=logging.CRITICAL)
@@ -31,7 +31,7 @@ logging.basicConfig(level=logging.CRITICAL)
 class Test_DispersionSuite(TestCase):
 
     def setUp(self):
-        self.full_path = get_full_path(__file__)
+        self.path = get_path(__file__)
 
     def test_check_input(self):
         # DispersionSuite to be instantiated with only a DispersionSet object.
@@ -44,7 +44,7 @@ class Test_DispersionSuite(TestCase):
         velocity = np.array([4, 5, 6])
         dc = swprepost.DispersionCurve(frequency=frequency, velocity=velocity)
         expected = swprepost.DispersionSet(identifier=5, misfit=15.,
-                                     rayleigh={0: dc}, love=None)
+                                           rayleigh={0: dc}, love=None)
         dc_suite = swprepost.DispersionSuite(dispersionset=expected)
         returned = dc_suite[0]
         self.assertEqual(expected, returned)
@@ -58,12 +58,12 @@ class Test_DispersionSuite(TestCase):
         velocity = np.array([4, 5, 6])
         dc = swprepost.DispersionCurve(frequency=frequency, velocity=velocity)
         dc_set_0 = swprepost.DispersionSet(identifier=0, misfit=2.1,
-                                       rayleigh={0: dc}, love=None)
+                                           rayleigh={0: dc}, love=None)
         dc_suite = swprepost.DispersionSuite(dispersionset=dc_set_0)
 
         # Manual Append
         dc_set_1 = swprepost.DispersionSet(identifier=2, misfit=1.1,
-                                       rayleigh={0: dc}, love=None)
+                                           rayleigh={0: dc}, love=None)
         dc_suite.append(dispersionset=dc_set_1, sort=False)
 
         # Compare the Result
@@ -74,8 +74,8 @@ class Test_DispersionSuite(TestCase):
         self.assertListEqual([2.1, 1.1], dc_suite.misfits)
 
     def test_str(self):
-        fname = "data/test_dc_mod2_ray2_lov0_shrt.txt"
-        suite = swprepost.DispersionSuite.from_geopsy(self.full_path+fname)
+        fname = "data/dc/test_dc_mod2_ray2_lov0_shrt.txt"
+        suite = swprepost.DispersionSuite.from_geopsy(self.path / fname)
         expected = "DispersionSuite with 2 DispersionSets."
         returned = suite.__str__()
         self.assertEqual(expected, returned)
@@ -83,7 +83,8 @@ class Test_DispersionSuite(TestCase):
     def test_from_geopsy(self):
 
         def compare(fname, models, **kwargs):
-            dc_suite = swprepost.DispersionSuite.from_geopsy(fname=fname, **kwargs)
+            dc_suite = swprepost.DispersionSuite.from_geopsy(
+                fname=fname, **kwargs)
 
             for model in models:
                 # Use identifier to select the appropriate DispersionSet
@@ -101,14 +102,16 @@ class Test_DispersionSuite(TestCase):
                     for mode_number in model[wave]:
                         for attr in model[wave][mode_number]:
                             expected = np.array(model[wave][mode_number][attr])
-                            returned = getattr(getattr(dc_set, wave)[mode_number], attr)
-                            self.assertArrayAlmostEqual(expected, returned, places=10)
+                            returned = getattr(getattr(dc_set, wave)[
+                                               mode_number], attr)
+                            self.assertArrayAlmostEqual(
+                                expected, returned, places=10)
 
         # One Set with Two Rayleigh and Two Love Modes
-        fname = self.full_path+"data/test_dc_mod1_ray2_lov2_shrt.txt"
+        fname = self.path / "data/dc/test_dc_mod1_ray2_lov2_shrt.txt"
         e1 = {"identifier": 149641,
               "misfit": 1.08851,
-              "love":None,
+              "love": None,
               "rayleigh": {0: {"frequency": [0.15, 64],
                                "velocity": [1/0.000334532972901842,
                                             1/0.00917746839997367]}}}
@@ -116,7 +119,7 @@ class Test_DispersionSuite(TestCase):
         compare(fname, models, nsets=1, nrayleigh=1, nlove=0)
 
         # One Set with Two Rayleigh and Two Love Modes
-        fname = self.full_path+"data/test_dc_mod1_ray2_lov2_shrt.txt"
+        fname = self.path / "data/dc/test_dc_mod1_ray2_lov2_shrt.txt"
         e1 = {"identifier": 149641,
               "misfit": 1.08851,
               "love": {0: {"frequency": [0.11, 61],
@@ -128,7 +131,7 @@ class Test_DispersionSuite(TestCase):
         compare(fname, models, nsets=1, nrayleigh=0, nlove=1)
 
         # One Set with Two Rayleigh and Two Love Modes
-        fname = self.full_path+"data/test_dc_mod1_ray2_lov2_shrt.txt"
+        fname = self.path / "data/dc/test_dc_mod1_ray2_lov2_shrt.txt"
         e1 = {"identifier": 149641,
               "misfit": 1.08851,
               "love": {0: {"frequency": [0.11, 61],
@@ -147,7 +150,7 @@ class Test_DispersionSuite(TestCase):
         compare(fname, models)
 
         # Two Sets with Two Rayleigh Modes Each
-        fname = self.full_path+"data/test_dc_mod2_ray2_lov0_shrt.txt"
+        fname = self.path / "data/dc/test_dc_mod2_ray2_lov0_shrt.txt"
         e1 = {"identifier": 149641,
               "misfit": 1.08851,
               "rayleigh": {0: {"frequency": [0.15, 64],
@@ -170,7 +173,7 @@ class Test_DispersionSuite(TestCase):
         compare(fname, models)
 
         # Two Sets with Two Love Modes Each
-        fname = self.full_path+"data/test_dc_mod2_ray0_lov2_shrt.txt"
+        fname = self.path / "data/dc/test_dc_mod2_ray0_lov2_shrt.txt"
         e1 = {"identifier": 149641,
               "misfit": 1.08851,
               "love": {0: {"frequency": [0.11, 61],
@@ -193,7 +196,7 @@ class Test_DispersionSuite(TestCase):
         compare(fname, models)
 
         # Two Sets with Two Rayleigh and Love Modes Each
-        fname = self.full_path+"data/test_dc_mod2_ray2_lov2_shrt.txt"
+        fname = self.path / "data/dc/test_dc_mod2_ray2_lov2_shrt.txt"
         e1 = {"identifier": 149641,
               "misfit": 1.08851,
               "love": {0: {"frequency": [0.11, 61],
@@ -246,7 +249,7 @@ class Test_DispersionSuite(TestCase):
         compare(fname, models, nrayleigh=1, nlove=1)
 
         # Large File
-        fname = self.full_path+"data/test_dc_mod100_ray2_lov2_full.txt"
+        fname = self.path / "data/dc/test_dc_mod100_ray2_lov2_full.txt"
         e1 = {"identifier": 146980,
               "misfit": 1.12243,
               "love": None,
@@ -333,15 +336,27 @@ class Test_DispersionSuite(TestCase):
         models = [e1]
         compare(fname, models, nsets=20)
 
+        # Real Examples
+        # -------------
+        for op_sys in ["windows", "linux"]:
+            for version in swprepost.meta.SUPPORTED_GEOPSY_VERSIONS:
+                for tar, par in zip(["tar1", "tar12"], ["ln3", "ln7"]):
+                    fname = self.path / \
+                        f"data/dc/{op_sys}/{tar}_{par}_v{version.replace('.','')}_m100_dc.txt"
+                    suite = swprepost.DispersionSuite.from_geopsy(fname)
+                    dc_set = swprepost.DispersionSet.from_geopsy(fname)
+                    self.assertEqual(dc_set, suite[0])
+                    self.assertTrue(len(suite) == 100)
+
     def test_write_to_txt(self):
         dc_0 = swprepost.DispersionCurve([1, 5, 10, 15], [100, 200, 300, 400])
         dc_1 = swprepost.DispersionCurve([1, 5, 12, 15], [100, 180, 300, 400])
         dc_set_0 = swprepost.DispersionSet(0, misfit=0.0,
-                                       rayleigh={0: dc_0, 1: dc_1},
-                                       love={0: dc_1, 1: dc_0})
+                                           rayleigh={0: dc_0, 1: dc_1},
+                                           love={0: dc_1, 1: dc_0})
         dc_set_1 = swprepost.DispersionSet(1, misfit=0.0,
-                                       rayleigh={0: dc_1, 1: dc_0},
-                                       love={0: dc_0, 1: dc_1})
+                                           rayleigh={0: dc_1, 1: dc_0},
+                                           love={0: dc_0, 1: dc_1})
         set_list = [dc_set_0, dc_set_1]
         expected = swprepost.DispersionSuite.from_list(set_list)
 
@@ -353,8 +368,8 @@ class Test_DispersionSuite(TestCase):
         self.assertEqual(expected, returned)
 
     def test_eq(self):
-        dc = swprepost.DispersionCurve([1,2,3],[10,20,30])
-        dc_set = swprepost.DispersionSet(0, rayleigh={0:dc})
+        dc = swprepost.DispersionCurve([1, 2, 3], [10, 20, 30])
+        dc_set = swprepost.DispersionSet(0, rayleigh={0: dc})
         expected = swprepost.DispersionSuite.from_list([dc_set, dc_set])
 
         # Bad length
@@ -362,7 +377,7 @@ class Test_DispersionSuite(TestCase):
         self.assertNotEqual(expected, returned)
 
         # Bad Value
-        dc_set = swprepost.DispersionSet(1, rayleigh={0:dc})
+        dc_set = swprepost.DispersionSet(1, rayleigh={0: dc})
         returned = swprepost.DispersionSuite.from_list([dc_set, dc_set])
         self.assertNotEqual(expected, returned)
 

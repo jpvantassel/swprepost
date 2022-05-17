@@ -16,4 +16,5 @@ API Reference
    parameter
    parameterization
    suite
-   target
+   modaltarget
+   targetset

@@ -17,6 +17,8 @@
 
 """GroundModelSuite class definition."""
 
+import warnings
+
 import numpy as np
 
 from swprepost import GroundModel, Suite, regex
@@ -70,7 +72,7 @@ class GroundModelSuite(Suite):
         Parameters
         ----------
         groundmodel : GroundModel
-            refer to 
+            refer to
             :meth: `__init__ <swprepost.GroundModelSuite.__init__>`.
         sort : bool
             Sort models according to misfit (smallest to largest),
@@ -143,7 +145,7 @@ class GroundModelSuite(Suite):
         nlay = 1E6
         for gm in gms:
             nlay = min(nlay, len(getattr(gm, "thickness")))
-        
+
         # Comfirm that the model does not require simplification.
         # TODO (jpv): Consider checking model
 
@@ -167,7 +169,7 @@ class GroundModelSuite(Suite):
                 try:
                     thks[:, ncol] = thk
                     pars[:, ncol] = par
-                except ValueError as e:
+                except ValueError as e:  # pragma: no cover
                     msg = f"The simplified model {thks}, {pars} contains too few layers. The original model was {gm}. Please report this issue."
                     raise ValueError(msg) from e
 
@@ -292,7 +294,7 @@ class GroundModelSuite(Suite):
         """
         cols = tks.shape[1]
         for other in (vps.shape[1], vss.shape[1], rhs.shape[1], ids.size, misfits.size):
-            if cols != other:
+            if cols != other:  # pragma: no cover
                 raise ValueError("Array sizes must be consistent.")
 
         for col in range(cols):
@@ -326,7 +328,7 @@ class GroundModelSuite(Suite):
         sort : bool, optional
             Indicates whether the imported data should be sorted from
             lowest to highest misfit, default is `False` indicating no
-            sorting is performed.  
+            sorting is performed.
 
         Returns
         -------
@@ -334,22 +336,27 @@ class GroundModelSuite(Suite):
             Initialized `GroundModelSuite`.
 
         """
-        # TODO (jpv): Add warning if nsets < navailable.
         if nmodels == "all":
             nmodels = np.inf
 
         with open(fname, "r") as f:
-            lines = f.read()
+            text = f.read()
 
         gms = []
         model_count = 0
-        for model_info in regex.gm.finditer(lines):
+        for model_info in regex.gm_exec.finditer(text):
             identifier, misfit, data = model_info.groups()
             gms.append(cls._gm()._parse_gm(data, identifier, misfit))
 
             model_count += 1
             if model_count == nmodels:
                 break
+        else:
+            if nmodels is not np.inf:
+                msg = f"The number of GroundModels requested ({nmodels}) is "
+                msg += f"greater than the number of those available "
+                msg += f"({model_count})."
+                warnings.warn(msg, UserWarning)
 
         return cls.from_list(gms, sort=sort)
 
@@ -366,6 +373,6 @@ class GroundModelSuite(Suite):
         """Human-readable representation of a `GroundModelSuite`."""
         return f"GroundModelSuite with {len(self.gms)} GroundModels."
 
-    def __repr__(self):
+    def __repr__(self):  # pragma: no cover
         """Unambiguous representation of a `GroundModelSuite`."""
         return f"GroundModelSuite with {len(self.gms)} GroundModels at {id(self)}."

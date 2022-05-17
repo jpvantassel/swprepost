@@ -75,7 +75,7 @@ class Suite(ABC):
 
             if nbest > max_avail:
                 msg = f"Requested ({nbest}) > Available ({max_avail})"
-                msg += f", setting requested to available."
+                msg += ", setting requested to available."
                 warnings.warn(msg)
                 return max_avail
             else:
@@ -94,7 +94,7 @@ class Suite(ABC):
         -------
         float, tuple
             If `nmodels==1`, returns `float` corresponding to the single
-            best misfit, otherwise returns `tuple` of the form 
+            best misfit, otherwise returns `tuple` of the form
             (min_msft, max_msft).
 
         """
@@ -142,4 +142,7 @@ class Suite(ABC):
             if my != ur:
                 return False
         return True
+
+    def __len__(self):
+        return len(self._items)
         

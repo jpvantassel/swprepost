@@ -21,17 +21,17 @@ import cProfile
 import pstats
 
 import swprepost
-from testtools import get_full_path
+from testtools import get_path
 
-full_path = get_full_path(__file__)
+path = get_path(__file__)
 
 
 def main():
-    fname = full_path+"data/test_gm_mod100.txt"
+    fname = path / "data/gm/test_gm_mod100.txt"
     swprepost.GroundModelSuite.from_geopsy(fname=fname)
 
 
-fname = full_path+"data/.tmp_profiler_run"
+fname = path / "data/.tmp_profiler_run"
 data = cProfile.run('main()', filename=fname)
 stat = pstats.Stats(fname)
 stat.sort_stats('tottime')

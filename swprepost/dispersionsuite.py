@@ -18,6 +18,9 @@
 """DispersionSuite class definition."""
 
 import logging
+import warnings
+
+import numpy as np
 
 from swprepost import DispersionSet, Suite, regex
 
@@ -104,7 +107,7 @@ class DispersionSuite(Suite):
         fname : str
             Name of file, may be a relative or full path.
         nsets : int, optional
-            Number of sets to extract, default is "all" so all 
+            Number of sets to extract, default is "all" so all
             available sets will be extracted.
         nrayleigh, nlove : int, optional
             Number of Rayleigh and Love modes respectively, default
@@ -120,18 +123,27 @@ class DispersionSuite(Suite):
             Instantiated `DispersionSuite` object.
 
         """
-        # TODO (jpv): Add warning if nsets < navailable.
+        if nsets == "all":
+            nsets = np.inf
+
         with open(fname, "r") as f:
-            lines = f.read()
+            text = f.read()
 
         dc_sets = []
         previous_id, previous_misfit = "start", "0"
         rayleigh, love = None, None
         model_count = 0
-        for model_info in regex.dcset.finditer(lines):
-            identifier, misfit, wave_type, data = model_info.groups()
+        for model_info in regex.dc_set_exec.finditer(text):
+            id_a, msft_a, wav_a, wav_b, id_b, msft_b, wav_c, id_c, msft_c,  data = model_info.groups()
 
-            # Encountered new model, save previous and reset.
+            for _id, _msft, _wav in zip([id_a, id_b, id_c], [msft_a, msft_b, msft_c], [wav_a, wav_b, wav_c]):
+                if _id is not None:
+                    identifier = _id
+                    misfit = _msft
+                    wave_type = _wav
+                    break
+
+            # Encountered new model, save previous, and reset.
             if identifier != previous_id and previous_id != "start":
                 if model_count+1 == nsets:
                     break
@@ -147,7 +159,7 @@ class DispersionSuite(Suite):
                 rayleigh = cls._dcset()._parse_dcs(data, nmodes=nrayleigh)
             elif wave_type == "Love":
                 love = cls._dcset()._parse_dcs(data, nmodes=nlove)
-            else:
+            else: # pragma: no cover
                 raise NotImplementedError
 
             previous_id, previous_misfit = identifier, misfit
@@ -155,6 +167,12 @@ class DispersionSuite(Suite):
         dc_sets.append(cls._dcset()(previous_id,
                                     float(previous_misfit),
                                     rayleigh=rayleigh, love=love))
+
+        if nsets is not np.inf and len(dc_sets) < nsets:
+            msg =  f"The number of DispersionSets requested ({nsets}) is "
+            msg += f"fewer than the number of those returned ({len(dc_sets)})."
+            warnings.warn(msg, UserWarning)
+
         return cls.from_list(dc_sets, sort=sort)
 
     @classmethod
@@ -173,7 +191,7 @@ class DispersionSuite(Suite):
         sort : bool, optional
             Indicates whether the imported data should be sorted from
             lowest to highest misfit, default is `False` indicating no
-            sorting is performed.  
+            sorting is performed.
 
         Returns
         -------

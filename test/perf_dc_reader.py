@@ -18,17 +18,17 @@
 """Performance test for reading a file containing dispersion curves."""
 
 import swprepost
-from testtools import get_full_path
+from testtools import get_path
 import cProfile
 import pstats
 
-full_path = get_full_path(__file__)
+path = get_path(__file__)
 
 def main():
-    fname = full_path+"data/test_dc_mod100_ray2_lov2_full.txt"
+    fname = path / "data/dc/test_dc_mod100_ray2_lov2_full.txt"
     swprepost.DispersionSuite.from_geopsy(fname=fname, nsets="all")
 
-fname = full_path+"data/.tmp_profiler_run"
+fname = path / "data/.tmp_profiler_run"
 data = cProfile.run('main()', filename=fname)
 stat = pstats.Stats(fname)
 stat.sort_stats('tottime')

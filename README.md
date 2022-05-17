@@ -7,8 +7,8 @@
 [![CircleCI](https://circleci.com/gh/jpvantassel/swprepost.svg?style=svg)](https://circleci.com/gh/jpvantassel/swprepost)
 [![Documentation Status](https://readthedocs.org/projects/swprepost/badge/?version=latest)](https://swprepost.readthedocs.io/en/latest/?badge=latest)
 [![Language grade: Python](https://img.shields.io/lgtm/grade/python/g/jpvantassel/swprepost.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/jpvantassel/swprepost/context:python)
-[![Codacy Badge](https://app.codacy.com/project/badge/Grade/150eb75dee3848f5bbfac0d9f2c33644)](https://www.codacy.com/manual/jpvantassel/swprepost?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=jpvantassel/swprepost&amp;utm_campaign=Badge_Grade)
-[![codecov](https://codecov.io/gh/jpvantassel/swprepost/branch/main/graph/badge.svg?token=N5kQxjr2RB)](https://codecov.io/gh/jpvantassel/swprepost)
+[![Codacy badge](https://app.codacy.com/project/badge/Grade/150eb75dee3848f5bbfac0d9f2c33644)](https://www.codacy.com/manual/jpvantassel/swprepost?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=jpvantassel/swprepost&amp;utm_campaign=Badge_Grade)
+[![Codecov](https://codecov.io/gh/jpvantassel/swprepost/branch/main/graph/badge.svg?token=N5kQxjr2RB)](https://codecov.io/gh/jpvantassel/swprepost)
 ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/swprepost)
 
 ## Table of Contents
@@ -23,16 +23,19 @@
 
 ---
 
-_swprepost_ is a Python package for performing surface wave inversion pre- and
-post-processing. _swprepost_ was developed by Joseph P. Vantassel under the
-supervision of Professor Brady R. Cox at The University of Texas at Austin. The
-package includes 11 class definitions for interacting with the various
+_swprepost_ is an open-source Python package for performing surface wave
+inversion pre- and post-processing. _swprepost_ was initially developed by
+Joseph P. Vantassel under the supervision of Professor Brady R. Cox at
+The University of Texas at Austin. The package continues to be developed by
+Joseph P. Vantassel.
+
+The package includes multiple class definitions for interacting with the various
 components required for surface wave inversion. It is designed to integrate
-seamlessly with the Dinver module of the popular open-source software Geopsy,
+seamlessly with the _dinver_ module of the popular open-source software _[geopsy](www.geopsy.org)_,
 however has been written in a general manner to ensure its usefulness with other
-inversion programs. Furthermore, some of the class definitions provided such as
-`GroundModel` may even be of use to those working in the Geotechnical or
-Geophysical fields, but who do not perform surface wave inversions.
+inversion programs. Furthermore, some of the class definitions provided, such as
+`GroundModel`, may even be of use to those working in the geotechnical or
+geophysical fields, but who do not perform surface wave inversion.
 
 If you use _swprepost_ in your research or consulting we ask you please cite the
 following:
@@ -40,23 +43,19 @@ following:
 > Joseph Vantassel. (2020). jpvantassel/swprepost: latest (Concept). Zenodo.
 > http://doi.org/10.5281/zenodo.3839998
 
+> Vantassel, J.P. and Cox, B.R. (2021). SWinvert: a workflow for performing
+> rigorous 1-D surface wave inversions. Geophysical Journal International
+> 224, 1141-1156. https://doi.org/10.1093/gji/ggaa426
+
 _Note: For software, version specific citations should be preferred to general_
 _concept citations, such as that listed above. To generate a version specific_
 _citation for _swprepost_, please use the citation tool for that specific_
 _version on the _swprepost_ [archive](https://doi.org/10.5281/zenodo.3839998)._
 
-For the motivation behind the development of _swprepost_ and its role in a
-larger project focused on developing a complete and rigorous workflow for
-surface wave inversion please refer to and consider citing the following:
-
-> Vantassel, J.P. and Cox, B.R. (2021). SWinvert: a workflow for performing
-> rigorous 1-D surface wave inversions. Geophysical Journal International
-> 224, 1141-1156. https://doi.org/10.1093/gji/ggaa426
-
 ## A Few Examples
 
 All examples presented here can be replicated using the Jupyter notebook titled
-`ReadmeExamples.ipynb` in the `examples` directory.
+`ReadmeExamples.ipynb` in the `examples/basic` directory.
 
 ### Import 100 ground models in less than 0.5 seconds
 
@@ -91,7 +90,7 @@ ax.legend()
 plt.show()
 ```
 
-![100bestvs.svg](figs/100bestvs.svg)
+![Plot of 100 best shear wave velocity profiles.](https://raw.githubusercontent.com/jpvantassel/swprepost/main/figs/100bestvs.svg)
 
 ### Compute and plot their uncertainty
 
@@ -106,7 +105,7 @@ ax.set_ylabel("Depth (m)")
 plt.show()
 ```
 
-![siglnvs.svg](figs/siglnvs.svg)
+![Plot of the lognormal standard deviation of the 100 best shear wave velocity profiles.](https://raw.githubusercontent.com/jpvantassel/swprepost/main/figs/siglnvs.svg)
 
 ## Getting Started
 
@@ -129,19 +128,32 @@ last few lines of text displayed in the console.
 
 ### Using _swprepost_
 
-1.  Download the contents of the
-  [examples](https://github.com/jpvantassel/swprepost/tree/main/examples)
-  directory to any location of your choice.
+To start learning about _swprepost_, we recommend walking through the
+provided examples.
 
-2.  Explore the Jupyter notebooks in the
+1.  To access the
+  [examples](https://github.com/jpvantassel/swprepost/tree/main/examples)
+  you can download the latest release of the project archived on
+  [zenodo](https://doi.org/10.5281/zenodo.3839998).
+  
+2.  Unzip the project folder titled `swprepost-vX.X.X.zip`. And move the
+  `example` directory to any location of your choosing. You can now discard
+  the other files and directories in the .zip.
+
+3.  Explore the Jupyter notebooks in the
   [basic](https://github.com/jpvantassel/swprepost/tree/main/examples/basic)
   directory for a no-coding-required introduction to the _swprepost_ package.
   If you have not installed `Jupyter`, detailed instructions can be found
   [here](https://jpvantassel.github.io/python3-course/#/intro/installing_jupyter).
 
-3.  Move to the [adv](https://github.com/jpvantassel/swprepost/tree/main/examples/adv)
-  directory and follow the Jupyter notebook title `example_swinvert_workflow.ipynb` for
-  an example application of _swprepost_ to the SWinvert workflow
-  (Vantassel and Cox, 2021).
+4.  Move to the
+  [adv](https://github.com/jpvantassel/swprepost/tree/main/examples/adv)
+  directory and follow the Jupyter notebook title
+  `example_swinvert_workflow.ipynb` for
+  an example of _swprepost_ applied in the context of the SWinvert workflow
+  (Vantassel and Cox, 2021). This workflow demonstrates how to use _swprepost_
+  to perform surface wave processing and _swbatch_ for running batch-style
+  surface wave inversion. For more information on _swbatch_ see
+  [its GitHub page](https://github.com/jpvantassel/swbatch).
 
-4.  Enjoy!
+5.  Enjoy!
